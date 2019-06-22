@@ -20,9 +20,31 @@
  ******************************************************************************/
 // @formatter:on
 
-package io.github.ossgang.commons.monads;
+package io.github.ossgang.commons.observable;
 
-@FunctionalInterface
-public interface ThrowingConsumer<T> {
-    void accept(T input) throws Exception;
+/**
+ * An {@link Observable} which can be updated explicitly with new values.
+ *
+ * @param <T> The value type.
+ */
+public class Updateable<T> extends AbstractDispatchingObservable<T> implements Observable<T> {
+    private Updateable(T initial) {
+        super(initial);
+    }
+
+    public static <T> Updateable<T> withInitialValue(T initialValue) {
+        return new Updateable<>(initialValue);
+    }
+
+    public static <T> Updateable<T> empty() {
+        return new Updateable<>(null);
+    }
+
+    /**
+     * Update the value (notifying all registered listeners)
+     * @param newValue the new value
+     */
+    public void update(T newValue) {
+        dispatch(newValue);
+    }
 }
