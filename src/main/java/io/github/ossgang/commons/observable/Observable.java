@@ -24,34 +24,14 @@ package io.github.ossgang.commons.observable;
 
 import java.util.function.Consumer;
 
-/**
- * A generic "observable" value of type T. An Observable&lt;T&gt; contains a value of type T (which can be retrieved
- * at any time), but also allows interested parties to observe the value for future changes.
- * @param <T> the wrapped data type
- */
 public interface Observable<T> {
-    /**
-     * Get the wrapped latest value.
-     * @return The latest value, or null if no value exists.
-     */
-    T value();
+    static SubscriptionOption WEAK = new SubscriptionOption();
 
     /**
-     * Add a listener to observe this value for future values.
-     * If a value is present when the listener is registered, it will be called with that value upon registration.
-     * However, there is no guarantee at which time or in which order listeners are notified.
-     *
-     * Implementations are expected to hold strong references to the listeners added. In order to remove a listener,
-     * call unsubscribe().
-     * @param listener the listener to add
+     * N
+     * @param listener
+     * @param options
+     * @return
      */
-    void subscribe(Consumer<T> listener);
-
-    /**
-     * Remove a previously registered listener
-     * @param listener the listener
-     * @throws IllegalArgumentException if the listener has not been registered with this observable
-     */
-    void unsubscribe(Consumer<T> listener);
-
+    Subscription subscribe(Consumer<? super T> listener, SubscriptionOption... options);
 }

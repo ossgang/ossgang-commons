@@ -22,55 +22,46 @@
 
 package io.github.ossgang.commons.observable;
 
-import java.util.Objects;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-import static java.util.Collections.newSetFromMap;
-import static java.util.Objects.requireNonNull;
-
-/**
- * An abstract implementation of {@link Observable} with a dispatcher-listener pattern. This class keeps track of a
- * list of added listeners and the latest value in a thread-safe way.
- *
- * Implementations should call the (protected) dispatch(T) method to dispatch updates to the value.
- * @param <T> The data type
- */
 public abstract class AbstractDispatchingObservable<T> implements Observable<T> {
-    private final Set<Consumer<T>> listeners = newSetFromMap(new ConcurrentHashMap<>());
-    private final AtomicReference<T> lastValue = new AtomicReference<>();
+    private final Map<Consumer<? super T>, Set<SubscriptionOption>> listeners = new ConcurrentHashMap<>();
     private final ExecutorService dispatcher = Executors.newCachedThreadPool();
 
-    protected AbstractDispatchingObservable(T initial) {
-        lastValue.set(initial);
+    protected AbstractDispatchingObservable() {
     }
 
-    public void unsubscribe(Consumer<T> listener) {
-        if (!listeners.remove(listener)) {
-            throw new IllegalArgumentException("The listener " + listener + " is not known to this observable.");
+    @Override
+    public Subscription subscribe(Consumer<? super T> listener, SubscriptionOption... options) {
+        Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
+        if (optionSet.contains(WEAK)) {
+            listeners.put(new WeakConsumer<>(listener, listeners::remove), optionSet);
+        } else {
+            listeners.put(listener, optionSet);
         }
+        return new ObservableSubscription(listener);
     }
 
-    public void subscribe(Consumer<T> listener) {
-        listeners.add(listener);
-        T value = lastValue.get();
-        if (value != null) {
-            dispatch(listener, value);
-        }
+    protected void update(T newValue) {
+        listeners.keySet().forEach(l -> dispatch(l, newValue));
     }
 
-    protected void dispatch(T newValue) {
-        requireNonNull(newValue, "null value not allowed");
-        if (!Objects.equals(lastValue.getAndSet(newValue), newValue)) {
-            listeners.forEach(l -> dispatch(l, newValue));
-        }
+    protected void update(T newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
+        listeners.entrySet().stream() //
+                .filter(entry -> optionPredicate.test(entry.getValue())) //
+                .map(Map.Entry::getKey) //
+                .forEach(l -> dispatch(l, newValue));
     }
 
-    private void dispatch(Consumer<T> listener, T value) {
+    private void dispatch(Consumer<? super T> listener, T value) {
         dispatcher.submit(() -> {
             try {
                 listener.accept(value);
@@ -81,7 +72,16 @@ public abstract class AbstractDispatchingObservable<T> implements Observable<T> 
         });
     }
 
-    public T value() {
-        return lastValue.get();
+
+    private class ObservableSubscription implements Subscription {
+        private final Consumer<? super T> listener;
+        private ObservableSubscription(Consumer<? super T> listener) {
+            this.listener = listener;
+        }
+
+        @Override
+        public void unsubscribe() {
+            listeners.remove(listener);
+        }
     }
 }
