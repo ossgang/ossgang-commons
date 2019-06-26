@@ -298,6 +298,24 @@ public class Maybe<T> {
         }
     }
 
+    /**
+     * Apply a function if this {@link Maybe} is in a "unsuccessful" state. The function gets passed the exception
+     * wrapped in this maybe. If the function succeeds, this Maybe is returned unaltered. Otherwise, the stored
+     * exception gets replaced by the one thrown by the consumer.
+     *
+     * @param function the exception handler to apply
+     * @return this
+     */
+    public Maybe<T> onException(ThrowingConsumer<Throwable> function) {
+        requireNonNull(function);
+        try {
+            function.accept(exception);
+            return this;
+        } catch (Exception e) {
+            return Maybe.ofException(e);
+        }
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;

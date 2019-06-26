@@ -1,0 +1,23 @@
+language: java
+dist: trusty
+jdk:
+  - oraclejdk8
+  - oraclejdk11
+before_install:
+  - chmod +x ./gradlew
+script:
+  - ./gradlew wrapper
+  - ./gradlew check
+  - ./gradlew jacocoTestReport
+before_deploy:
+  - ./gradlew generateLicenseReport
+  - ./gradlew javadoc
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: ./gradlew bintrayUpload -Ddeployment=true
+    on:
+      tags: true
+      jdk: oraclejdk8
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
