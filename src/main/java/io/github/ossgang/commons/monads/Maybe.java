@@ -308,6 +308,9 @@ public class Maybe<T> {
      */
     public Maybe<T> onException(ThrowingConsumer<Throwable> function) {
         requireNonNull(function);
+        if (exception == null) {
+            return this;
+        }
         try {
             function.accept(exception);
             return this;
