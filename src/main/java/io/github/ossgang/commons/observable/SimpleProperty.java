@@ -1,6 +1,6 @@
 package io.github.ossgang.commons.observable;
 
-public class SimpleProperty<T> extends AbstractDispatchingObservableValue<T> implements Property<T> {
+public class SimpleProperty<T> extends DispatchingObservableValue<T> implements Property<T> {
     SimpleProperty(T initial) {
         super(initial);
     }

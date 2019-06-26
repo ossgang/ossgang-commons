@@ -32,11 +32,11 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public abstract class AbstractDispatchingObservable<T> implements Observable<T> {
+public class DispatchingObservable<T> implements Observable<T> {
     private final Map<Consumer<? super T>, Set<SubscriptionOption>> listeners = new ConcurrentHashMap<>();
     private final ExecutorService dispatcher = Executors.newCachedThreadPool();
 
-    protected AbstractDispatchingObservable() {
+    protected DispatchingObservable() {
     }
 
     @Override

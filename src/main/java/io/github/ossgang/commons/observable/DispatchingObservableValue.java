@@ -22,16 +22,20 @@
 
 package io.github.ossgang.commons.observable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
 
-public abstract class AbstractDispatchingObservableValue<T> extends AbstractDispatchingObservable<T> implements ObservableValue<T> {
+public class DispatchingObservableValue<T> extends DispatchingObservable<T> implements ObservableValue<T> {
     private final AtomicReference<T> lastValue;
 
-    protected AbstractDispatchingObservableValue(T initial) {
+    protected DispatchingObservableValue(T initial) {
         lastValue = new AtomicReference<>(initial);
     }
 
