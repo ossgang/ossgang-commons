@@ -40,12 +40,12 @@ public class SimplePropertyTest {
 
         property.set(ANY_OTHER_STRING);
         assertThat(mappedValue.get()).isNull();
+        assertThat(filteredValueUpdate.get(1, SECONDS)).isEqualTo(ANY_OTHER_STRING);
         assertThat(filteredValue.get()).isEqualTo(ANY_OTHER_STRING);
-        assertThat(filteredValueUpdate.get(1, SECONDS)).isEqualTo(ANY_STRING);
 
         property.set(Integer.toString(ANY_INT));
+        assertThat(mappedValueUpdate.get(1, SECONDS)).isEqualTo(ANY_INT);
         assertThat(filteredValue.get()).isEqualTo(ANY_OTHER_STRING);
         assertThat(mappedValue.get()).isEqualTo(ANY_INT);
-        assertThat(mappedValueUpdate.get(1, SECONDS)).isEqualTo(ANY_INT);
     }
 }
