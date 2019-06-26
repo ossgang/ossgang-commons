@@ -7,11 +7,12 @@ import java.util.function.Function;
 
 import static java.util.Collections.newSetFromMap;
 
-public class DerivedObservable<S,D> extends DispatchingObservable<D> implements Observable<D> {
-    private final static Set<DerivedObservable<?,?>> GC_PROTECTION = newSetFromMap(new ConcurrentHashMap<>());
+public class DerivedObservableValue<S,D> extends DispatchingObservableValue<D> implements ObservableValue<D> {
+    private final static Set<DerivedObservableValue<?,?>> GC_PROTECTION = newSetFromMap(new ConcurrentHashMap<>());
     private final Function<S, Optional<D>> mapper;
 
-    DerivedObservable(Observable<S> sourceObservable, Function<S, Optional<D>> mapper) {
+    DerivedObservableValue(ObservableValue<S> sourceObservable, Function<S, Optional<D>> mapper) {
+        super(Optional.ofNullable(sourceObservable.get()).flatMap(mapper).orElse(null));
         this.mapper = mapper;
         sourceObservable.subscribe(this::deriveUpdate, WEAK);
     }

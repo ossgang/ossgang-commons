@@ -92,7 +92,6 @@ public class DispatchingObservable<T> implements Observable<T> {
         });
     }
 
-
     private class ObservableSubscription implements Subscription {
         private final Consumer<? super T> listener;
 
