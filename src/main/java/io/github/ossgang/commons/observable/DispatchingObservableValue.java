@@ -22,8 +22,6 @@
 
 package io.github.ossgang.commons.observable;
 
-import io.github.ossgang.commons.monads.Maybe;
-
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -50,14 +48,12 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
 
     @Override
     public <D> ObservableValue<D> map(Function<T, D> mapper) {
-        return new DerivedObservableValue<>(this,
-                v -> Maybe.ofValue(v).map(mapper::apply).optionalValue());
+        return new DerivedObservableValue<>(this, mapper.andThen(Optional::of));
     }
 
     @Override
     public ObservableValue<T> filter(Predicate<T> filter) {
-        return new DerivedObservableValue<>(this,
-                i -> Optional.of(i).filter(filter));
+        return new DerivedObservableValue<>(this, v -> Optional.of(v).filter(filter));
     }
 
     @Override

@@ -25,4 +25,27 @@ public class SimplePropertyTest {
         assertThat(updateValue.get(1, SECONDS)).isEqualTo(ANY_STRING);
     }
 
+    @Test
+    public void transformationTest() throws Exception {
+        CompletableFuture<Integer> mappedValueUpdate = new CompletableFuture<>();
+        CompletableFuture<String> filteredValueUpdate = new CompletableFuture<>();
+
+        Property<String> property = Properties.property(ANY_STRING);
+        ObservableValue<Integer> mappedValue = property.map(Integer::parseInt);
+        mappedValue.subscribe(mappedValueUpdate::complete);
+        ObservableValue<String> filteredValue = property.filter(ANY_OTHER_STRING::equals);
+        filteredValue.subscribe(filteredValueUpdate::complete);
+        assertThat(mappedValue.get()).isNull();
+        assertThat(filteredValue.get()).isNull();
+
+        property.set(ANY_OTHER_STRING);
+        assertThat(mappedValue.get()).isNull();
+        assertThat(filteredValue.get()).isEqualTo(ANY_OTHER_STRING);
+        assertThat(filteredValueUpdate.get(1, SECONDS)).isEqualTo(ANY_STRING);
+
+        property.set(Integer.toString(ANY_INT));
+        assertThat(filteredValue.get()).isEqualTo(ANY_OTHER_STRING);
+        assertThat(mappedValue.get()).isEqualTo(ANY_INT);
+        assertThat(mappedValueUpdate.get(1, SECONDS)).isEqualTo(ANY_INT);
+    }
 }
