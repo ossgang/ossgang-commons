@@ -27,11 +27,5 @@ import java.util.function.Consumer;
 public interface Observable<T> {
     static SubscriptionOption WEAK = new SubscriptionOption();
 
-    /**
-     * N
-     * @param listener
-     * @param options
-     * @return
-     */
     Subscription subscribe(Consumer<? super T> listener, SubscriptionOption... options);
 }

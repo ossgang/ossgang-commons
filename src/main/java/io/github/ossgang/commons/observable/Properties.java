@@ -13,5 +13,5 @@ public class Properties {
         return new SimpleProperty<>(null);
     }
 
-    public static PropertyMaker propertyMaker() { return new PropertyMaker(); }
+//    public static PropertyMaker propertyMaker() { return new PropertyMaker(); }
 }
