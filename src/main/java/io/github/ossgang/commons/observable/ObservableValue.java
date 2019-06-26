@@ -32,9 +32,7 @@ public interface ObservableValue<T> extends Observable<T> {
 
     T get();
 
-    @Override
     <D> ObservableValue<D> map(Function<T, D> mapper);
 
-    @Override
     ObservableValue<T> filter(Predicate<T> filter);
 }
