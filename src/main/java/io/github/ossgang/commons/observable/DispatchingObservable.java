@@ -29,12 +29,14 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class DispatchingObservable<T> implements Observable<T> {
     private final Map<Consumer<? super T>, Set<SubscriptionOption>> listeners = new ConcurrentHashMap<>();
     private final ExecutorService dispatcher = Executors.newCachedThreadPool();
+    private final AtomicInteger listenerCount = new AtomicInteger(0);
 
     protected DispatchingObservable() {
     }
@@ -43,12 +45,31 @@ public class DispatchingObservable<T> implements Observable<T> {
     public Subscription subscribe(Consumer<? super T> listener, SubscriptionOption... options) {
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
         if (optionSet.contains(WEAK)) {
-            listeners.put(new WeakConsumer<>(listener, listeners::remove), optionSet);
+            addListener(new WeakConsumer<>(listener, this::removeListener), optionSet);
         } else {
-            listeners.put(listener, optionSet);
+            addListener(listener, optionSet);
         }
         return new ObservableSubscription(listener);
     }
+
+    private void addListener(Consumer<? super T> listener, Set<SubscriptionOption> subscriptionOptions) {
+        listeners.put(listener, subscriptionOptions);
+        if (listenerCount.getAndIncrement() == 0) {
+            firstListenerAdded();
+        }
+    }
+
+    protected void firstListenerAdded() { /* no op */ }
+
+    private void removeListener(Consumer<? super T> listener) {
+        if(listeners.remove(listener) != null) {
+            if (listenerCount.decrementAndGet() == 0) {
+                lastListenerRemoved();
+            }
+        }
+    }
+
+    protected void lastListenerRemoved() { /* no op */ }
 
     protected void update(T newValue) {
         listeners.keySet().forEach(l -> dispatch(l, newValue));
@@ -72,16 +93,16 @@ public class DispatchingObservable<T> implements Observable<T> {
         });
     }
 
-
     private class ObservableSubscription implements Subscription {
         private final Consumer<? super T> listener;
+
         private ObservableSubscription(Consumer<? super T> listener) {
             this.listener = listener;
         }
 
         @Override
         public void unsubscribe() {
-            listeners.remove(listener);
+            removeListener(listener);
         }
     }
 }

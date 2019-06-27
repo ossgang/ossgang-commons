@@ -22,13 +22,11 @@
 
 package io.github.ossgang.commons.observable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static java.util.Objects.requireNonNull;
 
@@ -46,6 +44,16 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
             Optional.ofNullable(lastValue.get()).ifPresent(listener);
         }
         return super.subscribe(listener, options);
+    }
+
+    @Override
+    public <D> ObservableValue<D> map(Function<T, D> mapper) {
+        return new DerivedObservableValue<>(this, mapper.andThen(Optional::of));
+    }
+
+    @Override
+    public ObservableValue<T> filter(Predicate<T> filter) {
+        return new DerivedObservableValue<>(this, v -> Optional.of(v).filter(filter));
     }
 
     @Override
