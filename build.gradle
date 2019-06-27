@@ -14,8 +14,8 @@ buildscript {
             maven { url 'http://artifactory.cern.ch/ds-jcenter' }
             maven { url 'http://artifactory.cern.ch/development' }
         } else {
-            jcenter()
             maven { url 'https://plugins.gradle.org/m2/' }
+            jcenter()
         }
     }
 
@@ -40,6 +40,7 @@ repositories {
         maven { url 'http://artifactory.cern.ch/development' }
     } else {
         mavenCentral()
+        jcenter()
     }
 }
 
@@ -63,6 +64,10 @@ test {
         events "passed", "skipped", "failed"
         exceptionFormat "full"
     }
+}
+
+jacoco {
+    toolVersion = "0.8.3"
 }
 
 jacocoTestReport {
