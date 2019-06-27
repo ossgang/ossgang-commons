@@ -62,11 +62,10 @@ public class DispatchingObservable<T> implements Observable<T> {
     protected void firstListenerAdded() { /* no op */ }
 
     private void removeListener(Consumer<? super T> listener) {
-        if(listeners.remove(listener) == null) {
-            throw new IllegalStateException("This listener was not subscribed to this observable.");
-        }
-        if (listenerCount.decrementAndGet() == 0) {
-            lastListenerRemoved();
+        if(listeners.remove(listener) != null) {
+            if (listenerCount.decrementAndGet() == 0) {
+                lastListenerRemoved();
+            }
         }
     }
 
