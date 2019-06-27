@@ -6,7 +6,6 @@ jdk:
 before_install:
   - chmod +x ./gradlew
 script:
-  - ./gradlew wrapper
   - ./gradlew check
   - ./gradlew jacocoTestReport
 before_deploy:
