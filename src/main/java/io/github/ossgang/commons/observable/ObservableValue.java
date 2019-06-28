@@ -31,7 +31,6 @@ import java.util.function.Predicate;
  * @param <T> the type of the observable
  */
 public interface ObservableValue<T> extends Observable<T> {
-    // delivered before listener is registered on the subscribing thread
     enum ObservableValueSubscriptionOption implements SubscriptionOption {
         /**
          * On subscription, deliver the actual value (it it exists) as a "first update".
