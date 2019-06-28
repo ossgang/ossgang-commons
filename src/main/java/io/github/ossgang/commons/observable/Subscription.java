@@ -22,6 +22,9 @@
 
 package io.github.ossgang.commons.observable;
 
+/**
+ * A handle to a subscription, which allows to unsubscribe later.
+ */
 public interface Subscription {
     void unsubscribe();
 }

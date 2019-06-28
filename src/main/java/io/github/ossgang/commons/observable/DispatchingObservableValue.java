@@ -28,8 +28,19 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static io.github.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
+import static io.github.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.ON_CHANGE;
 import static java.util.Objects.requireNonNull;
 
+/**
+ * A basic implementation of {@link ObservableValue}, based on {@link DispatchingObservable} to handle the update
+ * dispatching, and keeping track of the latest value in a thread safe way.
+ *
+ * The value is only allowed to be null for an "uninitialized" {@link ObservableValue}. Trying to dispatch an update
+ * with a null value will raise an exception.
+ *
+ * @param <T> the type of the observable
+ */
 public class DispatchingObservableValue<T> extends DispatchingObservable<T> implements ObservableValue<T> {
     private final AtomicReference<T> lastValue;
 

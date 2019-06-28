@@ -33,6 +33,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static io.github.ossgang.commons.observable.Observable.ObservableSubscriptionOption.WEAK;
+
+/**
+ * A basic implementation of {@link Observable} managing a set of listeners, and dispatching updates to them.
+ *
+ * @param <T> the type of the observable
+ */
 public class DispatchingObservable<T> implements Observable<T> {
     private final Map<Consumer<? super T>, Set<SubscriptionOption>> listeners = new ConcurrentHashMap<>();
     private final ExecutorService dispatcher = Executors.newCachedThreadPool();

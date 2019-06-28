@@ -22,18 +22,33 @@
 
 package io.github.ossgang.commons.observable;
 
+/**
+ * Static entry point to create properties.
+ */
 public class Properties {
     private Properties() {
         throw new UnsupportedOperationException("static only");
     }
 
+    /**
+     * Create a {@link Property} with an initial value.
+     *
+     * @param initialValue the initial value
+     * @param <T> the type
+     * @return the new property
+     */
     public static <T> Property<T> property(T initialValue) {
         return new SimpleProperty<>(initialValue);
     }
 
+    /**
+     * Create a {@link Property} with NO initial value.
+     *
+     * @param <T> the type
+     * @return the new property
+     */
     public static <T> Property<T> property() {
         return new SimpleProperty<>(null);
     }
 
-//    public static PropertyMaker propertyMaker() { return new PropertyMaker(); }
 }
