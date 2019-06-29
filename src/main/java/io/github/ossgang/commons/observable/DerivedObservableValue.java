@@ -10,9 +10,9 @@ import static io.github.ossgang.commons.observable.Observable.ObservableSubscrip
 import static java.util.Collections.newSetFromMap;
 
 /**
- * An {@link ObservableValue} which gets its data from a parent (upstream) {@link ObservableValue}, applying a
- * transformation. Transformations can include arbitrary mapping and/or filtering. If a transformation fails (the
- * mapping function throws), a warning is issued and the value is discarded.
+ * An {@link ObservableValue} which gets its data from a parent (upstream) {@link ObservableValue} or {@link Observable},
+ * applying a transformation. Transformations can include arbitrary mapping and/or filtering. If a transformation fails
+ * (the mapping function throws), a warning is issued and the value is discarded.
  *
  * The subscription to the upstream observable is eager (as soon as this class is instantiated), even if there are no
  * subscribers.
@@ -31,9 +31,13 @@ public class DerivedObservableValue<S,D> extends DispatchingObservableValue<D> i
     private final Function<S, Optional<D>> mapper;
 
     DerivedObservableValue(ObservableValue<S> sourceObservable, Function<S, Optional<D>> mapper) {
+        this(sourceObservable, sourceObservable.get(), mapper);
+    }
+
+    DerivedObservableValue(Observable<S> sourceObservable, S initialValue, Function<S, Optional<D>> mapper) {
         super(null);
         this.mapper = mapper;
-        Optional.ofNullable(sourceObservable.get()).ifPresent(this::deriveUpdate);
+        Optional.ofNullable(initialValue).ifPresent(this::deriveUpdate);
         sourceObservable.subscribe(this::deriveUpdate, WEAK);
     }
 

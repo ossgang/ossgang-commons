@@ -20,15 +20,35 @@
  ******************************************************************************/
 // @formatter:on
 
-package io.github.ossgang.commons.observable;
+package io.github.ossgang.commons.property;
 
-public class SimpleProperty<T> extends DispatchingObservableValue<T> implements Property<T> {
-    SimpleProperty(T initial) {
-        super(initial);
+/**
+ * Static entry point to create properties.
+ */
+public class Properties {
+    private Properties() {
+        throw new UnsupportedOperationException("static only");
     }
 
-    @Override
-    public void set(T value) {
-        update(value);
+    /**
+     * Create a {@link Property} with an initial value.
+     *
+     * @param initialValue the initial value
+     * @param <T> the type
+     * @return the new property
+     */
+    public static <T> Property<T> property(T initialValue) {
+        return new SimpleProperty<>(initialValue);
     }
+
+    /**
+     * Create a {@link Property} with NO initial value.
+     *
+     * @param <T> the type
+     * @return the new property
+     */
+    public static <T> Property<T> property() {
+        return new SimpleProperty<>(null);
+    }
+
 }
