@@ -1,7 +1,6 @@
-package io.github.ossgang.commons.observable;
+package io.github.ossgang.commons.property;
 
-import io.github.ossgang.commons.property.Properties;
-import io.github.ossgang.commons.property.Property;
+import io.github.ossgang.commons.observable.ObservableValue;
 import org.junit.Test;
 
 import java.util.concurrent.CompletableFuture;
