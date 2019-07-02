@@ -20,35 +20,22 @@
  ******************************************************************************/
 // @formatter:on
 
-package io.github.ossgang.commons.observable;
+package io.github.ossgang.commons.property;
+
+import io.github.ossgang.commons.observable.ObservableValue;
 
 /**
- * Static entry point to create properties.
+ * A "property": an {@link ObservableValue} which can be set.
+ *
+ * @param <T> the type of the property
  */
-public class Properties {
-    private Properties() {
-        throw new UnsupportedOperationException("static only");
-    }
-
+public interface Property<T> extends ObservableValue<T> {
     /**
-     * Create a {@link Property} with an initial value.
+     * Set the property to the given value, notifying all observers.
+     * The new value must not be null.
      *
-     * @param initialValue the initial value
-     * @param <T> the type
-     * @return the new property
+     * @param value the new value.
+     * @throws NullPointerException on a null value
      */
-    public static <T> Property<T> property(T initialValue) {
-        return new SimpleProperty<>(initialValue);
-    }
-
-    /**
-     * Create a {@link Property} with NO initial value.
-     *
-     * @param <T> the type
-     * @return the new property
-     */
-    public static <T> Property<T> property() {
-        return new SimpleProperty<>(null);
-    }
-
+    void set(T value);
 }

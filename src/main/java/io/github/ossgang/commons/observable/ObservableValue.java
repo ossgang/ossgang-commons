@@ -22,6 +22,7 @@
 
 package io.github.ossgang.commons.observable;
 
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -60,7 +61,9 @@ public interface ObservableValue<T> extends Observable<T> {
      * @param <D> the destination type
      * @return the derived observable
      */
-    <D> ObservableValue<D> map(Function<T, D> mapper);
+    default <D> ObservableValue<D> map(Function<T, D> mapper) {
+        return new DerivedObservableValue<>(this, mapper.andThen(Optional::of));
+    }
 
     /**
      * Create a derived observable value applying a filtering function to the updates of this one. Values which do not
@@ -69,5 +72,8 @@ public interface ObservableValue<T> extends Observable<T> {
      * @param filter the filter to apply
      * @return the derived observable
      */
-    ObservableValue<T> filter(Predicate<T> filter);
+    default ObservableValue<T> filter(Predicate<T> filter) {
+        return new DerivedObservableValue<>(this, v -> Optional.of(v).filter(filter));
+    }
+
 }
