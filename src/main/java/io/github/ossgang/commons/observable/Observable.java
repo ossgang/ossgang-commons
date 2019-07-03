@@ -22,8 +22,6 @@
 
 package io.github.ossgang.commons.observable;
 
-import java.util.function.Consumer;
-
 /**
  * An stream of objects of type T, which can be subscribed to by interested consumers.
  *
@@ -52,5 +50,5 @@ public interface Observable<T> {
      * @param options the list of options
      * @return a Subscription object, which can be used to unsubscribe at a later point
      */
-    Subscription subscribe(Consumer<? super T> listener, SubscriptionOption... options);
+    Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options);
 }
