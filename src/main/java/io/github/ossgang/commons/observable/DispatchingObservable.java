@@ -78,22 +78,22 @@ public class DispatchingObservable<T> implements Observable<T> {
 
     protected void lastListenerRemoved() { /* no op */ }
 
-    protected void update(T newValue) {
+    protected void dispatchValue(T newValue) {
         listeners.keySet().forEach(l -> dispatch(l::onValue, newValue));
     }
 
-    protected void update(T newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
+    protected void dispatchValue(T newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
         listeners.entrySet().stream() //
                 .filter(entry -> optionPredicate.test(entry.getValue())) //
                 .map(Map.Entry::getKey) //
                 .forEach(l -> dispatch(l::onValue, newValue));
     }
 
-    protected void exception(Throwable newValue) {
+    protected void dispatchException(Throwable newValue) {
         listeners.keySet().forEach(l -> dispatch(l::onException, newValue));
     }
 
-    protected void exception(Throwable newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
+    protected void dispatchException(Throwable newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
         listeners.entrySet().stream() //
                 .filter(entry -> optionPredicate.test(entry.getValue())) //
                 .map(Map.Entry::getKey) //

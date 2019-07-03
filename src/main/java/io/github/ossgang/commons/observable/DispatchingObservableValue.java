@@ -55,12 +55,12 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
     }
 
     @Override
-    protected void update(T newValue) {
+    protected void dispatchValue(T newValue) {
         requireNonNull(newValue, "null value not allowed");
         if (Objects.equals(lastValue.getAndSet(newValue), newValue)) {
-            super.update(newValue, s -> !s.contains(ON_CHANGE));
+            super.dispatchValue(newValue, s -> !s.contains(ON_CHANGE));
         } else {
-            super.update(newValue);
+            super.dispatchValue(newValue);
         }
     }
 

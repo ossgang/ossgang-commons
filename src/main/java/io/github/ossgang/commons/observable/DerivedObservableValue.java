@@ -42,12 +42,12 @@ public class DerivedObservableValue<S,D> extends DispatchingObservableValue<D> i
     }
 
     private void deriveUpdate(S item) {
-        transform(item).ifPresent(this::update);
+        transform(item).ifPresent(this::dispatchValue);
     }
 
     private Optional<D> transform(S value) {
         return attempt(() -> mapper.apply(value)) //
-                .onException(this::exception) //
+                .onException(this::dispatchException) //
                 .optionalValue() //
                 .orElseGet(Optional::empty);
     }
