@@ -24,7 +24,6 @@ package io.github.ossgang.commons.observable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import static io.github.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
 import static io.github.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.ON_CHANGE;
@@ -47,10 +46,10 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
     }
 
     @Override
-    public Subscription subscribe(Consumer<? super T> listener, SubscriptionOption... options) {
+    public Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options) {
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
         if (optionSet.contains(FIRST_UPDATE)) {
-            Optional.ofNullable(lastValue.get()).ifPresent(listener);
+            Optional.ofNullable(lastValue.get()).ifPresent(listener::onValue);
         }
         return super.subscribe(listener, options);
     }
