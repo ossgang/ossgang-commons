@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.util.concurrent.CompletableFuture;
 
+import static io.github.ossgang.commons.observable.Observer.withErrorHandling;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,17 +30,20 @@ public class SimplePropertyTest {
     @Test
     public void transformationTest() throws Exception {
         CompletableFuture<Integer> mappedValueUpdate = new CompletableFuture<>();
+        CompletableFuture<Throwable> mappedValueError = new CompletableFuture<>();
         CompletableFuture<String> filteredValueUpdate = new CompletableFuture<>();
 
         Property<String> property = Properties.property(ANY_STRING);
         ObservableValue<Integer> mappedValue = property.map(Integer::parseInt);
-        mappedValue.subscribe(mappedValueUpdate::complete);
+        mappedValue.subscribe(withErrorHandling(mappedValueUpdate::complete, mappedValueError::complete));
         ObservableValue<String> filteredValue = property.filter(ANY_OTHER_STRING::equals);
         filteredValue.subscribe(filteredValueUpdate::complete);
         assertThat(mappedValue.get()).isNull();
         assertThat(filteredValue.get()).isNull();
 
         property.set(ANY_OTHER_STRING);
+        assertThat(mappedValueError.get(1, SECONDS)).isInstanceOf(NumberFormatException.class);
+        assertThat(mappedValueUpdate.isDone()).isFalse();
         assertThat(mappedValue.get()).isNull();
         assertThat(filteredValueUpdate.get(1, SECONDS)).isEqualTo(ANY_OTHER_STRING);
         assertThat(filteredValue.get()).isEqualTo(ANY_OTHER_STRING);

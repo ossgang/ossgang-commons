@@ -37,7 +37,7 @@ public interface Observable<T> {
 
     /**
      * Subscribe for future updates of this observable. By default, the Observable will hold a strong reference
-     * to the provided Consumer (this can be overriden by the WEAK option).
+     * to the provided Observer (this can be overriden by the WEAK option).
      *
      * The provided {@link SubscriptionOption}s are specific to the sub-type of observable. The available options are
      * typically exposed in the interface of the concrete sub-type, or any of its parent interfaces.

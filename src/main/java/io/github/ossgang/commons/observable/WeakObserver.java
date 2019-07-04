@@ -27,7 +27,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
- * A wrapper around a {@link Consumer} with a weak reference. On every update, it is checked if the wrapped consumer
+ * A wrapper around a {@link Observer} with a weak reference. On every update, it is checked if the wrapped consumer
  * still exists; if so, the update is forwarded. If not, a cleanup method is called.
  * @param <T> the type of the wrapped consumer
  */

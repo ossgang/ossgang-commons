@@ -22,10 +22,8 @@
 
 package io.github.ossgang.commons.observable;
 
-import java.util.function.Consumer;
-
 /**
- * An option which can be passed to {@link Observable#subscribe(Consumer, SubscriptionOption...)}. The available options
+ * An option which can be passed to {@link Observable#subscribe(Observer, SubscriptionOption...)}. The available options
  * are implementation specific and should be exposed in the concrete interface of the implementation.
  *
  * Implementations are expected to ignore options they don't support, and pass the set of options through to a
