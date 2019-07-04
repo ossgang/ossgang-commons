@@ -41,7 +41,7 @@ import static io.github.ossgang.commons.observable.Observable.ObservableSubscrip
  * @param <T> the type of the observable
  */
 public class DispatchingObservable<T> implements Observable<T> {
-    private final Map<Consumer<? super T>, Set<SubscriptionOption>> listeners = new ConcurrentHashMap<>();
+    private final Map<Observer<? super T>, Set<SubscriptionOption>> listeners = new ConcurrentHashMap<>();
     private final ExecutorService dispatcher = Executors.newCachedThreadPool();
     private final AtomicInteger listenerCount = new AtomicInteger(0);
 
@@ -49,17 +49,17 @@ public class DispatchingObservable<T> implements Observable<T> {
     }
 
     @Override
-    public Subscription subscribe(Consumer<? super T> listener, SubscriptionOption... options) {
+    public Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options) {
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
         if (optionSet.contains(WEAK)) {
-            addListener(new WeakConsumer<>(listener, this::removeListener), optionSet);
+            addListener(new WeakObserver<>(listener, this::removeListener), optionSet);
         } else {
             addListener(listener, optionSet);
         }
         return new ObservableSubscription(listener);
     }
 
-    private void addListener(Consumer<? super T> listener, Set<SubscriptionOption> subscriptionOptions) {
+    private void addListener(Observer<? super T> listener, Set<SubscriptionOption> subscriptionOptions) {
         listeners.put(listener, subscriptionOptions);
         if (listenerCount.getAndIncrement() == 0) {
             firstListenerAdded();
@@ -68,7 +68,7 @@ public class DispatchingObservable<T> implements Observable<T> {
 
     protected void firstListenerAdded() { /* no op */ }
 
-    private void removeListener(Consumer<? super T> listener) {
+    private void removeListener(Observer<? super T> listener) {
         if(listeners.remove(listener) != null) {
             if (listenerCount.decrementAndGet() == 0) {
                 lastListenerRemoved();
@@ -78,21 +78,32 @@ public class DispatchingObservable<T> implements Observable<T> {
 
     protected void lastListenerRemoved() { /* no op */ }
 
-    protected void update(T newValue) {
-        listeners.keySet().forEach(l -> dispatch(l, newValue));
+    protected void dispatchValue(T newValue) {
+        listeners.keySet().forEach(l -> dispatch(l::onValue, newValue));
     }
 
-    protected void update(T newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
+    protected void dispatchValue(T newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
         listeners.entrySet().stream() //
                 .filter(entry -> optionPredicate.test(entry.getValue())) //
                 .map(Map.Entry::getKey) //
-                .forEach(l -> dispatch(l, newValue));
+                .forEach(l -> dispatch(l::onValue, newValue));
     }
 
-    private void dispatch(Consumer<? super T> listener, T value) {
+    protected void dispatchException(Throwable newValue) {
+        listeners.keySet().forEach(l -> dispatch(l::onException, newValue));
+    }
+
+    protected void dispatchException(Throwable newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
+        listeners.entrySet().stream() //
+                .filter(entry -> optionPredicate.test(entry.getValue())) //
+                .map(Map.Entry::getKey) //
+                .forEach(l -> dispatch(l::onException, newValue));
+    }
+
+    private <X> void dispatch(Consumer<X> handler, X value) {
         dispatcher.submit(() -> {
             try {
-                listener.accept(value);
+                handler.accept(value);
             } catch (Exception e) {
                 System.err.println("Error in event handler\nvalue: " + value);
                 e.printStackTrace();
@@ -101,9 +112,9 @@ public class DispatchingObservable<T> implements Observable<T> {
     }
 
     private class ObservableSubscription implements Subscription {
-        private final Consumer<? super T> listener;
+        private final Observer<? super T> listener;
 
-        private ObservableSubscription(Consumer<? super T> listener) {
+        private ObservableSubscription(Observer<? super T> listener) {
             this.listener = listener;
         }
 

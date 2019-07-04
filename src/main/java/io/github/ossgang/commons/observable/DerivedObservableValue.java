@@ -42,19 +42,14 @@ public class DerivedObservableValue<S,D> extends DispatchingObservableValue<D> i
     }
 
     private void deriveUpdate(S item) {
-        transform(item).ifPresent(this::update);
+        transform(item).ifPresent(this::dispatchValue);
     }
 
     private Optional<D> transform(S value) {
         return attempt(() -> mapper.apply(value)) //
-                .onException(ex -> transformationException(value, ex)) //
+                .onException(this::dispatchException) //
                 .optionalValue() //
                 .orElseGet(Optional::empty);
-    }
-
-    private void transformationException(S value, Throwable throwable) {
-        System.err.println("Error in transformation - discarding value: "+value);
-        throwable.printStackTrace();
     }
 
     @Override

@@ -31,6 +31,6 @@ public class SimpleProperty<T> extends DispatchingObservableValue<T> implements 
 
     @Override
     public void set(T value) {
-        update(value);
+        dispatchValue(value);
     }
 }

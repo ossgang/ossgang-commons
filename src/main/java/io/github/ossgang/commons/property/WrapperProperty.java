@@ -23,6 +23,7 @@
 package io.github.ossgang.commons.property;
 
 import io.github.ossgang.commons.observable.ObservableValue;
+import io.github.ossgang.commons.observable.Observer;
 import io.github.ossgang.commons.observable.Subscription;
 import io.github.ossgang.commons.observable.SubscriptionOption;
 
@@ -47,9 +48,8 @@ public class WrapperProperty<T> implements Property<T>, ObservableValue<T> {
         return observableValue.get();
     }
 
-
     @Override
-    public Subscription subscribe(Consumer<? super T> listener, SubscriptionOption... options) {
+    public Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options) {
         return observableValue.subscribe(listener, options);
     }
 }

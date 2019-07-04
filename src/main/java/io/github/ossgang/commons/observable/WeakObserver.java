@@ -23,6 +23,7 @@
 package io.github.ossgang.commons.observable;
 
 import java.lang.ref.WeakReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -30,21 +31,30 @@ import java.util.function.Consumer;
  * still exists; if so, the update is forwarded. If not, a cleanup method is called.
  * @param <T> the type of the wrapped consumer
  */
-public class WeakConsumer<T> implements Consumer<T> {
+public class WeakObserver<T> implements Observer<T> {
 
-    private final WeakReference<Consumer<? super T>> consumer;
-    private final Consumer<WeakConsumer<T>> cleanUp;
+    private final WeakReference<Observer<? super T>> consumer;
+    private final Consumer<WeakObserver<T>> cleanUp;
 
-    WeakConsumer(Consumer<? super T> parent, Consumer<WeakConsumer<T>> cleanUp) {
+    WeakObserver(Observer<? super T> parent, Consumer<WeakObserver<T>> cleanUp) {
         this.consumer = new WeakReference<>(parent);
         this.cleanUp = cleanUp;
     }
 
     @Override
-    public void accept(T t) {
-        Consumer<? super T> parent = consumer.get();
+    public void onValue(T t) {
+        dispatch(Observer::onValue, t);
+    }
+
+    @Override
+    public void onException(Throwable t) {
+        dispatch(Observer::onException, t);
+    }
+
+    private <X> void dispatch(BiConsumer<Observer<? super T>, X> handler, X item) {
+        Observer<? super T> parent = consumer.get();
         if (parent != null) {
-            parent.accept(t);
+            handler.accept(parent, item);
         } else {
             cleanUp.accept(this);
         }
