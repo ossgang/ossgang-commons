@@ -26,6 +26,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Objects.requireNonNull;
+import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
+import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.ON_CHANGE;
 
 /**
  * A basic implementation of {@link ObservableValue}, based on {@link DispatchingObservable} to handle the update
@@ -46,7 +48,7 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
     @Override
     public Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options) {
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
-        if (optionSet.contains(ObservableValueSubscriptionOption.FIRST_UPDATE)) {
+        if (optionSet.contains(FIRST_UPDATE)) {
             Optional.ofNullable(lastValue.get()).ifPresent(listener::onValue);
         }
         return super.subscribe(listener, options);
@@ -56,7 +58,7 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
     protected void dispatchValue(T newValue) {
         requireNonNull(newValue, "null value not allowed");
         if (Objects.equals(lastValue.getAndSet(newValue), newValue)) {
-            super.dispatchValue(newValue, s -> !s.contains(ObservableValueSubscriptionOption.ON_CHANGE));
+            super.dispatchValue(newValue, s -> !s.contains(ON_CHANGE));
         } else {
             super.dispatchValue(newValue);
         }

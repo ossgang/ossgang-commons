@@ -1,14 +1,13 @@
 package org.ossgang.commons.observable;
 
-import org.ossgang.commons.monads.Maybe;
-
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-import static org.ossgang.commons.monads.Maybe.attempt;
 import static java.util.Collections.newSetFromMap;
+import static org.ossgang.commons.monads.Maybe.attempt;
+import static org.ossgang.commons.observable.Observable.ObservableSubscriptionOption.WEAK;
 
 /**
  * An {@link ObservableValue} which gets its data from a parent (upstream) {@link ObservableValue} or {@link Observable},
@@ -39,7 +38,7 @@ public class DerivedObservableValue<S,D> extends DispatchingObservableValue<D> i
         super(null);
         this.mapper = mapper;
         Optional.ofNullable(initialValue).ifPresent(this::deriveUpdate);
-        sourceObservable.subscribe(this::deriveUpdate, ObservableSubscriptionOption.WEAK);
+        sourceObservable.subscribe(this::deriveUpdate, WEAK);
     }
 
     private void deriveUpdate(S item) {
@@ -47,7 +46,7 @@ public class DerivedObservableValue<S,D> extends DispatchingObservableValue<D> i
     }
 
     private Optional<D> transform(S value) {
-        return Maybe.attempt(() -> mapper.apply(value)) //
+        return attempt(() -> mapper.apply(value)) //
                 .onException(this::dispatchException) //
                 .optionalValue() //
                 .orElseGet(Optional::empty);
