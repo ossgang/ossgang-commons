@@ -23,6 +23,6 @@ public class Observables {
         if (observable instanceof ObservableValue) {
             return (ObservableValue<T>) observable;
         }
-        return new DerivedObservableValue<>(observable, null, Optional::of);
+        return new DerivedObservableValue<>(observable, Optional::of);
     }
 }

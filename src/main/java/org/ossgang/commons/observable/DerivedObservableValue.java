@@ -8,6 +8,7 @@ import java.util.function.Function;
 import static java.util.Collections.newSetFromMap;
 import static org.ossgang.commons.monads.Maybe.attempt;
 import static org.ossgang.commons.observable.Observable.ObservableSubscriptionOption.WEAK;
+import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
 
 /**
  * An {@link ObservableValue} which gets its data from a parent (upstream) {@link ObservableValue} or {@link Observable},
@@ -30,15 +31,10 @@ public class DerivedObservableValue<S,D> extends DispatchingObservableValue<D> i
     private final static Set<DerivedObservableValue<?,?>> GC_PROTECTION = newSetFromMap(new ConcurrentHashMap<>());
     private final Function<S, Optional<D>> mapper;
 
-    DerivedObservableValue(ObservableValue<S> sourceObservable, Function<S, Optional<D>> mapper) {
-        this(sourceObservable, sourceObservable.get(), mapper);
-    }
-
-    DerivedObservableValue(Observable<S> sourceObservable, S initialValue, Function<S, Optional<D>> mapper) {
+    DerivedObservableValue(Observable<S> sourceObservable, Function<S, Optional<D>> mapper) {
         super(null);
         this.mapper = mapper;
-        Optional.ofNullable(initialValue).ifPresent(this::deriveUpdate);
-        sourceObservable.subscribe(this::deriveUpdate, WEAK);
+        sourceObservable.subscribe(this::deriveUpdate, WEAK, FIRST_UPDATE);
     }
 
     private void deriveUpdate(S item) {
