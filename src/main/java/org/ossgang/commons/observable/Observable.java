@@ -28,13 +28,6 @@ package org.ossgang.commons.observable;
  * @param <T> the type of objects
  */
 public interface Observable<T> {
-    enum ObservableSubscriptionOption implements SubscriptionOption {
-        /**
-         * Hold a weak reference to the subscriber (the default is a strong one).
-         */
-        WEAK
-    }
-
     /**
      * Subscribe for future updates of this observable. By default, the Observable will hold a strong reference
      * to the provided Observer (this can be overriden by the WEAK option).

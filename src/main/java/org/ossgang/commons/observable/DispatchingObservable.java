@@ -33,8 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static org.ossgang.commons.observable.Observable.ObservableSubscriptionOption.WEAK;
-
 /**
  * A basic implementation of {@link Observable} managing a set of listeners, and dispatching updates to them.
  *
@@ -51,11 +49,7 @@ public class DispatchingObservable<T> implements Observable<T> {
     @Override
     public Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options) {
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
-        if (optionSet.contains(WEAK)) {
-            addListener(new WeakObserver<>(listener, this::removeListener), optionSet);
-        } else {
-            addListener(listener, optionSet);
-        }
+        addListener(listener, optionSet);
         return new ObservableSubscription(listener);
     }
 
@@ -69,7 +63,7 @@ public class DispatchingObservable<T> implements Observable<T> {
     protected void firstListenerAdded() { /* no op */ }
 
     private void removeListener(Observer<? super T> listener) {
-        if(listeners.remove(listener) != null) {
+        if (listeners.remove(listener) != null) {
             if (listenerCount.decrementAndGet() == 0) {
                 lastListenerRemoved();
             }
