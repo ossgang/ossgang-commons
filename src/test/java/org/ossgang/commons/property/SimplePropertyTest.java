@@ -1,13 +1,13 @@
 package org.ossgang.commons.property;
 
-import org.ossgang.commons.observable.ObservableValue;
 import org.junit.Test;
+import org.ossgang.commons.observable.ObservableValue;
 
 import java.util.concurrent.CompletableFuture;
 
-import static org.ossgang.commons.observable.Observer.withErrorHandling;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.observable.Observers.withErrorHandling;
 
 public class SimplePropertyTest {
 
@@ -53,4 +53,5 @@ public class SimplePropertyTest {
         assertThat(filteredValue.get()).isEqualTo(ANY_OTHER_STRING);
         assertThat(mappedValue.get()).isEqualTo(ANY_INT);
     }
+
 }

@@ -1,45 +1,14 @@
 package org.ossgang.commons.observable;
 
-import java.util.function.Consumer;
-import org.ossgang.commons.monads.Maybe;
-
+/**
+ * An observer which can consume an {@link Observable}. Instances of this class can be created from lambdas, method
+ * references, or using the {@link Observers} utility class.
+ * @param <T> the item type
+ */
 public interface Observer<T> {
     void onValue(T value);
 
     default void onException(Throwable exception) {};
 
-    static <T> Observer<T> withErrorHandling(Consumer<T> valueConsumer, Consumer<Throwable> exceptionConsumer) {
-        return new Observer<T>() {
-            public void onValue(T value) {
-                valueConsumer.accept(value);
-            }
-
-            public void onException(Throwable exception) {
-                exceptionConsumer.accept(exception);
-            }
-        };
-    }
-
-    static <T> Observer<T> forMaybes(Consumer<Maybe<T>> maybeConsumer) {
-        return new Observer<T>() {
-
-            public void onValue(T value) {
-                maybeConsumer.accept(Maybe.ofValue(value));
-            }
-
-            public void onException(Throwable exception) {
-                maybeConsumer.accept(Maybe.ofException(exception));
-            }
-
-        };
-    }
-
-    static <T> Observer<T> forExceptions(Consumer<Throwable> exceptionConsumer) {
-        return new Observer<T>() {
-                public void onValue(T value) {}
-            public void onException(Throwable exception) {
-                exceptionConsumer.accept(exception);
-            }
-        };
-    }
+    default void onSubscribe(Subscription subscription) {};
 }
