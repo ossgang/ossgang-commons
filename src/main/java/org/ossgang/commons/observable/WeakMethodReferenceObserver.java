@@ -24,6 +24,7 @@ package org.ossgang.commons.observable;
 
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -45,14 +46,18 @@ import java.util.function.BiConsumer;
  */
 class WeakMethodReferenceObserver<C, T> implements Observer<T> {
     private final WeakReference<C> holder;
-    private final BiConsumer<C, T> valueConsumer;
-    private final BiConsumer<C, Throwable> exceptionConsumer;
+    private final BiConsumer<? super C, T> valueConsumer;
+    private final BiConsumer<? super C, Throwable> exceptionConsumer;
+    private final BiConsumer<? super C, Integer> subscriptionCountUpdated;
     private final Set<Subscription> subscriptions = new HashSet<>();
 
-    WeakMethodReferenceObserver(C holder, BiConsumer<C, T> valueConsumer, BiConsumer<C, Throwable> exceptionConsumer) {
+    WeakMethodReferenceObserver(C holder, BiConsumer<? super C, T> valueConsumer,
+                                BiConsumer<? super C, Throwable> exceptionConsumer,
+                                BiConsumer<? super C, Integer> subscriptionCountUpdated) {
         this.holder = new WeakReference<>(holder);
         this.valueConsumer = valueConsumer;
         this.exceptionConsumer = exceptionConsumer;
+        this.subscriptionCountUpdated = subscriptionCountUpdated;
     }
 
     @Override
@@ -65,15 +70,23 @@ class WeakMethodReferenceObserver<C, T> implements Observer<T> {
         dispatch(exceptionConsumer, t);
     }
 
-
     @Override
     public void onSubscribe(Subscription subscription) {
         synchronized (subscriptions) {
             subscriptions.add(subscription);
+            Optional.ofNullable(holder.get()).ifPresent(h -> subscriptionCountUpdated.accept(h, subscriptions.size()));
         }
     }
 
-    private <X> void dispatch(BiConsumer<C, X> consumer, X item) {
+    @Override
+    public void onUnsubscribe(Subscription subscription) {
+        synchronized (subscriptions) {
+            subscriptions.remove(subscription);
+            Optional.ofNullable(holder.get()).ifPresent(h -> subscriptionCountUpdated.accept(h, subscriptions.size()));
+        }
+    }
+
+    private <X> void dispatch(BiConsumer<? super C, X> consumer, X item) {
         C holderInstance = holder.get();
         if (holderInstance != null) {
             consumer.accept(holderInstance, item);

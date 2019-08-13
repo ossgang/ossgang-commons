@@ -3,12 +3,13 @@ package org.ossgang.commons.observable;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import static java.util.Collections.newSetFromMap;
 import static org.ossgang.commons.monads.Maybe.attempt;
 import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
-import static org.ossgang.commons.observable.Observers.weak;
+import static org.ossgang.commons.observable.WeakObservers.weakWithErrorAndSubscriptionCountHandling;
 
 /**
  * An {@link ObservableValue} which gets its data from a parent (upstream) {@link ObservableValue} or {@link Observable},
@@ -30,11 +31,16 @@ import static org.ossgang.commons.observable.Observers.weak;
 public class DerivedObservableValue<S, D> extends DispatchingObservableValue<D> implements ObservableValue<D> {
     private final static Set<DerivedObservableValue<?, ?>> GC_PROTECTION = newSetFromMap(new ConcurrentHashMap<>());
     private final Function<S, Optional<D>> mapper;
+    private final AtomicBoolean hasUpstreamSubscription = new AtomicBoolean(false);
+    private final AtomicBoolean hasDownstreamListener = new AtomicBoolean(false);
 
     DerivedObservableValue(Observable<S> sourceObservable, Function<S, Optional<D>> mapper) {
         super(null);
         this.mapper = mapper;
-        sourceObservable.subscribe(weak(this, DerivedObservableValue::deriveUpdate), FIRST_UPDATE);
+        sourceObservable.subscribe(weakWithErrorAndSubscriptionCountHandling(this,
+                DerivedObservableValue::deriveUpdate,
+                DerivedObservableValue::dispatchException,
+                DerivedObservableValue::upstreamObserverSubscriptionCountChanged), FIRST_UPDATE);
     }
 
     private void deriveUpdate(S item) {
@@ -48,13 +54,28 @@ public class DerivedObservableValue<S, D> extends DispatchingObservableValue<D> 
                 .orElseGet(Optional::empty);
     }
 
+    private void upstreamObserverSubscriptionCountChanged(int refCount) {
+        hasUpstreamSubscription.set(refCount != 0);
+        refreshGcProtection();
+    }
+
+    private void refreshGcProtection() {
+        if (hasUpstreamSubscription.get() && hasDownstreamListener.get()) {
+            GC_PROTECTION.add(this);
+        } else {
+            GC_PROTECTION.remove(this);
+        }
+    }
+
     @Override
     protected void firstListenerAdded() {
-        GC_PROTECTION.add(this);
+        hasDownstreamListener.set(true);
+        refreshGcProtection();
     }
 
     @Override
     protected void lastListenerRemoved() {
-        GC_PROTECTION.remove(this);
+        hasDownstreamListener.set(false);
+        refreshGcProtection();
     }
 }

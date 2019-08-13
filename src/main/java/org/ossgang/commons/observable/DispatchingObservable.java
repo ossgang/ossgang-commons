@@ -50,7 +50,9 @@ public class DispatchingObservable<T> implements Observable<T> {
     public Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options) {
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
         addListener(listener, optionSet);
-        return new ObservableSubscription(listener);
+        ObservableSubscription observableSubscription = new ObservableSubscription(listener);
+        listener.onSubscribe(observableSubscription);
+        return observableSubscription;
     }
 
     private void addListener(Observer<? super T> listener, Set<SubscriptionOption> subscriptionOptions) {
@@ -115,6 +117,7 @@ public class DispatchingObservable<T> implements Observable<T> {
         @Override
         public void unsubscribe() {
             removeListener(listener);
+            listener.onUnsubscribe(this);
         }
     }
 }

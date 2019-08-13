@@ -11,4 +11,6 @@ public interface Observer<T> {
     default void onException(Throwable exception) {};
 
     default void onSubscribe(Subscription subscription) {};
+
+    default void onUnsubscribe(Subscription subscription) {};
 }
