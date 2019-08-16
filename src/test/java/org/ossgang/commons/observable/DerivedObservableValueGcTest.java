@@ -1,10 +1,8 @@
-package org.ossgang.commons.property;
+package org.ossgang.commons.observable;
 
 import org.junit.Test;
-import org.ossgang.commons.observable.ObservableValue;
-import org.ossgang.commons.observable.Observer;
-import org.ossgang.commons.observable.Subscription;
-import org.ossgang.commons.observable.SubscriptionOption;
+import org.ossgang.commons.property.Properties;
+import org.ossgang.commons.property.Property;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.CompletableFuture;

@@ -25,4 +25,16 @@ public class Observables {
         }
         return new DerivedObservableValue<>(observable, Optional::of);
     }
+
+    /**
+     * Create a constant {@link ObservableValue} holding any value. This observable is immutable, and will always
+     * return the given value on get(). On subscribe(), it will immediately send the given value to the listener.
+     *
+     * @param value the value
+     * @param <T> the value type
+     * @return a constant ObservableValue
+     */
+    public static <T> ObservableValue<T> constant(T value) {
+        return new ConstantObservableValue<>(value);
+    }
 }
