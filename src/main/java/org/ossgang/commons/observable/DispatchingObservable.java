@@ -39,7 +39,7 @@ import java.util.function.Predicate;
  * @param <T> the type of the observable
  */
 public class DispatchingObservable<T> implements Observable<T> {
-    private final Map<Observer<? super T>, Set<SubscriptionOption>> listeners = new ConcurrentHashMap<>();
+    private final Map<Observer<? super T>, ObservableSubscription> listeners = new ConcurrentHashMap<>();
     private final ExecutorService dispatcher = Executors.newCachedThreadPool();
     private final AtomicInteger listenerCount = new AtomicInteger(0);
 
@@ -49,17 +49,18 @@ public class DispatchingObservable<T> implements Observable<T> {
     @Override
     public Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options) {
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
-        addListener(listener, optionSet);
-        ObservableSubscription observableSubscription = new ObservableSubscription(listener);
-        listener.onSubscribe(observableSubscription);
-        return observableSubscription;
+        ObservableSubscription subscription = addListener(listener, optionSet);
+        listener.onSubscribe(subscription);
+        return subscription;
     }
 
-    private void addListener(Observer<? super T> listener, Set<SubscriptionOption> subscriptionOptions) {
-        listeners.put(listener, subscriptionOptions);
+    private ObservableSubscription addListener(Observer<? super T> listener, Set<SubscriptionOption> options) {
+        ObservableSubscription subscription = new ObservableSubscription(listener, options);
+        listeners.put(listener, subscription);
         if (listenerCount.getAndIncrement() == 0) {
             firstListenerAdded();
         }
+        return subscription;
     }
 
     protected void firstListenerAdded() { /* no op */ }
@@ -72,6 +73,11 @@ public class DispatchingObservable<T> implements Observable<T> {
         }
     }
 
+    protected void unsubscribeAllObservers() {
+        Set<Subscription> allSubscriptions = new HashSet<>(listeners.values());
+        allSubscriptions.forEach(Subscription::unsubscribe);
+    }
+
     protected void lastListenerRemoved() { /* no op */ }
 
     protected void dispatchValue(T newValue) {
@@ -80,7 +86,7 @@ public class DispatchingObservable<T> implements Observable<T> {
 
     protected void dispatchValue(T newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
         listeners.entrySet().stream() //
-                .filter(entry -> optionPredicate.test(entry.getValue())) //
+                .filter(entry -> optionPredicate.test(entry.getValue().options)) //
                 .map(Map.Entry::getKey) //
                 .forEach(l -> dispatch(l::onValue, newValue));
     }
@@ -91,7 +97,7 @@ public class DispatchingObservable<T> implements Observable<T> {
 
     protected void dispatchException(Throwable newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
         listeners.entrySet().stream() //
-                .filter(entry -> optionPredicate.test(entry.getValue())) //
+                .filter(entry -> optionPredicate.test(entry.getValue().options)) //
                 .map(Map.Entry::getKey) //
                 .forEach(l -> dispatch(l::onException, newValue));
     }
@@ -109,9 +115,11 @@ public class DispatchingObservable<T> implements Observable<T> {
 
     private class ObservableSubscription implements Subscription {
         private final Observer<? super T> listener;
+        private final Set<SubscriptionOption> options;
 
-        private ObservableSubscription(Observer<? super T> listener) {
+        private ObservableSubscription(Observer<? super T> listener, Set<SubscriptionOption> options) {
             this.listener = listener;
+            this.options = options;
         }
 
         @Override

@@ -3,7 +3,6 @@ package org.ossgang.commons.observable;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import static java.util.Collections.newSetFromMap;
@@ -31,8 +30,6 @@ import static org.ossgang.commons.observable.WeakObservers.weakWithErrorAndSubsc
 public class DerivedObservableValue<S, D> extends DispatchingObservableValue<D> implements ObservableValue<D> {
     private final static Set<DerivedObservableValue<?, ?>> GC_PROTECTION = newSetFromMap(new ConcurrentHashMap<>());
     private final Function<S, Optional<D>> mapper;
-    private final AtomicBoolean hasUpstreamSubscription = new AtomicBoolean(false);
-    private final AtomicBoolean hasDownstreamListener = new AtomicBoolean(false);
 
     DerivedObservableValue(Observable<S> sourceObservable, Function<S, Optional<D>> mapper) {
         super(null);
@@ -55,27 +52,20 @@ public class DerivedObservableValue<S, D> extends DispatchingObservableValue<D> 
     }
 
     private void upstreamObserverSubscriptionCountChanged(int refCount) {
-        hasUpstreamSubscription.set(refCount != 0);
-        refreshGcProtection();
-    }
-
-    private void refreshGcProtection() {
-        if (hasUpstreamSubscription.get() && hasDownstreamListener.get()) {
-            GC_PROTECTION.add(this);
-        } else {
-            GC_PROTECTION.remove(this);
+        if (refCount == 0) {
+            /* the upstream subscription was terminated. terminate downstream subscriptions, eventually
+               allowing GC'ing this derived value. */
+            unsubscribeAllObservers();
         }
     }
 
     @Override
     protected void firstListenerAdded() {
-        hasDownstreamListener.set(true);
-        refreshGcProtection();
+        GC_PROTECTION.add(this);
     }
 
     @Override
     protected void lastListenerRemoved() {
-        hasDownstreamListener.set(false);
-        refreshGcProtection();
+        GC_PROTECTION.remove(this);
     }
 }
