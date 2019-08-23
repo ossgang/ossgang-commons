@@ -30,9 +30,11 @@ import static org.ossgang.commons.observable.WeakObservers.weakWithErrorAndSubsc
 public class DerivedObservableValue<S, D> extends DispatchingObservableValue<D> implements ObservableValue<D> {
     private final static Set<DerivedObservableValue<?, ?>> GC_PROTECTION = newSetFromMap(new ConcurrentHashMap<>());
     private final Function<S, Optional<D>> mapper;
+    private final Observable<S> sourceObservable;
 
     DerivedObservableValue(Observable<S> sourceObservable, Function<S, Optional<D>> mapper) {
         super(null);
+        this.sourceObservable = sourceObservable; /* keep a reference to prevent GC'ing the source */
         this.mapper = mapper;
         sourceObservable.subscribe(weakWithErrorAndSubscriptionCountHandling(this,
                 DerivedObservableValue::deriveUpdate,

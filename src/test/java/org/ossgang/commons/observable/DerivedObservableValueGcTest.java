@@ -18,6 +18,7 @@ public class DerivedObservableValueGcTest {
         methodReferenceUpdateValue.complete(test);
     }
 
+
     @Test
     public void gcWhileSubscribed_shouldPreventGc() throws Exception {
         Property<String> property = Properties.property("2");
@@ -29,6 +30,22 @@ public class DerivedObservableValueGcTest {
 
     private void gcWhileSubscribed_shouldPreventGc_subscribe(ObservableValue<String> value) {
         value.map(Integer::parseInt).subscribe(this::handleUpdate);
+    }
+
+    @Test
+    public void gcWhileSubscribed_shouldPreventGcOfUpstream() throws Exception {
+        WeakReference<Property<String>> property = gcWhileSubscribed_shouldPreventGcOfUpstream_subscribe();
+        forceGc();
+        Property<String> prop = property.get();
+        assertThat(prop).isNotNull();
+        prop.set("3");
+        assertThat(methodReferenceUpdateValue.get(1, SECONDS)).isEqualTo(3);
+    }
+
+    private WeakReference<Property<String>> gcWhileSubscribed_shouldPreventGcOfUpstream_subscribe() {
+        Property<String> property = Properties.property("2");
+        property.map(Integer::parseInt).subscribe(this::handleUpdate);
+        return new WeakReference<>(property);
     }
 
     @Test
