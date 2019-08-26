@@ -4,7 +4,10 @@ import org.ossgang.commons.property.Property;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
 import static org.ossgang.commons.property.Properties.property;
 
@@ -45,32 +48,97 @@ public class Observables {
     }
 
     /**
-     * Merges any Observables of the same type into one. Updates whenever all sources have provided at least one item.
+     * Produces an {@link ObservableValue} that zips the values of the provided {@link ObservableValue}. The {@link Map}
+     * parameter provides the indexes of the resulting {@link ObservableValue} values.
+     * <br>
+     * Note: this operator will wait until all the source {@link ObservableValue}s have a value to match.
+     *
+     * @param sourcesMap the input {@link ObservableValue}s indexed
+     * @param <K>        the indexing type
+     * @param <V>        the input type
+     * @return an {@link ObservableValue} that zips the values of the provided {@link ObservableValue}. The {@link Map} parameter provides the indexes of the
+     * resulting {@link ObservableValue} values.
      */
-    @SafeVarargs
-    public static <K, V> ObservableValue<Map<K, V>> zip(Function<K, ObservableValue<V>> supplier, K... items) {
-        return zip(supplier, Arrays.asList(items));
+    public static <K, V> ObservableValue<Map<K, V>> zip(Map<K, ObservableValue<V>> sourcesMap) {
+        return zip(sourcesMap, Function.identity());
     }
 
     /**
-     * Merges any Observables of the same type into one. Updates whenever all sources have provided at least one item.
+     * Produces an {@link ObservableValue} that zips the values of the provided {@link ObservableValue}. The {@link Map}
+     * parameter provides the indexes of the {@link Map} that will be passed to the specified mapper {@link Function}.
+     * <br>
+     * Note: this operator will wait until all the source {@link ObservableValue}s have a value to match.
+     *
+     * @param sourcesMap the input {@link ObservableValue}s indexed
+     * @param <K>        the indexing type
+     * @param <V>        the input type
+     * @param <O>        the output type
+     * @return an {@link ObservableValue} that zips the values of the provided {@link ObservableValue}. The {@link Map}
+     * parameter provides the indexes of the {@link Map} that will be passed to the specified mapper {@link Function}.
      */
-    public static <K, V> ObservableValue<Map<K, V>> zip(Function<K, ObservableValue<V>> supplier, Collection<K> items) {
-        Property<Map<K, V>> combinedProperty = property();
-        Map<K, V> values = new HashMap<>();
-        Set<K> itemSet = new HashSet<>(items);
-        for (K item : items) {
-            supplier.apply(item).subscribe(value -> {
-                synchronized (values) {
-                    values.put(item, value);
-                    if (values.keySet().containsAll(itemSet)) {
-                        combinedProperty.set(new HashMap<>(values));
-                        values.clear();
+    public static <K, V, O> ObservableValue<O> zip(Map<K, ObservableValue<V>> sourcesMap, Function<Map<K, V>, O> mapper) {
+        Property<O> zipProperty = property();
+
+        Map<K, ObservableValue<V>> sourcesMapCopy = new HashMap<>(sourcesMap);
+        Set<K> keys = sourcesMapCopy.keySet();
+        Map<K, V> valuesToZip = new HashMap<>();
+
+        for (K key : keys) {
+            sourcesMapCopy.get(key).subscribe(value -> {
+                synchronized (valuesToZip) {
+                    valuesToZip.put(key, value);
+                    if (valuesToZip.keySet().containsAll(keys)) {
+                        zipProperty.set(mapper.apply(new HashMap<>(valuesToZip)));
+                        valuesToZip.clear();
                     }
                 }
             }, FIRST_UPDATE);
         }
-        return combinedProperty;
+
+        return zipProperty;
+    }
+
+    /**
+     * Produces an {@link ObservableValue} that zips the values of the provided {@link ObservableValue}. The index of
+     * the provided {@link ObservableValue} matches the index of the {@link List} of values provided to the mapping
+     * {@link Function}.
+     * <br>
+     * Note: this operator will wait until all the source {@link ObservableValue}s have a value to match.
+     *
+     * @param sources the input {@link ObservableValue}s
+     * @param mapper  the mapping function
+     * @param <V>     the input type
+     * @param <O>     the output type
+     * @return an {@link ObservableValue} that zips the values of the provided {@link ObservableValue}. The index of
+     * the provided {@link ObservableValue} matches the index of the {@link List} of values provided to the mapping
+     * {@link Function}.
+     */
+    public static <V, O> ObservableValue<O> zip(List<ObservableValue<V>> sources, Function<List<V>, O> mapper) {
+        List<ObservableValue<V>> sourcesCopy = new ArrayList<>(sources);
+        Map<Integer, ObservableValue<V>> indexToSources = IntStream.range(0, sourcesCopy.size()).boxed() //
+                .collect(toMap(Function.identity(), sourcesCopy::get));
+
+        return zip(indexToSources, (Map<Integer, V> sourceValuesIndexed) -> {
+            List<V> sourcesValues = IntStream.range(0, sourceValuesIndexed.size()).boxed() //
+                    .map(sourceValuesIndexed::get) //
+                    .collect(toList());
+            return mapper.apply(sourcesValues);
+        });
+    }
+
+    /**
+     * Produces an {@link ObservableValue} that zips the values of the provided {@link ObservableValue}. The index of
+     * the provided {@link ObservableValue} matches the index of the {@link List} in the resulting {@link ObservableValue}.
+     * <br>
+     * Note: this operator will wait until all the source {@link ObservableValue}s have a value to match.
+     *
+     * @param sources the input {@link ObservableValue}s
+     * @param <V>     the input type
+     * @return an {@link ObservableValue} that zips the values of the provided {@link ObservableValue}. The index of
+     * the provided {@link ObservableValue} matches the index of the {@link List} in the resulting {@link ObservableValue}.
+     */
+    public static <V> ObservableValue<List<V>> zip(List<ObservableValue<V>> sources) {
+        return zip(sources, Function.identity());
     }
 
     /**

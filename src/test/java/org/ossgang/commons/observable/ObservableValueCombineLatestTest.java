@@ -17,7 +17,7 @@ import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubs
 import static org.ossgang.commons.observable.Observables.combineLatest;
 import static org.ossgang.commons.property.Properties.property;
 
-public class ObservablesValueCombineLatestTest {
+public class ObservableValueCombineLatestTest {
 
     @Test
     public void testCombiningWithFirstUpdateValues() throws InterruptedException, ExecutionException, TimeoutException {
