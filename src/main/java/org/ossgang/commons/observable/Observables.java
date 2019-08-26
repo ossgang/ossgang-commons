@@ -85,8 +85,8 @@ public class Observables {
      * @return an {@link ObservableValue} that on each update of any source publishes the result of the
      * combiner applied with the latest values of the other inputs.
      */
-    public static <V, O> ObservableValue<O> mergeLatest(List<ObservableValue<V>> sources,
-                                                        Function<List<V>, O> combiner) {
+    public static <V, O> ObservableValue<O> combineLatest(List<ObservableValue<V>> sources,
+                                                          Function<List<V>, O> combiner) {
         Property<O> mergedProperty = property();
         Map<ObservableValue<V>, V> latestValues = new HashMap<>();
         List<ObservableValue<V>> sourcesCopy = new ArrayList<>(sources);
@@ -123,7 +123,7 @@ public class Observables {
      * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
      * result of applying the mapper {@link Function}. The {@link Map}s are used to avoid mathing values by index.
      */
-    public static <K, V, O> ObservableValue<O> mergeLatest(Map<K, ObservableValue<V>> sourcesMap, Function<Map<K, V>, O> mapper) {
+    public static <K, V, O> ObservableValue<O> combineLatest(Map<K, ObservableValue<V>> sourcesMap, Function<Map<K, V>, O> mapper) {
         HashMap<K, ObservableValue<V>> sourcesMapCopy = new HashMap<>(sourcesMap);
 
         Map<Integer, K> keyIndexes = new HashMap<>();
@@ -137,7 +137,7 @@ public class Observables {
             keyIndex++;
         }
 
-        return mergeLatest(sources, (List<V> sourceValues) -> {
+        return combineLatest(sources, (List<V> sourceValues) -> {
             Map<K, V> keyToSourceValues = new HashMap<>();
             for (int i = 0; i < sourceValues.size(); i++) {
                 keyToSourceValues.put(keyIndexes.get(i), sourceValues.get(i));
@@ -155,8 +155,8 @@ public class Observables {
      * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
      * a list containing the values of each {@link ObservableValue}
      */
-    public static <V> ObservableValue<List<V>> mergeLatest(List<ObservableValue<V>> sources) {
-        return mergeLatest(sources, Function.identity());
+    public static <V> ObservableValue<List<V>> combineLatest(List<ObservableValue<V>> sources) {
+        return combineLatest(sources, Function.identity());
     }
 
     /**
@@ -169,8 +169,8 @@ public class Observables {
      * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes a
      * {@link Map} with the values of each corresponding source {@link ObservableValue}.
      */
-    public static <K, V> ObservableValue<Map<K, V>> mergeLatest(Map<K, ObservableValue<V>> sourcesMap) {
-        return mergeLatest(sourcesMap, Function.identity());
+    public static <K, V> ObservableValue<Map<K, V>> combineLatest(Map<K, ObservableValue<V>> sourcesMap) {
+        return combineLatest(sourcesMap, Function.identity());
     }
 
 }
