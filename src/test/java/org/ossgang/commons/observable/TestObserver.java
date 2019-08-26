@@ -9,9 +9,11 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
+
 public class TestObserver<T> implements Observer<T> {
 
-    public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
     private final Property<Integer> valuesCount = Properties.property(0);
     private final List<T> values = new ArrayList<>();
     private final List<Throwable> exceptions = new ArrayList<>();
@@ -48,17 +50,16 @@ public class TestObserver<T> implements Observer<T> {
     }
 
     public void awaitForValueCountToBe(int expectedCount, Duration timeout) {
-        if (valuesCount.get() >= expectedCount) {
-            return;
-        }
         CountDownLatch latch = new CountDownLatch(1);
         valuesCount.subscribe(i -> {
             if (i >= expectedCount) {
                 latch.countDown();
             }
-        });
+        }, FIRST_UPDATE);
         try {
-            latch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            if (!latch.await(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+                throw new IllegalStateException("Timeout occurred - timeout was " + timeout);
+            }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
