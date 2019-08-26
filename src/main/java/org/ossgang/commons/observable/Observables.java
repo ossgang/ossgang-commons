@@ -80,24 +80,25 @@ public class Observables {
      *
      * @param sources  the input {@link ObservableValue}s
      * @param combiner the combining function that will produce the result
-     * @param <I>      the input type
+     * @param <V>      the input type
      * @param <O>      the output type
      * @return an {@link ObservableValue} that on each update of any source publishes the result of the
      * combiner applied with the latest values of the other inputs.
      */
-    public static <I, O> ObservableValue<O> mergeLatest(List<ObservableValue<I>> sources,
-                                                        Function<List<I>, O> combiner) {
+    public static <V, O> ObservableValue<O> mergeLatest(List<ObservableValue<V>> sources,
+                                                        Function<List<V>, O> combiner) {
         Property<O> mergedProperty = property();
-        Map<ObservableValue<I>, I> latestValues = new HashMap<>();
+        Map<ObservableValue<V>, V> latestValues = new HashMap<>();
+        List<ObservableValue<V>> sourcesCopy = new ArrayList<>(sources);
 
-        for (ObservableValue<I> source : sources) {
+        for (ObservableValue<V> source : sourcesCopy) {
             source.subscribe(sourceValue -> {
                 synchronized (latestValues) {
                     latestValues.put(source, sourceValue);
 
-                    if (latestValues.keySet().containsAll(sources)) {
-                        List<I> latestValueSnapshotInOrder = new ArrayList<>();
-                        for (ObservableValue<I> s : sources) {
+                    if (latestValues.keySet().containsAll(sourcesCopy)) {
+                        List<V> latestValueSnapshotInOrder = new ArrayList<>();
+                        for (ObservableValue<V> s : sourcesCopy) {
                             latestValueSnapshotInOrder.add(latestValues.get(s));
                         }
 
@@ -108,6 +109,68 @@ public class Observables {
         }
 
         return mergedProperty;
+    }
+
+    /**
+     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * result of applying the mapper {@link Function}. The {@link Map}s are used to avoid mathing values by index.
+     *
+     * @param sourcesMap the input {@link ObservableValue}s indexed
+     * @param mapper     the combining function that will produce the result
+     * @param <K>        the key for each input {@link ObservableValue} that is used for indexing
+     * @param <V>        the input type
+     * @param <O>        the output type
+     * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * result of applying the mapper {@link Function}. The {@link Map}s are used to avoid mathing values by index.
+     */
+    public static <K, V, O> ObservableValue<O> mergeLatest(Map<K, ObservableValue<V>> sourcesMap, Function<Map<K, V>, O> mapper) {
+        HashMap<K, ObservableValue<V>> sourcesMapCopy = new HashMap<>(sourcesMap);
+
+        Map<Integer, K> keyIndexes = new HashMap<>();
+        List<ObservableValue<V>> sources = new ArrayList<>();
+
+        int keyIndex = 0;
+        for (Map.Entry<K, ObservableValue<V>> entry : sourcesMapCopy.entrySet()) {
+            sources.add(entry.getValue());
+
+            keyIndexes.put(keyIndex, entry.getKey());
+            keyIndex++;
+        }
+
+        return mergeLatest(sources, (List<V> sourceValues) -> {
+            Map<K, V> keyToSourceValues = new HashMap<>();
+            for (int i = 0; i < sourceValues.size(); i++) {
+                keyToSourceValues.put(keyIndexes.get(i), sourceValues.get(i));
+            }
+            return mapper.apply(keyToSourceValues);
+        });
+    }
+
+    /**
+     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * a list containing the values of each {@link ObservableValue}
+     *
+     * @param sources the input {@link ObservableValue}s
+     * @param <V>     the input type
+     * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * a list containing the values of each {@link ObservableValue}
+     */
+    public static <V> ObservableValue<List<V>> mergeLatest(List<ObservableValue<V>> sources) {
+        return mergeLatest(sources, Function.identity());
+    }
+
+    /**
+     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes a
+     * {@link Map} with the values of each corresponding source {@link ObservableValue}.
+     *
+     * @param sourcesMap the input {@link ObservableValue}s indexed
+     * @param <K>        the key for each input {@link ObservableValue} that is used for indexing
+     * @param <V>        the input type
+     * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes a
+     * {@link Map} with the values of each corresponding source {@link ObservableValue}.
+     */
+    public static <K, V> ObservableValue<Map<K, V>> mergeLatest(Map<K, ObservableValue<V>> sourcesMap) {
+        return mergeLatest(sourcesMap, Function.identity());
     }
 
 }
