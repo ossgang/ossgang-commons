@@ -2,13 +2,7 @@ package org.ossgang.commons.observable;
 
 import org.ossgang.commons.property.Property;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
@@ -78,4 +72,42 @@ public class Observables {
         }
         return combinedProperty;
     }
+
+    /**
+     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * result of the combiner applied with the latest values of the other inputs.
+     * The order of the input values of the combiner is the same as the order of the provided source {@link ObservableValue}s
+     *
+     * @param sources  the input {@link ObservableValue}s
+     * @param combiner the combining function that will produce the result
+     * @param <I>      the input type
+     * @param <O>      the output type
+     * @return an {@link ObservableValue} that on each update of any source publishes the result of the
+     * combiner applied with the latest values of the other inputs.
+     */
+    public static <I, O> ObservableValue<O> mergeLatest(List<ObservableValue<I>> sources,
+                                                        Function<List<I>, O> combiner) {
+        Property<O> mergedProperty = property();
+        Map<ObservableValue<I>, I> latestValues = new HashMap<>();
+
+        for (ObservableValue<I> source : sources) {
+            source.subscribe(sourceValue -> {
+                synchronized (latestValues) {
+                    latestValues.put(source, sourceValue);
+
+                    if (latestValues.keySet().containsAll(sources)) {
+                        List<I> latestValueSnapshotInOrder = new ArrayList<>();
+                        for (ObservableValue<I> s : sources) {
+                            latestValueSnapshotInOrder.add(latestValues.get(s));
+                        }
+
+                        mergedProperty.set(combiner.apply(latestValueSnapshotInOrder));
+                    }
+                }
+            }, FIRST_UPDATE);
+        }
+
+        return mergedProperty;
+    }
+
 }
