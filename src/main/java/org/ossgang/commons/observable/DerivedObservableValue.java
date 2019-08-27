@@ -16,20 +16,15 @@ import static org.ossgang.commons.observable.WeakObservers.weakWithErrorAndSubsc
  * subscribers.
  * <p>
  * There is no guarantee that a call to get() will return the latest item of the upstream observable.
- * <p>
- * Objects of this class hold a strong reference to the source observable, preventing it from being GC'd as long as
- * they exist.
  *
  * @param <S> the type of the source observable
  * @param <D> the type of this observable
  */
 public class DerivedObservableValue<S, D> extends DispatchingObservableValue<D> implements ObservableValue<D> {
     private final Function<S, Optional<D>> mapper;
-    private final Observable<S> sourceObservable;
 
     DerivedObservableValue(Observable<S> sourceObservable, Function<S, Optional<D>> mapper) {
         super(null);
-        this.sourceObservable = sourceObservable; /* keep a reference to prevent GC'ing the source */
         this.mapper = mapper;
         sourceObservable.subscribe(weakWithErrorAndSubscriptionCountHandling(this,
                 DerivedObservableValue::deriveUpdate,
