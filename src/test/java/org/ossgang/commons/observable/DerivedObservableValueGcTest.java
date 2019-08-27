@@ -10,26 +10,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.GcTests.forceGc;
 
 public class DerivedObservableValueGcTest {
     private CompletableFuture<Integer> methodReferenceUpdateValue = new CompletableFuture<>();
 
     private void handleUpdate(int test) {
         methodReferenceUpdateValue.complete(test);
-    }
-
-
-    @Test
-    public void gcWhileSubscribed_shouldPreventGc() throws Exception {
-        Property<String> property = Properties.property("2");
-        gcWhileSubscribed_shouldPreventGc_subscribe(property);
-        forceGc();
-        property.set("1");
-        assertThat(methodReferenceUpdateValue.get(1, SECONDS)).isEqualTo(1);
-    }
-
-    private void gcWhileSubscribed_shouldPreventGc_subscribe(ObservableValue<String> value) {
-        value.map(Integer::parseInt).subscribe(this::handleUpdate);
     }
 
     @Test
@@ -88,18 +75,5 @@ public class DerivedObservableValueGcTest {
         upstreamSubscription.get().unsubscribe();
         forceGc(); /*  upstream subscription killed => not GC protected anymore */
         assertThat(derivedObservable.get()).isNull();
-    }
-
-    /**
-     * Force the GC to run a few times. Note that (in Oracles JVM) multiple GC runs are needed to resolve indirections
-     * and cycles, therefore this methods makes sure that the GC run at least 10 times.
-     */
-    private static void forceGc() {
-        for (int run = 0; run < 10; run++) {
-            WeakReference<?> ref = new WeakReference<>(new Object());
-            while (ref.get() != null) {
-                System.gc();
-            }
-        }
     }
 }

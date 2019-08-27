@@ -33,12 +33,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static java.util.Collections.newSetFromMap;
+
 /**
  * A basic implementation of {@link Observable} managing a set of listeners, and dispatching updates to them.
+ * <p>
+ * This class makes sure that it will not be garbage collected as long as there is at least one subscriber subscribed
+ * to the observable. If there are no subscribers to an observable, it becomes garbage collectible (provided
+ * that no other references to it exist).
  *
  * @param <T> the type of the observable
  */
 public class DispatchingObservable<T> implements Observable<T> {
+    private final static Set<Observable<?>> GC_PROTECTION = newSetFromMap(new ConcurrentHashMap<>());
     private final Map<Observer<? super T>, ObservableSubscription> listeners = new ConcurrentHashMap<>();
     private final ExecutorService dispatcher = Executors.newCachedThreadPool();
     private final AtomicInteger listenerCount = new AtomicInteger(0);
@@ -58,17 +65,15 @@ public class DispatchingObservable<T> implements Observable<T> {
         ObservableSubscription subscription = new ObservableSubscription(listener, options);
         listeners.put(listener, subscription);
         if (listenerCount.getAndIncrement() == 0) {
-            firstListenerAdded();
+            GC_PROTECTION.add(this);
         }
         return subscription;
     }
 
-    protected void firstListenerAdded() { /* no op */ }
-
     private void removeListener(Observer<? super T> listener) {
         if (listeners.remove(listener) != null) {
             if (listenerCount.decrementAndGet() == 0) {
-                lastListenerRemoved();
+                GC_PROTECTION.remove(this);
             }
         }
     }
@@ -77,8 +82,6 @@ public class DispatchingObservable<T> implements Observable<T> {
         Set<Subscription> allSubscriptions = new HashSet<>(listeners.values());
         allSubscriptions.forEach(Subscription::unsubscribe);
     }
-
-    protected void lastListenerRemoved() { /* no op */ }
 
     protected void dispatchValue(T newValue) {
         listeners.keySet().forEach(l -> dispatch(l::onValue, newValue));
