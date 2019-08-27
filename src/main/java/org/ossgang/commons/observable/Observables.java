@@ -1,15 +1,17 @@
 package org.ossgang.commons.observable;
 
-import org.ossgang.commons.property.Property;
-
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
-import static org.ossgang.commons.property.Properties.property;
+import static org.ossgang.commons.observable.DerivedObservableValue.derive;
 
 /**
  * Static support class for dealing with {@link Observable} and {@link ObservableValue}.
@@ -32,7 +34,7 @@ public class Observables {
         if (observable instanceof ObservableValue) {
             return (ObservableValue<T>) observable;
         }
-        return new DerivedObservableValue<>(observable, Optional::of);
+        return derive(observable, Optional::of);
     }
 
     /**
@@ -62,25 +64,19 @@ public class Observables {
      * parameter provides the indexes of the {@link Map} that will be passed to the specified mapper {@link Function}.
      */
     public static <K, V, O> ObservableValue<O> zip(Map<K, ObservableValue<V>> sourcesMap, Function<Map<K, V>, O> combiner) {
-        Property<O> zipProperty = property();
-
-        Map<K, ObservableValue<V>> sourcesMapCopy = new HashMap<>(sourcesMap);
-        Set<K> keys = sourcesMapCopy.keySet();
-        Map<K, V> valuesToZip = new HashMap<>();
-
-        for (K key : keys) {
-            sourcesMapCopy.get(key).subscribe(value -> {
-                synchronized (valuesToZip) {
-                    valuesToZip.put(key, value);
-                    if (valuesToZip.keySet().containsAll(keys)) {
-                        zipProperty.set(combiner.apply(new HashMap<>(valuesToZip)));
-                        valuesToZip.clear();
-                    }
+        Map<K, V> valueMap = new HashMap<>();
+        Set<K> keys = new HashSet<>(sourcesMap.keySet());
+        return derive(sourcesMap, (k, v) -> {
+            synchronized (valueMap) {
+                valueMap.put(k, v);
+                if (valueMap.keySet().containsAll(keys)) {
+                    Map<K, V> sourceMapCopy = new HashMap<>(valueMap);
+                    valueMap.clear();
+                    return Optional.of(combiner.apply(sourceMapCopy));
                 }
-            }, FIRST_UPDATE);
-        }
-
-        return zipProperty;
+                return Optional.empty();
+            }
+        });
     }
 
     /**
@@ -148,24 +144,17 @@ public class Observables {
      */
     public static <K, V, O> ObservableValue<O> combineLatest(Map<K, ObservableValue<V>> sourcesMap,
                                                              Function<Map<K, V>, O> combiner) {
-        Property<O> combinedProperty = property();
-
-        Map<K, ObservableValue<V>> sourcesMapCopy = new HashMap<>(sourcesMap);
-        Set<K> keys = sourcesMapCopy.keySet();
-        Map<K, V> valuesToCombine = new HashMap<>();
-
-        for (K key : keys) {
-            sourcesMapCopy.get(key).subscribe(value -> {
-                synchronized (valuesToCombine) {
-                    valuesToCombine.put(key, value);
-                    if (valuesToCombine.keySet().containsAll(keys)) {
-                        combinedProperty.set(combiner.apply(new HashMap<>(valuesToCombine)));
-                    }
+        Map<K, V> valueMap = new HashMap<>();
+        Set<K> keys = new HashSet<>(sourcesMap.keySet());
+        return derive(sourcesMap, (k, v) -> {
+            synchronized (valueMap) {
+                valueMap.put(k, v);
+                if (valueMap.keySet().containsAll(keys)) {
+                    return Optional.of(combiner.apply(new HashMap<>(valueMap)));
                 }
-            }, FIRST_UPDATE);
-        }
-
-        return combinedProperty;
+                return Optional.empty();
+            }
+        });
     }
 
     /**

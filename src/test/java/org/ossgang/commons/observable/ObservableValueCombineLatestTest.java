@@ -3,6 +3,7 @@ package org.ossgang.commons.observable;
 import org.junit.Test;
 import org.ossgang.commons.property.Property;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,11 +14,65 @@ import java.util.concurrent.TimeoutException;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.GcTests.forceGc;
 import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
 import static org.ossgang.commons.observable.Observables.combineLatest;
 import static org.ossgang.commons.property.Properties.property;
 
 public class ObservableValueCombineLatestTest {
+
+    @Test
+    public void combineLatest_noSubscription_shouldAllowGc() throws Exception {
+        Property<String> valueA = property("A");
+        Property<String> valueB = property("B");
+
+        WeakReference<ObservableValue<List<String>>> combineLatest = combineLatest_noSubscription_create(valueA, valueB);
+        forceGc();
+        assertThat(combineLatest.get()).isNull();
+    }
+
+    private WeakReference<ObservableValue<List<String>>> combineLatest_noSubscription_create(Property<String>... values) {
+        return new WeakReference<>(Observables.combineLatest(asList(values)));
+    }
+
+    @Test
+    public void combineLatest_afterUnsubscribe_shouldAllowGc() throws Exception {
+        Property<String> valueA = property("A");
+        Property<String> valueB = property("B");
+
+        WeakReference<ObservableValue<List<String>>> combineLatest =
+                combineLatest_afterUnsubscribe_create(valueA, valueB);
+        forceGc();
+        assertThat(combineLatest.get()).isNull();
+    }
+
+    private WeakReference<ObservableValue<List<String>>> combineLatest_afterUnsubscribe_create(Property<String>... values) {
+        ObservableValue<List<String>> combined = combineLatest(asList(values));
+        combined.subscribe(i -> {
+            /* no op */
+        }).unsubscribe();
+        return new WeakReference<>(combined);
+    }
+
+    @Test
+    public void combineLatest_withSubscription_shouldPreventGc() throws Exception {
+        Property<String> valueA = property("A");
+        Property<String> valueB = property("B");
+
+        WeakReference<ObservableValue<List<String>>> combineLatest =
+                combineLatest_withSubscription_create(valueA, valueB);
+        forceGc();
+        assertThat(combineLatest.get()).isNotNull();
+    }
+
+    private WeakReference<ObservableValue<List<String>>> combineLatest_withSubscription_create(Property<String>... values) {
+        ObservableValue<List<String>> combined = combineLatest(asList(values));
+        combined.subscribe(i -> {
+            /* no op */
+        });
+        return new WeakReference<>(combined);
+    }
+
 
     @Test
     public void testCombiningWithFirstUpdateValues() throws InterruptedException, ExecutionException, TimeoutException {

@@ -26,6 +26,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static org.ossgang.commons.observable.DerivedObservableValue.derive;
+
 /**
  * An observable of type T which has an actual value.
  *
@@ -62,7 +64,7 @@ public interface ObservableValue<T> extends Observable<T> {
      * @return the derived observable
      */
     default <D> ObservableValue<D> map(Function<T, D> mapper) {
-        return new DerivedObservableValue<>(this, mapper.andThen(Optional::of));
+        return derive(this, mapper.andThen(Optional::of));
     }
 
     /**
@@ -73,7 +75,7 @@ public interface ObservableValue<T> extends Observable<T> {
      * @return the derived observable
      */
     default ObservableValue<T> filter(Predicate<T> filter) {
-        return new DerivedObservableValue<>(this, v -> Optional.of(v).filter(filter));
+        return derive(this, v -> Optional.of(v).filter(filter));
     }
 
 }
