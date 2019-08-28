@@ -5,12 +5,15 @@ import org.ossgang.commons.property.Properties;
 import org.ossgang.commons.property.Property;
 
 import java.lang.ref.WeakReference;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.lang.Integer.parseInt;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.ossgang.commons.GcTests.forceGc;
+import static org.ossgang.commons.observable.DerivedObservableValue.derive;
 
 public class DerivedObservableValueGcTest {
     private CompletableFuture<Integer> methodReferenceUpdateValue = new CompletableFuture<>();
@@ -31,21 +34,21 @@ public class DerivedObservableValueGcTest {
 
     private WeakReference<Property<String>> gcWhileSubscribed_shouldPreventGcOfUpstream_subscribe() {
         Property<String> property = Properties.property("2");
-        property.map(Integer::parseInt).subscribe(this::handleUpdate);
+        derive(property, v -> Optional.of(parseInt(v))).subscribe(this::handleUpdate);
         return new WeakReference<>(property);
     }
 
     @Test
     public void gcWhileNotSubscribed_shouldGc() {
         Property<String> property = Properties.property("2");
-        WeakReference<ObservableValue<Integer>> derivedObservable = mapWeakReference(property);
+        WeakReference<ObservableValue<Integer>> derivedObservable = gcWhileNotSubscribed_derive(property);
         assertThat(derivedObservable.get()).isNotNull();
         forceGc();
         assertThat(derivedObservable.get()).isNull();
     }
 
-    private WeakReference<ObservableValue<Integer>> mapWeakReference(ObservableValue<String> value) {
-        return new WeakReference<>(value.map(Integer::parseInt));
+    private WeakReference<ObservableValue<Integer>> gcWhileNotSubscribed_derive(ObservableValue<String> value) {
+        return new WeakReference<>(derive(value, v -> Optional.of(parseInt(v))));
     }
 
     @Test
@@ -64,9 +67,7 @@ public class DerivedObservableValueGcTest {
                 return property.get();
             }
         };
-        WeakReference<ObservableValue<Integer>> derivedObservable = mapWeakReference(wrappedProperty);
-        assertThat(derivedObservable.get()).isNotNull();
-        derivedObservable.get().subscribe(this::handleUpdate);
+        WeakReference<ObservableValue<Integer>> derivedObservable = gcWhileSubscribedButUpstreamSubscriptionKilled_derive(wrappedProperty);
         assertThat(derivedObservable.get()).isNotNull();
         forceGc(); /* downstream listener and upstream subscription intact => GC protected */
         assertThat(derivedObservable.get()).isNotNull();
@@ -75,5 +76,11 @@ public class DerivedObservableValueGcTest {
         upstreamSubscription.get().unsubscribe();
         forceGc(); /*  upstream subscription killed => not GC protected anymore */
         assertThat(derivedObservable.get()).isNull();
+    }
+
+    private WeakReference<ObservableValue<Integer>> gcWhileSubscribedButUpstreamSubscriptionKilled_derive(ObservableValue<String> value) {
+        ObservableValue<Integer> derived = derive(value, v -> Optional.of(parseInt(v)));
+        derived.subscribe(this::handleUpdate);
+        return new WeakReference<>(derived);
     }
 }
