@@ -26,25 +26,14 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static org.ossgang.commons.observable.DerivedObservableValue.derive;
+
 /**
  * An observable of type T which has an actual value.
  *
  * @param <T> the type of the observable
  */
 public interface ObservableValue<T> extends Observable<T> {
-    enum ObservableValueSubscriptionOption implements SubscriptionOption {
-        /**
-         * On subscription, deliver the actual value (it it exists) as a "first update".
-         * This happens on the subscribing thread, before any other updates are delivered,
-         * and before subscribe() returns.
-         */
-        FIRST_UPDATE,
-
-        /**
-         * Only notify the subscriber on updates which actually changed the value of this ObservableValue.
-         */
-        ON_CHANGE
-    }
 
     /**
      * Retrieve the actual value of this ObservableValue.
@@ -62,7 +51,7 @@ public interface ObservableValue<T> extends Observable<T> {
      * @return the derived observable
      */
     default <D> ObservableValue<D> map(Function<T, D> mapper) {
-        return new DerivedObservableValue<>(this, mapper.andThen(Optional::of));
+        return derive(this, mapper.andThen(Optional::of));
     }
 
     /**
@@ -73,7 +62,7 @@ public interface ObservableValue<T> extends Observable<T> {
      * @return the derived observable
      */
     default ObservableValue<T> filter(Predicate<T> filter) {
-        return new DerivedObservableValue<>(this, v -> Optional.of(v).filter(filter));
+        return derive(this, v -> Optional.of(v).filter(filter));
     }
 
 }

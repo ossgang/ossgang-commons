@@ -1,10 +1,13 @@
 package org.ossgang.commons.observable;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static java.util.Collections.singletonMap;
 import static org.ossgang.commons.monads.Maybe.attempt;
-import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
+import static org.ossgang.commons.observable.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.observable.WeakObservers.weakWithErrorAndSubscriptionCountHandling;
 
 /**
@@ -17,30 +20,38 @@ import static org.ossgang.commons.observable.WeakObservers.weakWithErrorAndSubsc
  * <p>
  * There is no guarantee that a call to get() will return the latest item of the upstream observable.
  *
- * @param <S> the type of the source observable
- * @param <D> the type of this observable
+ * @param <K> the indexing type
+ * @param <I> the type of the source observable
+ * @param <O> the type of this observable
  */
-public class DerivedObservableValue<S, D> extends DispatchingObservableValue<D> implements ObservableValue<D> {
-    private final Function<S, Optional<D>> mapper;
+public class DerivedObservableValue<K, I, O> extends DispatchingObservableValue<O> implements ObservableValue<O> {
+    private final BiFunction<K, I, Optional<O>> mapper;
+    private static final Object SINGLE = new Object();
 
-    DerivedObservableValue(Observable<S> sourceObservable, Function<S, Optional<D>> mapper) {
+    private DerivedObservableValue(Map<K, ? extends Observable<I>> sourceObservables, BiFunction<K, I, Optional<O>> mapper) {
         super(null);
         this.mapper = mapper;
-        sourceObservable.subscribe(weakWithErrorAndSubscriptionCountHandling(this,
-                DerivedObservableValue::deriveUpdate,
+        sourceObservables.forEach((key, obs) -> obs.subscribe(weakWithErrorAndSubscriptionCountHandling(this,
+                (obj, item) -> obj.deriveUpdate(key, item),
                 DerivedObservableValue::dispatchException,
-                DerivedObservableValue::upstreamObserverSubscriptionCountChanged), FIRST_UPDATE);
+                DerivedObservableValue::upstreamObserverSubscriptionCountChanged), FIRST_UPDATE));
     }
 
-    private void deriveUpdate(S item) {
-        transform(item).ifPresent(this::dispatchValue);
+    public static <K, I, O> ObservableValue<O> derive(Map<K, ? extends Observable<I>> sourceObservables,
+                                                      BiFunction<K, I, Optional<O>> mapper) {
+        return new DerivedObservableValue<>(sourceObservables, mapper);
     }
 
-    private Optional<D> transform(S value) {
-        return attempt(() -> mapper.apply(value)) //
+    public static <I, O> ObservableValue<O> derive(Observable<I> source, Function<I, Optional<O>> mapper) {
+        return new DerivedObservableValue<>(singletonMap(SINGLE, source), (k, v) -> mapper.apply(v));
+    }
+
+    private void deriveUpdate(K key, I item) {
+        attempt(() -> mapper.apply(key, item)) //
                 .onException(this::dispatchException) //
                 .optionalValue() //
-                .orElseGet(Optional::empty);
+                .orElseGet(Optional::empty) //
+                .ifPresent(this::dispatchValue);
     }
 
     private void upstreamObserverSubscriptionCountChanged(int refCount) {
