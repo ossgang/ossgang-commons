@@ -26,8 +26,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Objects.requireNonNull;
-import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
-import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.ON_CHANGE;
+import static org.ossgang.commons.observable.SubscriptionOptions.FIRST_UPDATE;
+import static org.ossgang.commons.observable.SubscriptionOptions.ON_CHANGE;
 
 /**
  * A basic implementation of {@link ObservableValue}, based on {@link DispatchingObservable} to handle the update

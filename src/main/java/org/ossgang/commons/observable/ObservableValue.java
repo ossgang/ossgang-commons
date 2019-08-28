@@ -34,19 +34,6 @@ import static org.ossgang.commons.observable.DerivedObservableValue.derive;
  * @param <T> the type of the observable
  */
 public interface ObservableValue<T> extends Observable<T> {
-    enum ObservableValueSubscriptionOption implements SubscriptionOption {
-        /**
-         * On subscription, deliver the actual value (it it exists) as a "first update".
-         * This happens on the subscribing thread, before any other updates are delivered,
-         * and before subscribe() returns.
-         */
-        FIRST_UPDATE,
-
-        /**
-         * Only notify the subscriber on updates which actually changed the value of this ObservableValue.
-         */
-        ON_CHANGE
-    }
 
     /**
      * Retrieve the actual value of this ObservableValue.

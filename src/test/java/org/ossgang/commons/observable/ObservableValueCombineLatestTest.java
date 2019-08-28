@@ -15,8 +15,8 @@ import java.util.concurrent.TimeoutException;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.ossgang.commons.GcTests.forceGc;
-import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
 import static org.ossgang.commons.observable.Observables.combineLatest;
+import static org.ossgang.commons.observable.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.property.Properties.property;
 
 public class ObservableValueCombineLatestTest {
@@ -31,7 +31,8 @@ public class ObservableValueCombineLatestTest {
         assertThat(combineLatest.get()).isNull();
     }
 
-    private WeakReference<ObservableValue<List<String>>> combineLatest_noSubscription_create(Property<String>... values) {
+    @SafeVarargs
+    private final WeakReference<ObservableValue<List<String>>> combineLatest_noSubscription_create(Property<String>... values) {
         return new WeakReference<>(Observables.combineLatest(asList(values)));
     }
 
@@ -46,7 +47,8 @@ public class ObservableValueCombineLatestTest {
         assertThat(combineLatest.get()).isNull();
     }
 
-    private WeakReference<ObservableValue<List<String>>> combineLatest_afterUnsubscribe_create(Property<String>... values) {
+    @SafeVarargs
+    private final WeakReference<ObservableValue<List<String>>> combineLatest_afterUnsubscribe_create(Property<String>... values) {
         ObservableValue<List<String>> combined = combineLatest(asList(values));
         combined.subscribe(i -> {
             /* no op */
@@ -65,7 +67,8 @@ public class ObservableValueCombineLatestTest {
         assertThat(combineLatest.get()).isNotNull();
     }
 
-    private WeakReference<ObservableValue<List<String>>> combineLatest_withSubscription_create(Property<String>... values) {
+    @SafeVarargs
+    private final WeakReference<ObservableValue<List<String>>> combineLatest_withSubscription_create(Property<String>... values) {
         ObservableValue<List<String>> combined = combineLatest(asList(values));
         combined.subscribe(i -> {
             /* no op */

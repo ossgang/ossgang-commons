@@ -11,7 +11,7 @@ import java.util.function.Function;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.ossgang.commons.observable.ObservableValue.ObservableValueSubscriptionOption.FIRST_UPDATE;
+import static org.ossgang.commons.observable.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.property.Properties.property;
 
 public class ObservableValueZipTest {
