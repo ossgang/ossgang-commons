@@ -31,11 +31,6 @@ public class ObservableValueCombineLatestTest {
         assertThat(combineLatest.get()).isNull();
     }
 
-    @SafeVarargs
-    private final WeakReference<ObservableValue<List<String>>> combineLatest_noSubscription_create(Property<String>... values) {
-        return new WeakReference<>(Observables.combineLatest(asList(values)));
-    }
-
     @Test
     public void combineLatest_afterUnsubscribe_shouldAllowGc() throws Exception {
         Property<String> valueA = property("A");
@@ -45,15 +40,6 @@ public class ObservableValueCombineLatestTest {
                 combineLatest_afterUnsubscribe_create(valueA, valueB);
         forceGc();
         assertThat(combineLatest.get()).isNull();
-    }
-
-    @SafeVarargs
-    private final WeakReference<ObservableValue<List<String>>> combineLatest_afterUnsubscribe_create(Property<String>... values) {
-        ObservableValue<List<String>> combined = combineLatest(asList(values));
-        combined.subscribe(i -> {
-            /* no op */
-        }).unsubscribe();
-        return new WeakReference<>(combined);
     }
 
     @Test
@@ -67,18 +53,8 @@ public class ObservableValueCombineLatestTest {
         assertThat(combineLatest.get()).isNotNull();
     }
 
-    @SafeVarargs
-    private final WeakReference<ObservableValue<List<String>>> combineLatest_withSubscription_create(Property<String>... values) {
-        ObservableValue<List<String>> combined = combineLatest(asList(values));
-        combined.subscribe(i -> {
-            /* no op */
-        });
-        return new WeakReference<>(combined);
-    }
-
-
     @Test
-    public void testCombiningWithFirstUpdateValues() throws InterruptedException, ExecutionException, TimeoutException {
+    public void combineLatest_firstUpdate() throws InterruptedException, ExecutionException, TimeoutException {
         Property<String> valueA = property("A");
         Property<String> valueB = property("B");
 
@@ -90,7 +66,7 @@ public class ObservableValueCombineLatestTest {
     }
 
     @Test
-    public void testCombiningLatestValues() throws InterruptedException, TimeoutException, ExecutionException {
+    public void combineLatest_set() throws InterruptedException, TimeoutException, ExecutionException {
         Property<String> valueA = property();
         Property<String> valueB = property();
 
@@ -104,7 +80,7 @@ public class ObservableValueCombineLatestTest {
     }
 
     @Test
-    public void testCombiningWithoutMapper() throws InterruptedException, ExecutionException, TimeoutException {
+    public void combineLatest_withoutMapping() throws InterruptedException, ExecutionException, TimeoutException {
         Property<String> valueA = property("A");
         Property<String> valueB = property("B");
 
@@ -115,7 +91,7 @@ public class ObservableValueCombineLatestTest {
     }
 
     @Test
-    public void testCombiningWithMap() throws InterruptedException, ExecutionException, TimeoutException {
+    public void combineLatest_withMapping() throws InterruptedException, ExecutionException, TimeoutException {
         Map<String, ObservableValue<String>> inputs = new HashMap<>();
         inputs.put("FIRST", property("A"));
         inputs.put("SECOND", property("B"));
@@ -128,7 +104,7 @@ public class ObservableValueCombineLatestTest {
     }
 
     @Test
-    public void testCombiningWithMapWithoutMapper() throws InterruptedException, ExecutionException, TimeoutException {
+    public void combineLatest_withIndexedSources() throws InterruptedException, ExecutionException, TimeoutException {
         Map<String, ObservableValue<String>> inputs = new HashMap<>();
         inputs.put("FIRST", property("A"));
         inputs.put("SECOND", property("B"));
@@ -142,4 +118,26 @@ public class ObservableValueCombineLatestTest {
                 .containsEntry("SECOND", "B");
     }
 
+    @SafeVarargs
+    private static WeakReference<ObservableValue<List<String>>> combineLatest_noSubscription_create(Property<String>... values) {
+        return new WeakReference<>(Observables.combineLatest(asList(values)));
+    }
+
+    @SafeVarargs
+    private static WeakReference<ObservableValue<List<String>>> combineLatest_afterUnsubscribe_create(Property<String>... values) {
+        ObservableValue<List<String>> combined = combineLatest(asList(values));
+        combined.subscribe(i -> {
+            /* no op */
+        }).unsubscribe();
+        return new WeakReference<>(combined);
+    }
+
+    @SafeVarargs
+    private static WeakReference<ObservableValue<List<String>>> combineLatest_withSubscription_create(Property<String>... values) {
+        ObservableValue<List<String>> combined = combineLatest(asList(values));
+        combined.subscribe(i -> {
+            /* no op */
+        });
+        return new WeakReference<>(combined);
+    }
 }

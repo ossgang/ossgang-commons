@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.ossgang.commons.property.Property;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.function.Function;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.GcTests.forceGc;
 import static org.ossgang.commons.observable.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.property.Properties.property;
 
@@ -26,7 +28,62 @@ public class ObservableValueZipTest {
     }
 
     @Test
-    public void testZip() {
+    public void zip_noSubscription_shouldAllowGc() {
+        Property<String> valueA = property("A");
+        Property<String> valueB = property("B");
+
+        WeakReference<ObservableValue<List<String>>> combineLatest = zip_noSubscription_create(valueA, valueB);
+        forceGc();
+        assertThat(combineLatest.get()).isNull();
+    }
+
+    @Test
+    public void zip_afterUnsubscribe_shouldAllowGc() {
+        Property<String> valueA = property("A");
+        Property<String> valueB = property("B");
+
+        WeakReference<ObservableValue<List<String>>> combineLatest =
+                zip_afterUnsubscribe_create(valueA, valueB);
+        forceGc();
+        assertThat(combineLatest.get()).isNull();
+    }
+
+    @Test
+    public void zip_withSubscription_shouldPreventGc() {
+        Property<String> valueA = property("A");
+        Property<String> valueB = property("B");
+
+        WeakReference<ObservableValue<List<String>>> combineLatest =
+                zip_withSubscription_create(valueA, valueB);
+        forceGc();
+        assertThat(combineLatest.get()).isNotNull();
+    }
+
+    @SafeVarargs
+    private static WeakReference<ObservableValue<List<String>>> zip_noSubscription_create(Property<String>... values) {
+        return new WeakReference<>(Observables.zip(asList(values)));
+    }
+
+    @SafeVarargs
+    private static WeakReference<ObservableValue<List<String>>> zip_afterUnsubscribe_create(Property<String>... values) {
+        ObservableValue<List<String>> combined = Observables.zip(asList(values));
+        combined.subscribe(i -> {
+            /* no op */
+        }).unsubscribe();
+        return new WeakReference<>(combined);
+    }
+
+    @SafeVarargs
+    private static WeakReference<ObservableValue<List<String>>> zip_withSubscription_create(Property<String>... values) {
+        ObservableValue<List<String>> combined = Observables.zip(asList(values));
+        combined.subscribe(i -> {
+            /* no op */
+        });
+        return new WeakReference<>(combined);
+    }
+
+    @Test
+    public void zip_withFirstUpdate() {
         TestObserver<List<String>> testObserver = new TestObserver<>();
 
         Observables.zip(asList(valueA, valueB)).subscribe(testObserver, FIRST_UPDATE);
@@ -43,7 +100,7 @@ public class ObservableValueZipTest {
     }
 
     @Test
-    public void testZipWithMapper() {
+    public void zip_withCombiningFunction() {
         TestObserver<String> testObserver = new TestObserver<>();
 
         Observables.zip(asList(valueA, valueB), values -> String.join("", values)).subscribe(testObserver, FIRST_UPDATE);
@@ -60,7 +117,7 @@ public class ObservableValueZipTest {
     }
 
     @Test
-    public void testZipWithIndexedObservable() {
+    public void zip_withIndexedSources() {
         TestObserver<Map<Integer, String>> testObserver = new TestObserver<>();
 
         Map<Integer, ObservableValue<String>> indexedInputs = new HashMap<>();
@@ -89,7 +146,7 @@ public class ObservableValueZipTest {
     }
 
     @Test
-    public void testZipWithIndexedObservableWithMapper() {
+    public void zip_withIndexedSourcesAndCombiningFunction() {
         TestObserver<String> testObserver = new TestObserver<>();
 
         Map<Integer, ObservableValue<String>> indexedInputs = new HashMap<>();
