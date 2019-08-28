@@ -32,7 +32,7 @@ public class DerivedObservableValue<K, I, O> extends DispatchingObservableValue<
         super(null);
         this.mapper = mapper;
         sourceObservables.forEach((key, obs) -> obs.subscribe(weakWithErrorAndSubscriptionCountHandling(this,
-                (obj, item) -> obj.deriveUpdate(key, item),
+                (self, item) -> self.deriveUpdate(key, item),
                 DerivedObservableValue::dispatchException,
                 DerivedObservableValue::upstreamObserverSubscriptionCountChanged), FIRST_UPDATE));
     }
