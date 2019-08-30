@@ -28,12 +28,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static java.util.Collections.newSetFromMap;
+import static java.util.concurrent.Executors.newCachedThreadPool;
 
 /**
  * A basic implementation of {@link Observable} managing a set of listeners, and dispatching updates to them.
@@ -45,9 +45,9 @@ import static java.util.Collections.newSetFromMap;
  * @param <T> the type of the observable
  */
 public class DispatchingObservable<T> implements Observable<T> {
-    private final static Set<Observable<?>> GC_PROTECTION = newSetFromMap(new ConcurrentHashMap<>());
+    private static final Set<Observable<?>> GC_PROTECTION = newSetFromMap(new ConcurrentHashMap<>());
+    private static final ExecutorService DISPATCHER_POOL = newCachedThreadPool(new DispatchingThreadFactory());
     private final Map<Observer<? super T>, ObservableSubscription> listeners = new ConcurrentHashMap<>();
-    private final ExecutorService dispatcher = Executors.newCachedThreadPool();
     private final AtomicInteger listenerCount = new AtomicInteger(0);
 
     protected DispatchingObservable() {
@@ -106,7 +106,7 @@ public class DispatchingObservable<T> implements Observable<T> {
     }
 
     private <X> void dispatch(Consumer<X> handler, X value) {
-        dispatcher.submit(() -> {
+        DISPATCHER_POOL.submit(() -> {
             try {
                 handler.accept(value);
             } catch (Exception e) {
