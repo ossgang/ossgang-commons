@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.ossgang.commons.observable.SubscriptionOptions.FIRST_UPDATE;
-
 
 public class TestObserver<T> implements Observer<T> {
 
@@ -56,7 +54,10 @@ public class TestObserver<T> implements Observer<T> {
             if (i >= expectedCount) {
                 latch.countDown();
             }
-        }, FIRST_UPDATE);
+        });
+        if (valuesCount.get() >= expectedCount) {
+            return;
+        }
         try {
             if (!latch.await(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
                 throw new IllegalStateException("Timeout occurred - timeout was " + timeout);
