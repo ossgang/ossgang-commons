@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * </ul>
  */
 class DispatchingThreadFactory implements ThreadFactory {
-    private static final AtomicInteger threadIndex = new AtomicInteger(0);
+    private static final AtomicInteger THREAD_INDEX = new AtomicInteger(0);
     private static final String NAME_PREFIX = "ossgang-Observable-dispatcher-";
     private final ThreadGroup group;
 
@@ -22,7 +22,7 @@ class DispatchingThreadFactory implements ThreadFactory {
     }
 
     public Thread newThread(Runnable r) {
-        Thread t = new Thread(group, r, NAME_PREFIX + threadIndex.getAndIncrement(), 0);
+        Thread t = new Thread(group, r, NAME_PREFIX + THREAD_INDEX.getAndIncrement(), 0);
         if (!t.isDaemon()) {
             t.setDaemon(true);
         }
