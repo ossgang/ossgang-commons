@@ -49,6 +49,7 @@ public class DispatchingObservable<T> implements Observable<T> {
     private static final ExecutorService DISPATCHER_POOL = newCachedThreadPool(new DispatchingThreadFactory());
     private final Map<Observer<? super T>, ObservableSubscription> listeners = new ConcurrentHashMap<>();
     private final AtomicInteger listenerCount = new AtomicInteger(0);
+    private static Consumer<Exception> uncaughtExceptionHandler = DispatchingObservable::printExceptionToStderr;
 
     protected DispatchingObservable() {
     }
@@ -109,11 +110,21 @@ public class DispatchingObservable<T> implements Observable<T> {
         DISPATCHER_POOL.submit(() -> {
             try {
                 handler.accept(value);
+            } catch (UnhandledException e) {
+                uncaughtExceptionHandler.accept(e);
             } catch (Exception e) {
-                System.err.println("Error in event handler\nvalue: " + value);
-                e.printStackTrace();
+                uncaughtExceptionHandler.accept(new UpdateDeliveryException(value, e));
             }
         });
+    }
+
+    private static void printExceptionToStderr(Exception exception) {
+        System.err.println("[Observable] An unhandled exception occurred.");
+        exception.printStackTrace();
+    }
+
+    static void setUncaughtExceptionHandler(Consumer<Exception> handler) {
+        uncaughtExceptionHandler = handler;
     }
 
     private class ObservableSubscription implements Subscription {
