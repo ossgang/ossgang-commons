@@ -22,10 +22,7 @@
 
 package org.ossgang.commons.observable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,6 +46,7 @@ public class DispatchingObservable<T> implements Observable<T> {
     private static final ExecutorService DISPATCHER_POOL = newCachedThreadPool(new DispatchingThreadFactory());
     private final Map<Observer<? super T>, ObservableSubscription> listeners = new ConcurrentHashMap<>();
     private final AtomicInteger listenerCount = new AtomicInteger(0);
+    private static Consumer<Exception> uncaughtExceptionHandler = DispatchingObservable::printExceptionToStderr;
 
     protected DispatchingObservable() {
     }
@@ -109,11 +107,31 @@ public class DispatchingObservable<T> implements Observable<T> {
         DISPATCHER_POOL.submit(() -> {
             try {
                 handler.accept(value);
+            } catch (UnhandledException e) {
+                dispatchToUncaughtExceptionHandler(e);
             } catch (Exception e) {
-                System.err.println("Error in event handler\nvalue: " + value);
-                e.printStackTrace();
+                dispatchToUncaughtExceptionHandler(new UpdateDeliveryException(value, e));
             }
         });
+    }
+
+    private static void dispatchToUncaughtExceptionHandler(Exception exception) {
+        try {
+            uncaughtExceptionHandler.accept(exception);
+        } catch (Exception e) {
+            System.err.println("[Observable] An exception occurred in the global uncaught exception handler.");
+            exception.printStackTrace();
+        }
+    }
+
+    private static void printExceptionToStderr(Exception exception) {
+        System.err.println("[Observable] An unhandled exception occurred.");
+        exception.printStackTrace();
+    }
+
+    static void setUncaughtExceptionHandler(Consumer<Exception> handler) {
+        Objects.requireNonNull(handler, "The exception handler must not be null");
+        uncaughtExceptionHandler = handler;
     }
 
     private class ObservableSubscription implements Subscription {

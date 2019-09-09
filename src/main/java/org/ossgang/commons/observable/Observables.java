@@ -1,6 +1,7 @@
 package org.ossgang.commons.observable;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -194,6 +195,23 @@ public class Observables {
      */
     public static <I> ObservableValue<List<I>> combineLatest(List<ObservableValue<I>> sources) {
         return combineLatest(sources, Function.identity());
+    }
+
+    /**
+     * Sets a static, framework-wide uncaught exception handler. It is called in the following cases:
+     * <ul>
+     *     <li>If an observer onNext/onException throws, with an {@link UpdateDeliveryException}</li>
+     *     <li>If an observer does not implement onException and an exception would be delivered, by
+     *     an {@link UnhandledException}</li>
+     * </ul>
+     * In either case, getCause() can be used to obtain the original exception.
+     *
+     * @see UpdateDeliveryException
+     * @see UnhandledException
+     * @param handler the exception handler to be called
+     */
+    public static void setUncaughtExceptionHandler(Consumer<Exception> handler) {
+        DispatchingObservable.setUncaughtExceptionHandler(handler);
     }
 
     private static <V> Map<Integer, V> toIndexMap(List<V> list) {

@@ -8,7 +8,7 @@ package org.ossgang.commons.observable;
 public interface Observer<T> {
     void onValue(T value);
 
-    default void onException(Throwable exception) {};
+    default void onException(Throwable exception) { throw new UnhandledException(exception); };
 
     default void onSubscribe(Subscription subscription) {};
 
