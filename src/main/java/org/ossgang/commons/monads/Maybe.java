@@ -93,14 +93,14 @@ public class Maybe<T> {
 
     /**
      * Returns true, if this Maybe is in a successful state, i.e. it does not contain an exception. Usually this means,
-     * the Maybe has a valid (non-null) value. So ususally this is equivalent to {@code #hasValue()}. The only exception
+     * the Maybe has a valid (non-null) value. So usually this is equivalent to {@code #hasValue()}. The only exception
      * to this is a "successful"
-     * Maybe<Void> which does not have a valid value (and thus the {@link #value} would throw even if the monad is in a
+     * Maybe<Void> which does not have a valid value (and thus the {@link #value} would throw even if the Maybe is in a
      * successful state.
      * <p>
      * This is equivalent to {@code !hasException()}
      *
-     * @return true if the the value is availabl, false if not
+     * @return true if the Maybe is in "successful" state, false if not
      * @see #hasException()
      */
     public boolean isSuccesful() {
@@ -117,11 +117,12 @@ public class Maybe<T> {
     }
 
     /**
-     * Returns true, if this Maybe is in a successful state, i.e. it does not contain an exception and thus has a valid
-     * value. For normal Maybes, the value will always be non-null. The only exception to this is a Maybe<Void> which in
-     * successful state has a value of {@code null}. This is equivalent to {@code !hasException()}
+     * Returns true, if this Maybe is in a successful state, if it has a valid non-null value. Usually, a Maybe in a
+     * successful state always has a value. The only exception to this is a Maybe<Void> which even in
+     * successful state does not have a value. So this method would return {@code false}. Use the method
+     * {@link #isSuccesful()} in such a case.
      *
-     * @return true if the the value is availabl, false if not
+     * @return true if the the value is available, false if not
      * @see #hasException()
      */
     public boolean hasValue() {
