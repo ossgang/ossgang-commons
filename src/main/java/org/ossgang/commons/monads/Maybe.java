@@ -22,10 +22,12 @@
 
 package org.ossgang.commons.monads;
 
-
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
+
+import java.util.NoSuchElementException;
 
 /**
  * This utility class implements the concept of a "Maybe" or "Try" {@link Optional}. A Maybe&lt;T&gt; either carries a
@@ -77,8 +79,10 @@ public class Maybe<T> {
     }
 
     /**
-     * Construct a "successful" {@link Maybe}&lt;Void&gt; containing a null value. This special Maybe objects represents a
-     * successful execution with no result (e.g. a void function). Note that ONLY Maybe&lt;Void&gt; is allowed to carry a null
+     * Construct a "successful" {@link Maybe}&lt;Void&gt; containing a null value. This special Maybe objects represents
+     * a
+     * successful execution with no result (e.g. a void function). Note that ONLY Maybe&lt;Void&gt; is allowed to carry
+     * a null
      * value.
      *
      * @return the successful Maybe&lt;Void&gt; object
@@ -88,12 +92,19 @@ public class Maybe<T> {
     }
 
     /**
-     * Returns the exception, if any.
+     * Returns true, if this Maybe is in a successful state, i.e. it does not contain an exception. Usually this means,
+     * the Maybe has a valid (non-null) value. So usually this is equivalent to {@code #hasValue()}. The only exception
+     * to this is a "successful"
+     * Maybe<Void> which does not have a valid value (and thus the {@link #value} would throw even if the Maybe is in a
+     * successful state.
+     * <p>
+     * This is equivalent to {@code !hasException()}
      *
-     * @return the contained exception, or Optional.empty() if none occurred.
+     * @return true if the Maybe is in "successful" state, false if not
+     * @see #hasException()
      */
-    public Optional<Throwable> exception() {
-        return Optional.ofNullable(exception);
+    public boolean isSuccesful() {
+        return !hasException();
     }
 
     /**
@@ -106,30 +117,64 @@ public class Maybe<T> {
     }
 
     /**
+     * Returns true, if this Maybe is in a successful state, if it has a valid non-null value. Usually, a Maybe in a
+     * successful state always has a value. The only exception to this is a Maybe<Void> which even in
+     * successful state does not have a value. So this method would return {@code false}. Use the method
+     * {@link #isSuccesful()} in such a case.
+     *
+     * @return true if the the value is available, false if not
+     * @see #hasException()
+     */
+    public boolean hasValue() {
+        return value != null;
+    }
+
+    /**
      * Retrieve the value stored in this {@link Maybe}. If an exception is stored, this method will re-throw it wrapped
-     * in a {@link RuntimeException}.
+     * in a {@link RuntimeException}. If no value is contained, then this method will throw. Therefore, always check
+     * before if a value is stored by using the {@link #hasValue()} method.
      *
      * @return the value
      * @throws RuntimeException if this Maybe objects contains an exception
+     * @throws NoSuchElementException if the value is {@code null} (can only happen for a successful Maybe<Void>)
+     * @see #hasValue()
      */
     public T value() {
         throwOnException();
-        return value;
+        return optionalValue().get();
+    }
+
+    /**
+     * Retrieves the exception stored in this Maybe. If no exception is stored, then this method will throw. Therefore,
+     * always check before if an exception is there using the {@link #hasException()} method.
+     *
+     * @return the exception stored in this Maybe
+     * @throws NoSuchElementException if the Maybe does not contain an exception
+     * @see #hasException()
+     */
+    public Throwable exception() {
+        return optionalException().get();
     }
 
     /**
      * Retrieve the value stored in this {@link Maybe} as an {@link Optional}. If an exception is stored in this Maybe,
-     * the returned optional will be empty. For a "successful" {@link Maybe}&lt;Void&gt;, it will contain null.
+     * the returned optional will be empty. For a "successful" {@link Maybe}&lt;Void&gt;, it will also be an empty
+     * optional.
      *
-     * @return the value
-     * @throws RuntimeException if this Maybe objects contains an exception
+     * @return the value as an optional (empty in case of a successful void or an unsuccessful Maybe)
      */
     public Optional<T> optionalValue() {
-        if (exception != null) {
-            return Optional.empty();
-        } else {
-            return Optional.of(value);
-        }
+        return Optional.ofNullable(value);
+    }
+
+    /**
+     * Returns an optional containing the exception, if any. If no exception is contained, then an empty optional
+     * is returned.
+     *
+     * @return the contained exception, or Optional.empty() if none occurred.
+     */
+    public Optional<Throwable> optionalException() {
+        return Optional.ofNullable(exception);
     }
 
     /**
@@ -145,14 +190,14 @@ public class Maybe<T> {
     /**
      * Construct a {@link Maybe} from the execution of a function.
      *
-     * @param runnable the function to run.
+     * @param supplier the function to run.
      * @return A {@link Maybe} object containing either the return value of the function, or an exception of one
      *         occurred.
      */
-    public static <T> Maybe<T> attempt(ThrowingSupplier<T> runnable) {
-        requireNonNull(runnable);
+    public static <T> Maybe<T> attempt(ThrowingSupplier<T> supplier) {
+        requireNonNull(supplier);
         try {
-            return Maybe.ofValue(runnable.get());
+            return Maybe.ofValue(supplier.get());
         } catch (Exception e) {
             return Maybe.ofException(e);
         }
@@ -187,11 +232,7 @@ public class Maybe<T> {
         if (exception != null) {
             return Maybe.ofException(exception);
         }
-        try {
-            return Maybe.ofValue(function.apply(value));
-        } catch (Exception e) {
-            return Maybe.ofException(e);
-        }
+        return attempt(() -> function.apply(value));
     }
 
     /**
@@ -207,12 +248,7 @@ public class Maybe<T> {
         if (exception != null) {
             return Maybe.ofException(exception);
         }
-        try {
-            function.accept(value);
-            return Maybe.ofVoid();
-        } catch (Exception e) {
-            return Maybe.ofException(e);
-        }
+        return attempt(() -> function.accept(value));
     }
 
     /**
@@ -220,20 +256,16 @@ public class Maybe<T> {
      * "unsuccessful" state. The function does not get the value of the Maybe passed as parameter, which is useful e.g.
      * for chaining Maybe&lt;Void&gt;. If the function succeeds, its result is returned as a successful Maybe.
      *
-     * @param runnable the function to apply
+     * @param supplier the function to apply
      * @return A successful Maybe wrapping the return value if the function is executed and succeeds. An unsuccessful
      *         Maybe otherwise.
      */
-    public <R> Maybe<R> then(ThrowingSupplier<R> runnable) {
-        requireNonNull(runnable);
+    public <R> Maybe<R> then(ThrowingSupplier<R> supplier) {
+        requireNonNull(supplier);
         if (exception != null) {
             return Maybe.ofException(exception);
         }
-        try {
-            return Maybe.ofValue(runnable.get());
-        } catch (Exception e) {
-            return Maybe.ofException(e);
-        }
+        return attempt(() -> supplier.get());
     }
 
     /**
@@ -249,12 +281,7 @@ public class Maybe<T> {
         if (exception != null) {
             return Maybe.ofException(exception);
         }
-        try {
-            runnable.run();
-            return Maybe.ofVoid();
-        } catch (Exception e) {
-            return Maybe.ofException(e);
-        }
+        return attempt(() -> runnable.run());
     }
 
     /**
@@ -270,11 +297,7 @@ public class Maybe<T> {
         if (exception == null) {
             return Maybe.ofValue(value);
         }
-        try {
-            return Maybe.ofValue(function.apply(exception));
-        } catch (Exception e) {
-            return Maybe.ofException(e);
-        }
+        return attempt(() -> function.apply(exception));
     }
 
     /**
@@ -282,49 +305,76 @@ public class Maybe<T> {
      * wrapped in this maybe. If it returns successfully, a "successful" void Maybe is returned. If it
      * throws, the exception is returned wrapped in an "unsuccessful" Maybe.
      *
-     * @param function the recovery handler to apply
+     * @param consumer the recovery handler to apply
      * @return A successful void Maybe the new value if the handler returns. An unsuccessful Maybe if it throws.
      */
-    public Maybe<Void> recover(ThrowingConsumer<Throwable> function) {
-        requireNonNull(function);
+    public Maybe<Void> recover(ThrowingConsumer<Throwable> consumer) {
+        requireNonNull(consumer);
         if (exception == null) {
             return Maybe.ofVoid();
         }
-        try {
-            function.accept(exception);
-            return Maybe.ofVoid();
-        } catch (Exception e) {
-            return Maybe.ofException(e);
-        }
+        return attempt(() -> consumer.accept(exception));
     }
 
     /**
-     * Apply a function if this {@link Maybe} is in a "unsuccessful" state. The function gets passed the exception
-     * wrapped in this maybe. If the function succeeds, this Maybe is returned unaltered. Otherwise, the stored
-     * exception gets replaced by the one thrown by the consumer.
+     * Pass the exception to the given consumer if this {@link Maybe} is in a "unsuccessful" state. If the consumer
+     * throws when called, then the resulting exception is
+     * escalated.
      *
-     * @param function the exception handler to apply
+     * @param consumer the exception handler to apply
      * @return this
+     * @throws NullPointerException in case the consumer is {@code null}.
+     * @throws RuntimeException in case the consumer throws any exception
      */
-    public Maybe<T> onException(ThrowingConsumer<Throwable> function) {
-        requireNonNull(function);
-        if (exception == null) {
-            return this;
+    public Maybe<T> ifException(Consumer<Throwable> consumer) {
+        requireNonNull(consumer, "The consumer must not be null.");
+        if (hasException()) {
+            consumer.accept(exception);
         }
-        try {
-            function.accept(exception);
-            return this;
-        } catch (Exception e) {
-            return Maybe.ofException(e);
+        return this;
+    }
+
+    /**
+     * Pass the value to the given consumer if this {@link Maybe} is in a "successful" state. If the consumer
+     * throws when called, then the resulting exception is escalated.
+     *
+     * @param consumer the handler to which to pass on the value.
+     * @return this
+     * @throws NullPointerException in case the consumer is {@code null}.
+     * @throws RuntimeException in case the consumer throws any exception
+     */
+    public Maybe<T> ifValue(Consumer<T> consumer) {
+        requireNonNull(consumer, "The consumer must not be null.");
+        if (hasValue()) {
+            consumer.accept(value);
         }
+        return this;
+    }
+
+    /**
+     * Call the given runnable if the Maybe is in a successful state. No value is passed here, as e.g. a successful
+     * Maybe<Void> does not have a value. If you rely on the value, then consider using the {@link #ifValue(Consumer)}
+     * callback. If the given runnable throws when called, then the resulting exception is escalated.
+     *
+     * @param consumer the exception handler to apply
+     * @return this
+     * @throws NullPointerException in case the runnable is {@code null}.
+     * @throws RuntimeException in case the runnable throws any exception
+     */
+    public Maybe<T> ifSuccessful(Runnable runnable) {
+        requireNonNull(runnable, "The runnable must not be null.");
+        if (isSuccesful()) {
+            runnable.run();
+        }
+        return this;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((exception == null) ? 0 : exception.hashCode());
-        result = prime * result + ((value == null) ? 0 : value.hashCode());
+        result = (prime * result) + ((exception == null) ? 0 : exception.hashCode());
+        result = (prime * result) + ((value == null) ? 0 : value.hashCode());
         return result;
     }
 

@@ -48,7 +48,7 @@ public class DerivedObservableValue<K, I, O> extends DispatchingObservableValue<
 
     private void deriveUpdate(K key, I item) {
         attempt(() -> mapper.apply(key, item)) //
-                .onException(this::dispatchException) //
+                .ifException(this::dispatchException) //
                 .optionalValue() //
                 .orElseGet(Optional::empty) //
                 .ifPresent(this::dispatchValue);
