@@ -356,7 +356,7 @@ public class Maybe<T> {
      * Maybe&lt;Void&gt; does not have a value. If you rely on the value, then consider using the {@link #ifValue(Consumer)}
      * callback. If the given runnable throws when called, then the resulting exception is escalated.
      *
-     * @param consumer the exception handler to apply
+     * @param runnable the handler to run if this monad is in a successful state
      * @return this
      * @throws NullPointerException in case the runnable is {@code null}.
      * @throws RuntimeException in case the runnable throws any exception
