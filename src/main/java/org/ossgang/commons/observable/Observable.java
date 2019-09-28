@@ -22,6 +22,12 @@
 
 package org.ossgang.commons.observable;
 
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+import static org.ossgang.commons.observable.DerivedObservableValue.derive;
+
 /**
  * An stream of objects of type T, which can be subscribed to by interested consumers.
  *
@@ -44,4 +50,26 @@ public interface Observable<T> {
      * @return a Subscription object, which can be used to unsubscribe at a later point
      */
     Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options);
+
+    /**
+     * Create a derived observable applying a mapping function to each value.
+     *
+     * @param mapper the mapper to apply
+     * @param <D> the destination type
+     * @return the derived observable
+     */
+    default <D> Observable<D> map(Function<T, D> mapper) {
+        return derive(this, mapper.andThen(Optional::of));
+    }
+
+    /**
+     * Create a derived observable applying a filtering function to the updates of this one. Values which do not
+     * match the provided predicate are discarded.
+     *
+     * @param filter the filter to apply
+     * @return the derived observable
+     */
+    default Observable<T> filter(Predicate<T> filter) {
+        return derive(this, v -> Optional.of(v).filter(filter));
+    }
 }
