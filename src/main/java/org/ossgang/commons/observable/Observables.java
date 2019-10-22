@@ -59,7 +59,7 @@ public class Observables {
      * @return an {@link ObservableValue} that zips the values of the provided {@link ObservableValue}. The {@link Map}
      * parameter provides the indexes of the {@link Map} that will be passed to the specified mapper {@link Function}.
      */
-    public static <K, I, O> ObservableValue<O> zip(Map<K, ObservableValue<I>> sourcesMap, Function<Map<K, I>, O> combiner) {
+    public static <K, I, O> ObservableValue<O> zip(Map<K, ? extends Observable<I>> sourcesMap, Function<Map<K, I>, O> combiner) {
         Map<K, I> valueMap = new HashMap<>();
         Set<K> keys = new HashSet<>(sourcesMap.keySet());
         return derive(sourcesMap, (k, v) -> {
@@ -90,7 +90,7 @@ public class Observables {
      * the provided {@link ObservableValue} matches the index of the {@link List} of values provided to the mapping
      * {@link Function}.
      */
-    public static <I, O> ObservableValue<O> zip(List<ObservableValue<I>> sources, Function<List<I>, O> combiner) {
+    public static <I, O> ObservableValue<O> zip(List<? extends Observable<I>> sources, Function<List<I>, O> combiner) {
         return zip(toIndexMap(sources), idxMap -> combiner.apply(fromIndexMap(idxMap)));
     }
 
@@ -107,7 +107,7 @@ public class Observables {
      * @return an {@link ObservableValue} that zips the values of the provided {@link ObservableValue}. The {@link Map} parameter provides the indexes of the
      * resulting {@link ObservableValue} values.
      */
-    public static <K, I> ObservableValue<Map<K, I>> zip(Map<K, ObservableValue<I>> sourcesMap) {
+    public static <K, I> ObservableValue<Map<K, I>> zip(Map<K, ? extends Observable<I>> sourcesMap) {
         return zip(sourcesMap, Function.identity());
     }
 
@@ -122,7 +122,7 @@ public class Observables {
      * @return an {@link ObservableValue} that zips the values of the provided {@link ObservableValue}. The index of
      * the provided {@link ObservableValue} matches the index of the {@link List} in the resulting {@link ObservableValue}.
      */
-    public static <I> ObservableValue<List<I>> zip(List<ObservableValue<I>> sources) {
+    public static <I> ObservableValue<List<I>> zip(List<? extends Observable<I>> sources) {
         return zip(sources, Function.identity());
     }
 
@@ -138,7 +138,7 @@ public class Observables {
      * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
      * result of applying the mapper {@link Function}. The {@link Map}s are used to avoid mathing values by index.
      */
-    public static <K, I, O> ObservableValue<O> combineLatest(Map<K, ObservableValue<I>> sourcesMap,
+    public static <K, I, O> ObservableValue<O> combineLatest(Map<K, ? extends Observable<I>> sourcesMap,
                                                              Function<Map<K, I>, O> combiner) {
         Map<K, I> valueMap = new HashMap<>();
         Set<K> keys = new HashSet<>(sourcesMap.keySet());
@@ -165,7 +165,7 @@ public class Observables {
      * @return an {@link ObservableValue} that on each update of any source publishes the result of the
      * combiner applied with the latest values of the other inputs.
      */
-    public static <I, O> ObservableValue<O> combineLatest(List<ObservableValue<I>> sources,
+    public static <I, O> ObservableValue<O> combineLatest(List<? extends Observable<I>> sources,
                                                           Function<List<I>, O> combiner) {
         return combineLatest(toIndexMap(sources), idxMap -> combiner.apply(fromIndexMap(idxMap)));
     }
@@ -180,7 +180,7 @@ public class Observables {
      * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes a
      * {@link Map} with the values of each corresponding source {@link ObservableValue}.
      */
-    public static <K, I> ObservableValue<Map<K, I>> combineLatest(Map<K, ObservableValue<I>> sourcesMap) {
+    public static <K, I> ObservableValue<Map<K, I>> combineLatest(Map<K, ? extends Observable<I>> sourcesMap) {
         return combineLatest(sourcesMap, Function.identity());
     }
 
@@ -193,7 +193,7 @@ public class Observables {
      * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
      * a list containing the values of each {@link ObservableValue}
      */
-    public static <I> ObservableValue<List<I>> combineLatest(List<ObservableValue<I>> sources) {
+    public static <I> ObservableValue<List<I>> combineLatest(List<? extends Observable<I>> sources) {
         return combineLatest(sources, Function.identity());
     }
 

@@ -95,8 +95,8 @@ public class Maybe<T> {
      * Returns true, if this Maybe is in a successful state, i.e. it does not contain an exception. Usually this means,
      * the Maybe has a valid (non-null) value. So usually this is equivalent to {@code #hasValue()}. The only exception
      * to this is a "successful"
-     * Maybe<Void> which does not have a valid value (and thus the {@link #value} would throw even if the Maybe is in a
-     * successful state.
+     * Maybe&lt;Void&gt; which does not have a valid value (and thus the {@link #value} would throw even if the Maybe is
+     * in a successful state.
      * <p>
      * This is equivalent to {@code !hasException()}
      *
@@ -118,7 +118,7 @@ public class Maybe<T> {
 
     /**
      * Returns true, if this Maybe is in a successful state, if it has a valid non-null value. Usually, a Maybe in a
-     * successful state always has a value. The only exception to this is a Maybe<Void> which even in
+     * successful state always has a value. The only exception to this is a Maybe&lt;Void&lt; which even in
      * successful state does not have a value. So this method would return {@code false}. Use the method
      * {@link #isSuccesful()} in such a case.
      *
@@ -136,7 +136,7 @@ public class Maybe<T> {
      *
      * @return the value
      * @throws RuntimeException if this Maybe objects contains an exception
-     * @throws NoSuchElementException if the value is {@code null} (can only happen for a successful Maybe<Void>)
+     * @throws NoSuchElementException if the value is {@code null} (can only happen for a successful Maybe&lt;Void&gt;)
      * @see #hasValue()
      */
     public T value() {
@@ -353,10 +353,10 @@ public class Maybe<T> {
 
     /**
      * Call the given runnable if the Maybe is in a successful state. No value is passed here, as e.g. a successful
-     * Maybe<Void> does not have a value. If you rely on the value, then consider using the {@link #ifValue(Consumer)}
+     * Maybe&lt;Void&gt; does not have a value. If you rely on the value, then consider using the {@link #ifValue(Consumer)}
      * callback. If the given runnable throws when called, then the resulting exception is escalated.
      *
-     * @param consumer the exception handler to apply
+     * @param runnable the handler to run if this monad is in a successful state
      * @return this
      * @throws NullPointerException in case the runnable is {@code null}.
      * @throws RuntimeException in case the runnable throws any exception

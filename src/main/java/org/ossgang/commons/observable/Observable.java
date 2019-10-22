@@ -24,10 +24,12 @@ package org.ossgang.commons.observable;
 
 import static org.ossgang.commons.observable.DerivedObservableValue.derive;
 
+
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static org.ossgang.commons.observable.DerivedObservableValue.derive;
 /**
  * An stream of objects of type T, which can be subscribed to by interested consumers.
  *
