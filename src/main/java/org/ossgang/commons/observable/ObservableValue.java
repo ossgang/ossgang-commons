@@ -50,6 +50,7 @@ public interface ObservableValue<T> extends Observable<T> {
      * @param <D> the destination type
      * @return the derived observable
      */
+    @Override
     default <D> ObservableValue<D> map(Function<T, D> mapper) {
         return derive(this, mapper.andThen(Optional::of));
     }
@@ -61,6 +62,7 @@ public interface ObservableValue<T> extends Observable<T> {
      * @param filter the filter to apply
      * @return the derived observable
      */
+    @Override
     default ObservableValue<T> filter(Predicate<T> filter) {
         return derive(this, v -> Optional.of(v).filter(filter));
     }

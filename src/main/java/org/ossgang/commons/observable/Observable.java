@@ -22,6 +22,12 @@
 
 package org.ossgang.commons.observable;
 
+import static org.ossgang.commons.observable.DerivedObservableValue.derive;
+
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 /**
  * An stream of objects of type T, which can be subscribed to by interested consumers.
  *
@@ -31,10 +37,8 @@ public interface Observable<T> {
     /**
      * Subscribe for future updates of this observable. By default, the Observable will hold a strong reference
      * to the provided Observer (this can be overriden by the WEAK option).
-     *
      * The provided {@link SubscriptionOption}s are specific to the sub-type of observable. The available options are
      * typically exposed in the interface of the concrete sub-type, or any of its parent interfaces.
-     *
      * The returned {@link Subscription} object can be used to terminate the subscription at a later point by calling
      * {@link Subscription#unsubscribe()}. If the subscription will live for the lifetime of the application, it is
      * safe to discard this object.
@@ -44,4 +48,26 @@ public interface Observable<T> {
      * @return a Subscription object, which can be used to unsubscribe at a later point
      */
     Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options);
+
+    /**
+     * Create a derived observable applying a mapping function to each value.
+     *
+     * @param mapper the mapper to apply
+     * @param <D> the destination type
+     * @return the derived observable
+     */
+    default <D> Observable<D> map(Function<T, D> mapper) {
+        return derive(this, mapper.andThen(Optional::of));
+    }
+
+    /**
+     * Create a derived observable applying a filtering function to the updates of this one. Values which do not
+     * match the provided predicate are discarded.
+     *
+     * @param filter the filter to apply
+     * @return the derived observable
+     */
+    default Observable<T> filter(Predicate<T> filter) {
+        return derive(this, v -> Optional.of(v).filter(filter));
+    }
 }
