@@ -1,13 +1,18 @@
 package org.ossgang.commons.observable;
 
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.IntStream;
-
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.ossgang.commons.observable.DerivedObservableValue.derive;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.IntStream;
 
 /**
  * Static support class for dealing with {@link Observable} and {@link ObservableValue}.

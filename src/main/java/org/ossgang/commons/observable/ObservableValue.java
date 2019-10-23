@@ -26,8 +26,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static org.ossgang.commons.observable.DerivedObservableValue.derive;
-
 /**
  * An observable of type T which has an actual value.
  *

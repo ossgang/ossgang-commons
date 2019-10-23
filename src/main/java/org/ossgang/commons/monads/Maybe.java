@@ -22,12 +22,11 @@
 
 package org.ossgang.commons.monads;
 
-import java.util.Optional;
-import java.util.function.Consumer;
-
 import static java.util.Objects.requireNonNull;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * This utility class implements the concept of a "Maybe" or "Try" {@link Optional}. A Maybe&lt;T&gt; either carries a

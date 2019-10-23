@@ -22,12 +22,16 @@
 
 package org.ossgang.commons.observable;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-
 import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.observable.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.observable.SubscriptionOptions.ON_CHANGE;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A basic implementation of {@link ObservableValue}, based on {@link DispatchingObservable} to handle the update

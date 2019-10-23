@@ -1,14 +1,14 @@
 package org.ossgang.commons.observable;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-
 import static java.util.Collections.singletonMap;
 import static org.ossgang.commons.monads.Maybe.attempt;
 import static org.ossgang.commons.observable.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.observable.WeakObservers.weakWithErrorAndSubscriptionCountHandling;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * An {@link ObservableValue} which gets its data from a parent (upstream) {@link ObservableValue} or {@link Observable},
