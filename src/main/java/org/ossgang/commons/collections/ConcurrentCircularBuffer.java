@@ -1,4 +1,4 @@
-package org.ossgang.commons.observable.mappers.buffer;
+package org.ossgang.commons.collections;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +48,11 @@ public class ConcurrentCircularBuffer<T> {
     }
 
     /**
-     * Retrieves the current content of the buffer as a list.
+     * Retrieves the current content of the buffer as a list. Note: The list will have *roughly* the same length as the
+     * buffer or less. There is no guarantee on the exact length, because of the lock-free nature of the buffer, it can
+     * happen that items were removed or added while the retrieving loop is running.
+     *
+     * @return the content of the buffer as a list.
      */
     public List<T> toList() {
         List<T> list = new ArrayList<>();
@@ -74,5 +78,6 @@ public class ConcurrentCircularBuffer<T> {
             throw new IllegalArgumentException("buffer length must be >= 0 but was set to " + newLength);
         }
         length.set(newLength);
+        cleanup();
     }
 }

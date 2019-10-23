@@ -52,7 +52,7 @@ public interface ObservableValue<T> extends Observable<T> {
      */
     @Override
     default <D> ObservableValue<D> map(Function<T, D> mapper) {
-        return derive(this, mapper.andThen(Optional::of));
+        return derive(mapper.andThen(Optional::of));
     }
 
     /**
@@ -64,7 +64,19 @@ public interface ObservableValue<T> extends Observable<T> {
      */
     @Override
     default ObservableValue<T> filter(Predicate<T> filter) {
-        return derive(this, v -> Optional.of(v).filter(filter));
+        return derive(v -> Optional.of(v).filter(filter));
+    }
+
+    /**
+     * Creates a derived observable value, using the given mapper. If the mapper returns an optional containing a value,
+     * then values are emitted downstream, if the returned optional is empty, values will be filtered out.
+     *
+     * @param the mapper to be used
+     * @return the derived observable
+     */
+    @Override
+    default <D> ObservableValue<D> derive(Function<T, Optional<D>> mapper) {
+        return DerivedObservableValue.derive(this, mapper);
     }
 
 }

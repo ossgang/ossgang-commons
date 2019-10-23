@@ -3,17 +3,19 @@ package org.ossgang.commons.observable.mappers.buffer;
 import static org.ossgang.commons.observable.SubscriptionOptions.ON_CHANGE;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
+import org.ossgang.commons.collections.ConcurrentCircularBuffer;
 import org.ossgang.commons.observable.Observable;
 import org.ossgang.commons.observable.Observer;
 import org.ossgang.commons.property.Properties;
 import org.ossgang.commons.property.Property;
 
 /**
- * Represents a buffer that can be used as a mapping function for {@link Observable}s.
+ * Represents a buffer that can be used as a mapping function for {@link Observable#derive(Function)} method.
  * <p>
- * This buffer has properties himself, by which its behaviour can be controlled during runtime:
+ * This buffer has properties himself, by which its behavior can be controlled during runtime:
  * <ul>
  * <li>{@link #size()}: Defines the size of the buffer</li>
  * <li>{@link #minEmitSize()}: Defines the size at which the downstream observable starts emitting. The default is
@@ -22,7 +24,7 @@ import org.ossgang.commons.property.Property;
  * Additionally, the buffer exposes an {@link Observer}, {@link #clearTrigger()} that can be attached to another
  * observable, to trigger clearing of this buffer.
  */
-public class BufferMapper<T> implements Function<T, List<T>> {
+public class BufferMapper<T> implements Function<T, Optional<List<T>>> {
 
     private static final int DEFAULT_MIN_EMIT_SIZE = 2;
     private final ConcurrentCircularBuffer<T> buffer;
@@ -40,13 +42,13 @@ public class BufferMapper<T> implements Function<T, List<T>> {
     }
 
     @Override
-    public List<T> apply(T t) {
+    public Optional<List<T>> apply(T t) {
         buffer.add(t);
         List<T> buffered = buffer.toList();
         if (buffered.size() > minEmitSize.get()) {
-            return buffered;
+            return Optional.of(buffered);
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
