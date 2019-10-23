@@ -7,20 +7,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * A circular buffer of a given size. The exact length is not fully guaranteed. Cleanup is done on each addition of a
- * value. The length can be changed during runtime, however, the new length only applies as soon as a new element is
- * added.
+ * A lock-free implementation circular buffer of variable (maximum) size. The exact length is not fully guaranteed.
+ * Cleanup is done on each addition of a value. The length can be changed during runtime.
  */
 public class ConcurrentCircularBuffer<T> {
 
     private final AtomicLong nextIndex = new AtomicLong(0);
     private final AtomicLong firstIndex = new AtomicLong(0);
-    private final AtomicInteger length = new AtomicInteger(1);
+    private final AtomicInteger maxSize = new AtomicInteger(1);
 
     private final ConcurrentHashMap<Long, T> elements = new ConcurrentHashMap<>();
 
     /**
-     * Adds a value to the buffer. If the length of the buffer is exceede, old elements are removed.
+     * Adds a value to the buffer. If the maxLength of the buffer is exceeded, old elements are removed.
      */
     public void add(T value) {
         long index = nextIndex.getAndIncrement();
@@ -36,7 +35,7 @@ public class ConcurrentCircularBuffer<T> {
     }
 
     private void cleanup() {
-        long newFirstIndex = nextIndex.get() - length.get();
+        long newFirstIndex = nextIndex.get() - maxSize.get();
         cleanUpTo(newFirstIndex);
     }
 
@@ -69,15 +68,16 @@ public class ConcurrentCircularBuffer<T> {
     }
 
     /**
-     * Changes the length of the buffer to the given value.
+     * Changes the maximum length of the buffer to the given value. As soon as the maximum length is reached, old
+     * entries will be cleaned up.
      *
      * @throws IllegalArgumentException if the new length is less than 0
      */
-    public void setLength(int newLength) {
-        if (newLength < 0) {
-            throw new IllegalArgumentException("buffer length must be >= 0 but was set to " + newLength);
+    public void setMaxSize(int newMaxSize) {
+        if (newMaxSize < 0) {
+            throw new IllegalArgumentException("buffer maxSize must be >= 0 but was set to " + newMaxSize);
         }
-        length.set(newLength);
+        maxSize.set(newMaxSize);
         cleanup();
     }
 }
