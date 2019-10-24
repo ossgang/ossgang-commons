@@ -22,15 +22,19 @@
 
 package org.ossgang.commons.observable;
 
-import java.util.*;
+import static java.util.Collections.newSetFromMap;
+import static java.util.concurrent.Executors.newCachedThreadPool;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-
-import static java.util.Collections.newSetFromMap;
-import static java.util.concurrent.Executors.newCachedThreadPool;
 
 /**
  * A basic implementation of {@link Observable} managing a set of listeners, and dispatching updates to them.

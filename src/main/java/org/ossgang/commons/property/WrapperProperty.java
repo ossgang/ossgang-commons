@@ -22,12 +22,12 @@
 
 package org.ossgang.commons.property;
 
+import java.util.function.Consumer;
+
 import org.ossgang.commons.observable.ObservableValue;
 import org.ossgang.commons.observable.Observer;
 import org.ossgang.commons.observable.Subscription;
 import org.ossgang.commons.observable.SubscriptionOption;
-
-import java.util.function.Consumer;
 
 public class WrapperProperty<T> implements Property<T>, ObservableValue<T> {
     private final ObservableValue<T> observableValue;

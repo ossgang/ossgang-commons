@@ -22,11 +22,10 @@
 
 package org.ossgang.commons.observable;
 
+
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import static org.ossgang.commons.observable.DerivedObservableValue.derive;
 
 /**
  * An stream of objects of type T, which can be subscribed to by interested consumers.
@@ -37,10 +36,8 @@ public interface Observable<T> {
     /**
      * Subscribe for future updates of this observable. By default, the Observable will hold a strong reference
      * to the provided Observer (this can be overriden by the WEAK option).
-     *
      * The provided {@link SubscriptionOption}s are specific to the sub-type of observable. The available options are
      * typically exposed in the interface of the concrete sub-type, or any of its parent interfaces.
-     *
      * The returned {@link Subscription} object can be used to terminate the subscription at a later point by calling
      * {@link Subscription#unsubscribe()}. If the subscription will live for the lifetime of the application, it is
      * safe to discard this object.
@@ -59,7 +56,7 @@ public interface Observable<T> {
      * @return the derived observable
      */
     default <D> Observable<D> map(Function<T, D> mapper) {
-        return derive(this, mapper.andThen(Optional::of));
+        return derive(mapper.andThen(Optional::of));
     }
 
     /**
@@ -70,6 +67,17 @@ public interface Observable<T> {
      * @return the derived observable
      */
     default Observable<T> filter(Predicate<T> filter) {
-        return derive(this, v -> Optional.of(v).filter(filter));
+        return derive(v -> Optional.of(v).filter(filter));
+    }
+
+    /**
+     * Creates a derived observable, using the given mapper. If the mapper returns an optional containing a value, then
+     * values are emitted downstream, if the returned optional is empty, values will be filtered out.
+     *
+     * @param the mapper to be used
+     * @return the derived observable
+     */
+    default <D> Observable<D> derive(Function<T, Optional<D>> mapper) {
+        return DerivedObservableValue.derive(this, mapper);
     }
 }

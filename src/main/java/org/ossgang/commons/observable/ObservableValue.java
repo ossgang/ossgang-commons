@@ -26,8 +26,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static org.ossgang.commons.observable.DerivedObservableValue.derive;
-
 /**
  * An observable of type T which has an actual value.
  *
@@ -50,8 +48,9 @@ public interface ObservableValue<T> extends Observable<T> {
      * @param <D> the destination type
      * @return the derived observable
      */
+    @Override
     default <D> ObservableValue<D> map(Function<T, D> mapper) {
-        return derive(this, mapper.andThen(Optional::of));
+        return derive(mapper.andThen(Optional::of));
     }
 
     /**
@@ -61,8 +60,21 @@ public interface ObservableValue<T> extends Observable<T> {
      * @param filter the filter to apply
      * @return the derived observable
      */
+    @Override
     default ObservableValue<T> filter(Predicate<T> filter) {
-        return derive(this, v -> Optional.of(v).filter(filter));
+        return derive(v -> Optional.of(v).filter(filter));
+    }
+
+    /**
+     * Creates a derived observable value, using the given mapper. If the mapper returns an optional containing a value,
+     * then values are emitted downstream, if the returned optional is empty, values will be filtered out.
+     *
+     * @param the mapper to be used
+     * @return the derived observable
+     */
+    @Override
+    default <D> ObservableValue<D> derive(Function<T, Optional<D>> mapper) {
+        return DerivedObservableValue.derive(this, mapper);
     }
 
 }
