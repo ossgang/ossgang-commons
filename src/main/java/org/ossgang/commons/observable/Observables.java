@@ -1,18 +1,19 @@
 package org.ossgang.commons.observable;
 
+import org.ossgang.commons.observable.connectors.ConnectorObservableValue;
+import org.ossgang.commons.observable.connectors.ConnectorObservables;
+import org.ossgang.commons.observable.connectors.ConnectorState;
+import org.ossgang.commons.observable.connectors.DynamicConnectorObservableValue;
+
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.IntStream;
+
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.ossgang.commons.observable.DerivedObservableValue.derive;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.IntStream;
 
 /**
  * Static support class for dealing with {@link Observable} and {@link ObservableValue}.
@@ -36,6 +37,26 @@ public class Observables {
             return (ObservableValue<T>) observable;
         }
         return derive(observable, Optional::of);
+    }
+
+    public static <T> ConnectorObservableValue<T> connectWhen(ObservableValue<T> upstream, ObservableValue<ConnectorState> connectProvider) {
+        return ConnectorObservables.connectWhen(upstream, connectProvider);
+    }
+
+    public static <T> ConnectorObservableValue<T> connectWhen(Supplier<ObservableValue<T>> upstreamSupplier, ObservableValue<ConnectorState> connectProvider) {
+        return ConnectorObservables.connectWhen(upstreamSupplier, connectProvider);
+    }
+
+    public static <T> ConnectorObservableValue<T> connectorObservableValue(Supplier<ObservableValue<T>> upstreamSupplier) {
+        return ConnectorObservables.connectorObservableValue(upstreamSupplier);
+    }
+
+    public static <T> ConnectorObservableValue<T> connectorTo(ObservableValue<T> upstream) {
+        return ConnectorObservables.connectorTo(upstream);
+    }
+
+    public static <T> DynamicConnectorObservableValue<T> dynamicConnectorObservableValue() {
+        return ConnectorObservables.dynamicConnectorObservableValue();
     }
 
     /**

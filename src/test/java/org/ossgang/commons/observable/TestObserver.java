@@ -9,38 +9,43 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.ossgang.commons.observable.SubscriptionOptions.FIRST_UPDATE;
+
 
 public class TestObserver<T> implements Observer<T> {
 
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
-    private final Property<Integer> valuesCount = Properties.property(0);
-    private final List<T> values = new ArrayList<>();
-    private final List<Throwable> exceptions = new ArrayList<>();
+    private final Object lock = new Object();
+    private final Property<List<T>> values = Properties.property(new ArrayList<>());
+    private final Property<List<Throwable>> exceptions = Properties.property(new ArrayList<>());
 
     @Override
     public void onValue(T value) {
-        synchronized (values) {
-            values.add(value);
-            valuesCount.set(valuesCount.get() + 1);
+        synchronized (lock) {
+            List<T> newValues = new ArrayList<>(values.get());
+            newValues.add(value);
+            values.set(newValues);
         }
     }
 
     @Override
     public void onException(Throwable exception) {
-        synchronized (exceptions) {
-            exceptions.add(exception);
+        synchronized (lock) {
+            List<Throwable> newExceptions = new ArrayList<>(exceptions.get());
+            newExceptions.add(exception);
+            exceptions.set(newExceptions);
         }
     }
 
     public List<T> receivedValues() {
-        synchronized (values) {
-            return new ArrayList<>(values);
+        synchronized (lock) {
+            return new ArrayList<>(values.get());
         }
     }
 
     public List<Throwable> receivedExceptions() {
-        synchronized (exceptions) {
-            return new ArrayList<>(exceptions);
+        synchronized (lock) {
+            return new ArrayList<>(exceptions.get());
         }
     }
 
@@ -49,21 +54,56 @@ public class TestObserver<T> implements Observer<T> {
     }
 
     public void awaitForValueCountToBe(int expectedCount, Duration timeout) {
-        CountDownLatch latch = new CountDownLatch(1);
-        valuesCount.subscribe(i -> {
-            if (i >= expectedCount) {
-                latch.countDown();
-            }
-        });
-        if (valuesCount.get() >= expectedCount) {
+        if (values.get().size() >= expectedCount) {
             return;
         }
+
+        CountDownLatch latch = new CountDownLatch(1);
+        Subscription subscription = values.subscribe(v -> {
+            if (v.size() >= expectedCount) {
+                latch.countDown();
+            }
+        }, FIRST_UPDATE);
+
         try {
             if (!latch.await(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-                throw new IllegalStateException("Timeout occurred - timeout was " + timeout);
+                throw new IllegalStateException("Timeout while waiting for count " + expectedCount + " - timeout was " + timeout);
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        } finally {
+            subscription.unsubscribe();
+        }
+    }
+
+    public void awaitForValue(T targetValue) {
+        CountDownLatch latch = new CountDownLatch(1);
+//        int currentSize;
+        Subscription subscription;
+        synchronized (lock) {
+            if (values.get().contains(targetValue)) {
+                return;
+            }
+
+//            currentSize = values.get().size();
+            subscription = values.subscribe(v -> {
+//                List<T> newValues = new ArrayList<>(v).subList(currentSize, v.size());
+                if (v.contains(targetValue)) {
+                    latch.countDown();
+                }
+            }, FIRST_UPDATE);
+        }
+
+        try {
+            if (!latch.await(DEFAULT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
+                throw new IllegalStateException("Timeout while waiting for value " + targetValue + " - timeout was " + DEFAULT_TIMEOUT);
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (subscription != null) {
+                subscription.unsubscribe();
+            }
         }
     }
 }
