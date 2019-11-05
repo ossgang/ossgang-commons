@@ -1,18 +1,13 @@
 package org.ossgang.commons.observable;
 
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
-import static org.ossgang.commons.observable.DerivedObservableValue.derive;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
+
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static org.ossgang.commons.observable.DerivedObservableValue.derive;
 
 /**
  * Static support class for dealing with {@link Observable} and {@link ObservableValue}.
@@ -20,6 +15,27 @@ import java.util.stream.IntStream;
 public class Observables {
     private Observables() {
         throw new UnsupportedOperationException("static only");
+    }
+
+    /**
+     * Create an {@link ObservableValueSink} with the specified initial value.
+     *
+     * @param initial the initial value of the {@link ObservableValueSink}
+     * @param <T> the type of the observable
+     * @return an {@link ObservableValueSink} with the specified initial value
+     */
+    public static <T> ObservableValueSink<T> observableValueSink(T initial) {
+        return new SimpleObservableValueSink<>(initial);
+    }
+
+    /**
+     * Create an {@link ObservableValueSink}.
+     *
+     * @param <T> the type of the observable
+     * @return an {@link ObservableValueSink}
+     */
+    public static <T> ObservableValueSink<T> observableValueSink() {
+        return new SimpleObservableValueSink<>(null);
     }
 
     /**
