@@ -41,10 +41,9 @@ public final class ConnectorObservables {
                     subscription.unsubscribe();
                 }
             } else {
-                ConnectorState actualState = connector.connectorState().get();
-                if (requestedState == CONNECTED && actualState == DISCONNECTED) {
+                if (requestedState == CONNECTED) {
                     connector.connect();
-                } else if (requestedState == DISCONNECTED && actualState == CONNECTED) {
+                } else if (requestedState == DISCONNECTED) {
                     connector.disconnect();
                 }
             }

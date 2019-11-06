@@ -27,7 +27,7 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
     protected void connect(ObservableValue<T> upstream) {
         synchronized (lock) {
             if (connectionState.get() == CONNECTED) {
-                throw new IllegalStateException("Already connected to upstream");
+                disconnect();
             }
             upstreamObservable = requireNonNull(upstream, "Upstream observable cannot be null! Not connecting");
             upstreamSubscription = upstreamObservable.subscribe(weakWithErrorAndSubscriptionCountHandling(this,
@@ -40,13 +40,12 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
 
     protected void disconnect() {
         synchronized (lock) {
-            if (connectionState.get() == DISCONNECTED) {
-                throw new IllegalStateException("No connection to upstream, cannot disconnect");
+            if (connectionState.get() == CONNECTED) {
+                upstreamSubscription.unsubscribe();
+                upstreamSubscription = null;
+                upstreamObservable = null;
+                connectionState.set(DISCONNECTED);
             }
-            upstreamSubscription.unsubscribe();
-            upstreamSubscription = null;
-            upstreamObservable = null;
-            connectionState.set(DISCONNECTED);
         }
     }
 

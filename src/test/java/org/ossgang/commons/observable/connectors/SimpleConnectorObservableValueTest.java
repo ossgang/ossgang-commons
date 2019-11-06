@@ -4,7 +4,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.ossgang.commons.observable.ObservableValue;
 import org.ossgang.commons.observable.Observables;
-import org.ossgang.commons.observable.TestObserver;
+import org.ossgang.commons.observers.TestObserver;
 import org.ossgang.commons.property.Properties;
 import org.ossgang.commons.property.Property;
 
@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.observable.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.observable.connectors.ConnectorState.CONNECTED;
 import static org.ossgang.commons.observable.connectors.ConnectorState.DISCONNECTED;
 
@@ -45,27 +46,37 @@ public class SimpleConnectorObservableValueTest {
 
     @Test
     public void testUpstreamConnectionViaProperty() {
-        Assertions.fail("WIP");
         AtomicInteger count = new AtomicInteger();
         List<Object> values = Arrays.asList(VALUE_1, VALUE_2);
         Supplier<ObservableValue<Object>> factory = () -> Observables.constant(values.get(count.getAndIncrement() % values.size()));
         TestObserver<Object> observer = new TestObserver<>();
         TestObserver<ConnectorState> stateObserver = new TestObserver<>();
+        TestObserver<ConnectorState> switchObserver = new TestObserver<>();
 
         Property<ConnectorState> connectorSwitch = Properties.property();
+        connectorSwitch.subscribe(switchObserver, FIRST_UPDATE);
+
         ConnectorObservableValue<Object> connector = Observables.connectWhen(factory, connectorSwitch);
-        connector.connectorState().subscribe(stateObserver);
-        connector.subscribe(observer);
+        connector.connectorState().subscribe(stateObserver, FIRST_UPDATE);
+        connector.subscribe(observer, FIRST_UPDATE);
 
         connectorSwitch.set(CONNECTED);
-        observer.awaitForValueCountToBe(1);
+        switchObserver.awaitForValueCountToBe(1);
+        observer.awaitForPublishedValuesToContain(VALUE_1);
+        stateObserver.awaitForValueCountToBe(2);
+
         connectorSwitch.set(DISCONNECTED);
-        stateObserver.awaitForValue(DISCONNECTED);
+        switchObserver.awaitForValueCountToBe(2);
+        stateObserver.awaitForValueCountToBe(2);
 
         connectorSwitch.set(CONNECTED);
-        observer.awaitForValueCountToBe(2);
+        switchObserver.awaitForValueCountToBe(3);
+        observer.awaitForPublishedValuesToContain(VALUE_2);
+        stateObserver.awaitForValueCountToBe(3);
+
         connectorSwitch.set(DISCONNECTED);
-        stateObserver.awaitForValue(DISCONNECTED);
+        switchObserver.awaitForValueCountToBe(4);
+        stateObserver.awaitForValueCountToBe(4);
 
         assertThat(observer.receivedValues()).containsExactlyElementsOf(values);
     }

@@ -1,10 +1,11 @@
 package org.ossgang.commons.observable.connectors;
 
 import org.assertj.core.api.Assertions;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.ossgang.commons.observable.ObservableValue;
 import org.ossgang.commons.observable.Observables;
-import org.ossgang.commons.observable.TestObserver;
+import org.ossgang.commons.observers.TestObserver;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,11 +34,13 @@ public class SimpleDynamicConnectorObservableValueTest {
         assertThat(observer.receivedValues()).containsExactly(VALUE_1, VALUE_2);
     }
 
+    @Ignore
     @Test
     public void testDisconnectWhileNotConnectedFails() {
         Assertions.fail("TBD");
     }
 
+    @Ignore
     @Test
     public void testConnectWhileAlreadyConnectedFails() {
         Assertions.fail("TBD");
