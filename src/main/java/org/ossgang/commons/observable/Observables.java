@@ -2,7 +2,6 @@ package org.ossgang.commons.observable;
 
 import org.ossgang.commons.observable.connectors.ConnectorObservableValue;
 import org.ossgang.commons.observable.connectors.ConnectorObservables;
-import org.ossgang.commons.observable.connectors.ConnectorState;
 import org.ossgang.commons.observable.connectors.DynamicConnectorObservableValue;
 
 import java.util.*;
@@ -39,22 +38,38 @@ public class Observables {
         return derive(observable, Optional::of);
     }
 
-    public static <T> ConnectorObservableValue<T> connectWhen(ObservableValue<T> upstream, ObservableValue<ConnectorState> connectProvider) {
-        return ConnectorObservables.connectWhen(upstream, connectProvider);
-    }
-
-    public static <T> ConnectorObservableValue<T> connectWhen(Supplier<ObservableValue<T>> upstreamSupplier, ObservableValue<ConnectorState> connectProvider) {
-        return ConnectorObservables.connectWhen(upstreamSupplier, connectProvider);
-    }
-
+    /**
+     * Creates a {@link ConnectorObservableValue} that on each connection will subscribe to the upstream {@link ObservableValue}
+     * produced by the specified {@link Supplier}
+     *
+     * @see ConnectorObservables#connectorObservableValue(Supplier)
+     * @param upstreamSupplier the supplier of upstream {@link ObservableValue} to be used when connecting
+     * @param <T>              the type of the observable
+     * @return a {@link ConnectorObservableValue} that uses the specified {@link Supplier} for connecting upstream
+     */
     public static <T> ConnectorObservableValue<T> connectorObservableValue(Supplier<ObservableValue<T>> upstreamSupplier) {
         return ConnectorObservables.connectorObservableValue(upstreamSupplier);
     }
 
+    /**
+     * Creates a {@link ConnectorObservableValue} that will connect to the specified upstream {@link ObservableValue}.
+     *
+     * @see ConnectorObservables#connectorTo(ObservableValue)
+     * @param upstream the upstream {@link ObservableValue} to connect to
+     * @param <T>      the type of the observable
+     * @return a {@link ConnectorObservableValue} that connects to the specified {@link ObservableValue}
+     */
     public static <T> ConnectorObservableValue<T> connectorTo(ObservableValue<T> upstream) {
         return ConnectorObservables.connectorTo(upstream);
     }
 
+    /**
+     * Creates a {@link DynamicConnectorObservableValue}
+     *
+     * @see ConnectorObservables#dynamicConnectorObservableValue()
+     * @param <T> the type of the observable
+     * @return a {@link DynamicConnectorObservableValue}
+     */
     public static <T> DynamicConnectorObservableValue<T> dynamicConnectorObservableValue() {
         return ConnectorObservables.dynamicConnectorObservableValue();
     }
@@ -232,9 +247,9 @@ public class Observables {
      * </ul>
      * In either case, getCause() can be used to obtain the original exception.
      *
+     * @param handler the exception handler to be called
      * @see UpdateDeliveryException
      * @see UnhandledException
-     * @param handler the exception handler to be called
      */
     public static void setUncaughtExceptionHandler(Consumer<Exception> handler) {
         DispatchingObservable.setUncaughtExceptionHandler(handler);

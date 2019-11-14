@@ -1,29 +1,32 @@
 package org.ossgang.commons.observable.connectors;
 
 import org.ossgang.commons.observable.ObservableValue;
+import org.ossgang.commons.property.Property;
 
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
+import static org.ossgang.commons.property.Properties.wrapperProperty;
 
 /**
- * TODO
+ * Simple implementation of a {@link ConnectorObservableValue}
  *
- * @param <T>
+ * @param <T> the type of the observable
  */
 public class SimpleConnectorObservableValue<T> extends AbstractConnectorObservableValue<T> implements ConnectorObservableValue<T> {
 
     private final Supplier<ObservableValue<T>> upstreamSupplier;
+    private final Property<ConnectorState> connectorStateProperty;
 
-    protected SimpleConnectorObservableValue(Supplier<ObservableValue<T>> upstreamSupplier, T initial) {
+    SimpleConnectorObservableValue(Supplier<ObservableValue<T>> upstreamSupplier, T initial) {
         super(initial);
         this.upstreamSupplier = requireNonNull(upstreamSupplier, "Upstream supplier cannot be null");
+        connectorStateProperty = wrapperProperty(super.connectionState(), this::setConnectorState);
     }
 
     @Override
     public void connect() {
-        ObservableValue<T> upstreamObservable = requireNonNull(upstreamSupplier.get(), "Connector upstream supplier produced a null observable! Not connecting");
-        super.connect(upstreamObservable);
+        super.connect(upstreamSupplier);
     }
 
     @Override
@@ -32,8 +35,17 @@ public class SimpleConnectorObservableValue<T> extends AbstractConnectorObservab
     }
 
     @Override
-    public ObservableValue<ConnectorState> connectorState() {
-        return super.connectionState();
+    public Property<ConnectorState> connectorState() {
+        return connectorStateProperty;
     }
 
+    private void setConnectorState(ConnectorState connectorState) {
+        if (connectorState == ConnectorState.CONNECTED) {
+            connect();
+        } else if (connectorState == ConnectorState.DISCONNECTED) {
+            disconnect();
+        } else {
+            throw new IllegalArgumentException("Cannot set connector state to " + connectorState);
+        }
+    }
 }

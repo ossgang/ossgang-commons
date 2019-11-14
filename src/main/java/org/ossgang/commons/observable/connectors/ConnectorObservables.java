@@ -1,65 +1,47 @@
 package org.ossgang.commons.observable.connectors;
 
 import org.ossgang.commons.observable.ObservableValue;
-import org.ossgang.commons.observable.Subscription;
 
-import java.lang.ref.WeakReference;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import static org.ossgang.commons.observable.SubscriptionOptions.FIRST_UPDATE;
-import static org.ossgang.commons.observable.connectors.ConnectorState.CONNECTED;
-import static org.ossgang.commons.observable.connectors.ConnectorState.DISCONNECTED;
-
+/**
+ * Static support class for dealing with {@link ConnectorObservableValue}s
+ */
 public final class ConnectorObservables {
 
     private ConnectorObservables() {
         throw new UnsupportedOperationException("static only");
     }
 
-    public static <T> ConnectorObservableValue<T> connectWhen(Supplier<ObservableValue<T>> upstreamSupplier, ObservableValue<ConnectorState> connectorProvider) {
-        ConnectorObservableValue<T> connectorObservable = connectorObservableValue(upstreamSupplier);
-        bindConnectorToConnectorStateProvider(connectorObservable, connectorProvider);
-        return connectorObservable;
-    }
-
-    public static <T> ConnectorObservableValue<T> connectWhen(ObservableValue<T> upstream, ObservableValue<ConnectorState> connectorProvider) {
-        ConnectorObservableValue<T> connectorObservable = connectorTo(upstream);
-        bindConnectorToConnectorStateProvider(connectorObservable, connectorProvider);
-        return connectorObservable;
-    }
-
-    private static <T> void bindConnectorToConnectorStateProvider(ConnectorObservableValue<T> connectorObservable, ObservableValue<ConnectorState> connectorProvider) {
-        WeakReference<ConnectorObservableValue<T>> connectorWeakReference = new WeakReference<>(connectorObservable);
-        AtomicReference<Subscription> subscriptionReference = new AtomicReference<>();
-        subscriptionReference.set(connectorProvider.filter(Objects::nonNull).subscribe(requestedState -> {
-            ConnectorObservableValue<T> connector = connectorWeakReference.get();
-            if (connector == null) {
-                Subscription subscription = subscriptionReference.getAndSet(null);
-                if (subscription != null) {
-                    subscription.unsubscribe();
-                }
-            } else {
-                if (requestedState == CONNECTED) {
-                    connector.connect();
-                } else if (requestedState == DISCONNECTED) {
-                    connector.disconnect();
-                }
-            }
-        }, FIRST_UPDATE));
-    }
-
+    /**
+     * Creates a {@link ConnectorObservableValue} that on each connection will subscribe to the upstream {@link ObservableValue}
+     * produced by the specified {@link Supplier}
+     *
+     * @param supplier the supplier of upstream {@link ObservableValue} to be used when connecting
+     * @param <T>      the type of the observable
+     * @return a {@link ConnectorObservableValue} that uses the specified {@link Supplier} for connecting upstream
+     */
     public static <T> ConnectorObservableValue<T> connectorObservableValue(Supplier<ObservableValue<T>> supplier) {
         return new SimpleConnectorObservableValue<>(supplier, null);
     }
 
+    /**
+     * Creates a {@link ConnectorObservableValue} that will connect to the specified upstream {@link ObservableValue}.
+     *
+     * @param upstream the upstream {@link ObservableValue} to connect to
+     * @param <T>      the type of the observable
+     * @return a {@link ConnectorObservableValue} that connects to the specified {@link ObservableValue}
+     */
     public static <T> ConnectorObservableValue<T> connectorTo(ObservableValue<T> upstream) {
-        SimpleConnectorObservableValue<T> connector = new SimpleConnectorObservableValue<>(() -> upstream, null);
-        connector.connect();
-        return connector;
+        return new SimpleConnectorObservableValue<>(() -> upstream, null);
     }
 
+    /**
+     * Creates a {@link DynamicConnectorObservableValue}
+     *
+     * @param <T> the type of the observable
+     * @return a {@link DynamicConnectorObservableValue}
+     */
     public static <T> DynamicConnectorObservableValue<T> dynamicConnectorObservableValue() {
         return new SimpleDynamicConnectorObservableValue<>(null);
     }

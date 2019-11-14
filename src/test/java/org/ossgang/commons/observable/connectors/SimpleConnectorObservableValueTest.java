@@ -1,11 +1,11 @@
 package org.ossgang.commons.observable.connectors;
 
 import org.assertj.core.api.Assertions;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.ossgang.commons.observable.ObservableValue;
 import org.ossgang.commons.observable.Observables;
 import org.ossgang.commons.observers.TestObserver;
-import org.ossgang.commons.property.Properties;
 import org.ossgang.commons.property.Property;
 
 import java.util.Arrays;
@@ -53,10 +53,10 @@ public class SimpleConnectorObservableValueTest {
         TestObserver<ConnectorState> stateObserver = new TestObserver<>();
         TestObserver<ConnectorState> switchObserver = new TestObserver<>();
 
-        Property<ConnectorState> connectorSwitch = Properties.property();
-        connectorSwitch.subscribe(switchObserver, FIRST_UPDATE);
+        ConnectorObservableValue<Object> connector = Observables.connectorObservableValue(factory);
+        Property<ConnectorState> connectorSwitch = connector.connectorState();
 
-        ConnectorObservableValue<Object> connector = Observables.connectWhen(factory, connectorSwitch);
+        connectorSwitch.subscribe(switchObserver, FIRST_UPDATE);
         connector.connectorState().subscribe(stateObserver, FIRST_UPDATE);
         connector.subscribe(observer, FIRST_UPDATE);
 
@@ -81,11 +81,13 @@ public class SimpleConnectorObservableValueTest {
         assertThat(observer.receivedValues()).containsExactlyElementsOf(values);
     }
 
+    @Ignore
     @Test
     public void testDisconnectWhileNotConnectedFails() {
         Assertions.fail("TBD");
     }
 
+    @Ignore
     @Test
     public void testConnectWhileAlreadyConnectedFails() {
         Assertions.fail("TBD");

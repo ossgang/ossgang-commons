@@ -6,12 +6,19 @@ import org.ossgang.commons.observable.Subscription;
 import org.ossgang.commons.property.Properties;
 import org.ossgang.commons.property.Property;
 
+import java.util.function.Supplier;
+
 import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.observable.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.observable.WeakObservers.weakWithErrorAndSubscriptionCountHandling;
 import static org.ossgang.commons.observable.connectors.ConnectorState.CONNECTED;
 import static org.ossgang.commons.observable.connectors.ConnectorState.DISCONNECTED;
 
+/**
+ * Base implementation for the {@link ConnectorObservableValue} and {@link DynamicConnectorObservableValue}.
+ *
+ * @param <T> the type of the observable
+ */
 public abstract class AbstractConnectorObservableValue<T> extends DispatchingObservableValue<T> {
 
     private final Object lock = new Object();
@@ -22,6 +29,13 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
     protected AbstractConnectorObservableValue(T initial) {
         super(initial);
         connectionState = Properties.property(ConnectorState.DISCONNECTED);
+    }
+
+    protected void connect(Supplier<ObservableValue<T>> upstreamSupplier) {
+        synchronized (lock) {
+            ObservableValue<T> upstreamObservable = requireNonNull(upstreamSupplier.get(), "Connector upstream supplier produced a null observable! Not connecting");
+            connect(upstreamObservable);
+        }
     }
 
     protected void connect(ObservableValue<T> upstream) {

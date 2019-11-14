@@ -1,17 +1,9 @@
 package org.ossgang.commons.observable.connectors;
 
+/**
+ * Indicates the connector state, it could be connected or disconnected
+ */
 public enum ConnectorState {
     CONNECTED,
     DISCONNECTED;
-
-    public static boolean isConnected(ConnectorState state) {
-        return (CONNECTED == state);
-    }
-
-    public static ConnectorState fromConnected(boolean connected) {
-        if (connected) {
-            return CONNECTED;
-        }
-        return DISCONNECTED;
-    }
 }

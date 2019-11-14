@@ -9,6 +9,11 @@ import java.util.function.Supplier;
 
 import static org.ossgang.commons.utils.AwaitUtils.awaitFor;
 
+/**
+ * An {@link Observer} that is especially useful for testing {@link org.ossgang.commons.observable.ObservableValue}s
+ *
+ * @param <T> the type of the observer
+ */
 public class TestObserver<T> implements Observer<T> {
 
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);

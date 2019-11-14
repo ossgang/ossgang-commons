@@ -3,12 +3,13 @@ package org.ossgang.commons.observable.connectors;
 import org.ossgang.commons.observable.ObservableValue;
 
 /**
- * TODO
- * @param <T>
+ * Simple implementation of a {@link DynamicConnectorObservableValue}
+ *
+ * @param <T> the type of the observable
  */
 public class SimpleDynamicConnectorObservableValue<T> extends AbstractConnectorObservableValue<T> implements DynamicConnectorObservableValue<T> {
 
-    protected SimpleDynamicConnectorObservableValue(T initial) {
+    SimpleDynamicConnectorObservableValue(T initial) {
         super(initial);
     }
 
