@@ -1,18 +1,13 @@
 package org.ossgang.commons.observable;
 
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
-import static org.ossgang.commons.observable.DerivedObservableValue.derive;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
+
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static org.ossgang.commons.observable.DerivedObservableValue.derive;
 
 /**
  * Static support class for dealing with {@link Observable} and {@link ObservableValue}.
@@ -20,6 +15,27 @@ import java.util.stream.IntStream;
 public class Observables {
     private Observables() {
         throw new UnsupportedOperationException("static only");
+    }
+
+    /**
+     * Create an {@link Dispatcher} with the specified initial value.
+     *
+     * @param initial the initial value of the {@link Dispatcher}
+     * @param <T> the type of the observable
+     * @return an {@link Dispatcher} with the specified initial value
+     */
+    public static <T> Dispatcher<T> dispatcher(T initial) {
+        return new SimpleDispatcher<>(initial);
+    }
+
+    /**
+     * Create an {@link Dispatcher}.
+     *
+     * @param <T> the type of the observable
+     * @return an {@link Dispatcher}
+     */
+    public static <T> Dispatcher<T> dispatcher() {
+        return new SimpleDispatcher<>(null);
     }
 
     /**

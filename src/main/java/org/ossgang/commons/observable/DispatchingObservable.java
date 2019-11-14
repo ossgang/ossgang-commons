@@ -22,19 +22,15 @@
 
 package org.ossgang.commons.observable;
 
-import static java.util.Collections.newSetFromMap;
-import static java.util.concurrent.Executors.newCachedThreadPool;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import static java.util.Collections.newSetFromMap;
+import static java.util.concurrent.Executors.newCachedThreadPool;
 
 /**
  * A basic implementation of {@link Observable} managing a set of listeners, and dispatching updates to them.
@@ -96,15 +92,15 @@ public class DispatchingObservable<T> implements Observable<T> {
                 .forEach(l -> dispatch(l::onValue, newValue));
     }
 
-    protected void dispatchException(Throwable newValue) {
-        listeners.keySet().forEach(l -> dispatch(l::onException, newValue));
+    protected void dispatchException(Throwable exception) {
+        listeners.keySet().forEach(l -> dispatch(l::onException, exception));
     }
 
-    protected void dispatchException(Throwable newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
+    protected void dispatchException(Throwable exception, Predicate<Set<SubscriptionOption>> optionPredicate) {
         listeners.entrySet().stream() //
                 .filter(entry -> optionPredicate.test(entry.getValue().options)) //
                 .map(Map.Entry::getKey) //
-                .forEach(l -> dispatch(l::onException, newValue));
+                .forEach(l -> dispatch(l::onException, exception));
     }
 
     private <X> void dispatch(Consumer<X> handler, X value) {
