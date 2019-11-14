@@ -1,13 +1,13 @@
 package org.ossgang.commons.observable.connectors;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.ossgang.commons.observable.ObservableValue;
 import org.ossgang.commons.observable.Observables;
 import org.ossgang.commons.observers.TestObserver;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.observable.connectors.ConnectorState.CONNECTED;
+import static org.ossgang.commons.observable.connectors.ConnectorState.DISCONNECTED;
 
 public class SimpleDynamicConnectorObservableValueTest {
 
@@ -34,16 +34,57 @@ public class SimpleDynamicConnectorObservableValueTest {
         assertThat(observer.receivedValues()).containsExactly(VALUE_1, VALUE_2);
     }
 
-    @Ignore
+
     @Test
-    public void testDisconnectWhileNotConnectedFails() {
-        Assertions.fail("TBD");
+    public void testDisconnectWhileNotConnectedDoesNothing() {
+        TestObserver<Object> valueObserver = new TestObserver<>();
+        TestObserver<ConnectorState> stateObserver = new TestObserver<>();
+
+        ObservableValue<Object> upstream = Observables.constant(VALUE_1);
+
+        DynamicConnectorObservableValue<Object> connector = new SimpleDynamicConnectorObservableValue<>(null);
+        connector.subscribe(valueObserver);
+        connector.connectorState().subscribe(stateObserver);
+
+        connector.connect(upstream);
+        valueObserver.awaitForPublishedValuesToContain(VALUE_1);
+        stateObserver.awaitForValueCountToBe(1);
+
+        connector.disconnect();
+        stateObserver.awaitForValueCountToBe(2);
+
+        connector.disconnect();
+        stateObserver.awaitForValueCountToBe(2);
+
+        assertThat(connector.connectorState().get()).isEqualTo(DISCONNECTED);
+        assertThat(stateObserver.receivedValues()).containsExactly(CONNECTED, DISCONNECTED);
+        assertThat(valueObserver.receivedValues()).containsExactly(VALUE_1);
     }
 
-    @Ignore
     @Test
-    public void testConnectWhileAlreadyConnectedFails() {
-        Assertions.fail("TBD");
+    public void testConnectWhileAlreadyConnectedDisconnectsFromOldUpstream() {
+        TestObserver<Object> valueObserver = new TestObserver<>();
+        TestObserver<ConnectorState> stateObserver = new TestObserver<>();
+
+        ObservableValue<Object> upstream1 = Observables.constant(VALUE_1);
+        ObservableValue<Object> upstream2 = Observables.constant(VALUE_2);
+
+        DynamicConnectorObservableValue<Object> connector = new SimpleDynamicConnectorObservableValue<>(null);
+        connector.subscribe(valueObserver);
+        connector.connectorState().subscribe(stateObserver);
+
+        connector.connect(upstream1);
+        valueObserver.awaitForPublishedValuesToContain(VALUE_1);
+        stateObserver.awaitForValueCountToBe(1);
+
+        connector.connect(upstream2);
+        stateObserver.awaitForPublishedValuesToContain(DISCONNECTED);
+        valueObserver.awaitForPublishedValuesToContain(VALUE_2);
+        stateObserver.awaitForValueCountToBe(3);
+
+        assertThat(connector.connectorState().get()).isEqualTo(CONNECTED);
+        assertThat(stateObserver.receivedValues()).containsExactlyInAnyOrder(CONNECTED, DISCONNECTED, CONNECTED);
+        assertThat(valueObserver.receivedValues()).containsExactly(VALUE_1, VALUE_2);
     }
 
 }

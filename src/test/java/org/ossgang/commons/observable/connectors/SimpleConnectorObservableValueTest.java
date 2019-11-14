@@ -1,7 +1,5 @@
 package org.ossgang.commons.observable.connectors;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.ossgang.commons.observable.ObservableValue;
 import org.ossgang.commons.observable.Observables;
@@ -27,10 +25,10 @@ public class SimpleConnectorObservableValueTest {
     public void testUpstreamConnection() {
         AtomicInteger count = new AtomicInteger();
         List<Object> values = Arrays.asList(VALUE_1, VALUE_2);
-        Supplier<ObservableValue<Object>> factory = () -> Observables.constant(values.get(count.getAndIncrement() % values.size()));
+        Supplier<ObservableValue<Object>> upstreamFactory = () -> Observables.constant(values.get(count.getAndIncrement() % values.size()));
         TestObserver<Object> observer = new TestObserver<>();
 
-        SimpleConnectorObservableValue<Object> connector = new SimpleConnectorObservableValue<>(factory, null);
+        SimpleConnectorObservableValue<Object> connector = new SimpleConnectorObservableValue<>(upstreamFactory, null);
         connector.subscribe(observer);
 
         connector.connect();
@@ -46,14 +44,13 @@ public class SimpleConnectorObservableValueTest {
 
     @Test
     public void testUpstreamConnectionViaProperty() {
-        AtomicInteger count = new AtomicInteger();
         List<Object> values = Arrays.asList(VALUE_1, VALUE_2);
-        Supplier<ObservableValue<Object>> factory = () -> Observables.constant(values.get(count.getAndIncrement() % values.size()));
+
         TestObserver<Object> observer = new TestObserver<>();
         TestObserver<ConnectorState> stateObserver = new TestObserver<>();
         TestObserver<ConnectorState> switchObserver = new TestObserver<>();
 
-        ConnectorObservableValue<Object> connector = Observables.connectorObservableValue(factory);
+        ConnectorObservableValue<Object> connector = new SimpleConnectorObservableValue<>(cyclingUpstreamSupplier(values), null);
         Property<ConnectorState> connectorSwitch = connector.connectorState();
 
         connectorSwitch.subscribe(switchObserver, FIRST_UPDATE);
@@ -81,16 +78,59 @@ public class SimpleConnectorObservableValueTest {
         assertThat(observer.receivedValues()).containsExactlyElementsOf(values);
     }
 
-    @Ignore
     @Test
-    public void testDisconnectWhileNotConnectedFails() {
-        Assertions.fail("TBD");
+    public void testDisconnectWhileNotConnectedDoesNothing() {
+        TestObserver<Object> valueObserver = new TestObserver<>();
+        TestObserver<ConnectorState> stateObserver = new TestObserver<>();
+
+        ObservableValue<Object> upstream = Observables.constant(VALUE_1);
+
+        ConnectorObservableValue<Object> connector = new SimpleConnectorObservableValue<>(() -> upstream, null);
+        connector.subscribe(valueObserver);
+        connector.connectorState().subscribe(stateObserver);
+
+        connector.connect();
+        valueObserver.awaitForPublishedValuesToContain(VALUE_1);
+        stateObserver.awaitForValueCountToBe(1);
+
+        connector.disconnect();
+        stateObserver.awaitForValueCountToBe(2);
+
+        connector.disconnect();
+        stateObserver.awaitForValueCountToBe(2);
+
+        assertThat(connector.connectorState().get()).isEqualTo(DISCONNECTED);
+        assertThat(stateObserver.receivedValues()).containsExactly(CONNECTED, DISCONNECTED);
+        assertThat(valueObserver.receivedValues()).containsExactly(VALUE_1);
     }
 
-    @Ignore
     @Test
-    public void testConnectWhileAlreadyConnectedFails() {
-        Assertions.fail("TBD");
+    public void testConnectWhileAlreadyConnectedDisconnectsFromOldUpstream() {
+        List<Object> values = Arrays.asList(VALUE_1, VALUE_2);
+        TestObserver<Object> valueObserver = new TestObserver<>();
+        TestObserver<ConnectorState> stateObserver = new TestObserver<>();
+
+        ConnectorObservableValue<Object> connector = new SimpleConnectorObservableValue<>(cyclingUpstreamSupplier(values), null);
+        connector.subscribe(valueObserver);
+        connector.connectorState().subscribe(stateObserver);
+
+        connector.connect();
+        valueObserver.awaitForPublishedValuesToContain(VALUE_1);
+        stateObserver.awaitForValueCountToBe(1);
+
+        connector.connect();
+        stateObserver.awaitForPublishedValuesToContain(DISCONNECTED);
+        valueObserver.awaitForPublishedValuesToContain(VALUE_2);
+        stateObserver.awaitForValueCountToBe(3);
+
+        assertThat(connector.connectorState().get()).isEqualTo(CONNECTED);
+        assertThat(stateObserver.receivedValues()).containsExactlyInAnyOrder(CONNECTED, DISCONNECTED, CONNECTED);
+        assertThat(valueObserver.receivedValues()).containsExactly(VALUE_1, VALUE_2);
+    }
+
+    private static Supplier<ObservableValue<Object>> cyclingUpstreamSupplier(List<Object> values) {
+        AtomicInteger count = new AtomicInteger();
+        return () -> Observables.constant(values.get(count.getAndIncrement() % values.size()));
     }
 
 }
