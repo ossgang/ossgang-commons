@@ -23,6 +23,27 @@ public class Observables {
     }
 
     /**
+     * Create an {@link Dispatcher} with the specified initial value.
+     *
+     * @param initial the initial value of the {@link Dispatcher}
+     * @param <T> the type of the observable
+     * @return an {@link Dispatcher} with the specified initial value
+     */
+    public static <T> Dispatcher<T> dispatcher(T initial) {
+        return new SimpleDispatcher<>(initial);
+    }
+
+    /**
+     * Create an {@link Dispatcher}.
+     *
+     * @param <T> the type of the observable
+     * @return an {@link Dispatcher}
+     */
+    public static <T> Dispatcher<T> dispatcher() {
+        return new SimpleDispatcher<>(null);
+    }
+
+    /**
      * Create an {@link ObservableValue} from any {@link Observable}. If the observable passed in is an instance of
      * {@link ObservableValue}, it is returned unchanged. Otherwise, a derived observable value is created which
      * subscribes to the upstream observable and caches its latest value.

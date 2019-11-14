@@ -69,7 +69,7 @@ public interface ObservableValue<T> extends Observable<T> {
      * Creates a derived observable value, using the given mapper. If the mapper returns an optional containing a value,
      * then values are emitted downstream, if the returned optional is empty, values will be filtered out.
      *
-     * @param the mapper to be used
+     * @param mapper to be used
      * @return the derived observable
      */
     @Override
