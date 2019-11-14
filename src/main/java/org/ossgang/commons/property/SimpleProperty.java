@@ -24,6 +24,11 @@ package org.ossgang.commons.property;
 
 import org.ossgang.commons.observable.DispatchingObservableValue;
 
+/**
+ * Simple implementation of a {@link Property}
+ *
+ * @param <T> the type of the property
+ */
 public class SimpleProperty<T> extends DispatchingObservableValue<T> implements Property<T> {
     SimpleProperty(T initial) {
         super(initial);

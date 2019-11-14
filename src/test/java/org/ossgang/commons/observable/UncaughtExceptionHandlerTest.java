@@ -2,6 +2,7 @@ package org.ossgang.commons.observable;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.ossgang.commons.observers.TestObserver;
 import org.ossgang.commons.property.Properties;
 import org.ossgang.commons.property.Property;
 

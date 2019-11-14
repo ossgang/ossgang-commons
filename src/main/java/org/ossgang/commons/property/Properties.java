@@ -22,6 +22,12 @@
 
 package org.ossgang.commons.property;
 
+import org.ossgang.commons.observable.ObservableValue;
+import org.ossgang.commons.observable.Observer;
+import org.ossgang.commons.observable.SubscriptionOption;
+
+import java.util.function.Consumer;
+
 /**
  * Static entry point to create properties.
  */
@@ -34,7 +40,7 @@ public class Properties {
      * Create a {@link Property} with an initial value.
      *
      * @param initialValue the initial value
-     * @param <T> the type
+     * @param <T>          the type of the {@link Property}
      * @return the new property
      */
     public static <T> Property<T> property(T initialValue) {
@@ -44,11 +50,23 @@ public class Properties {
     /**
      * Create a {@link Property} with NO initial value.
      *
-     * @param <T> the type
+     * @param <T> the type of the {@link Property}
      * @return the new property
      */
     public static <T> Property<T> property() {
         return new SimpleProperty<>(null);
     }
 
+    /**
+     * Create a {@link Property} that will bind the {@link Property#get()} and {@link Property#subscribe(Observer, SubscriptionOption...)}
+     * to the specified {@link ObservableValue} and the {@link Property#set(T)} to the specified {@link Consumer}
+     *
+     * @param updateProvider the {@link ObservableValue} for the {@link Property#get()} and {@link Property#subscribe(Observer, SubscriptionOption...)}
+     * @param setConsumer    the {@link Consumer} for the {@link Property#set(T)}
+     * @param <T>            the type of the {@link Property}
+     * @return the new wrapper {@link Property}
+     */
+    public static <T> Property<T> wrapperProperty(ObservableValue<T> updateProvider, Consumer<? super T> setConsumer) {
+        return new WrapperProperty<>(updateProvider, setConsumer);
+    }
 }
