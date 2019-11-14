@@ -59,10 +59,10 @@ public class Properties {
 
     /**
      * Create a {@link Property} that will bind the {@link Property#get()} and {@link Property#subscribe(Observer, SubscriptionOption...)}
-     * to the specified {@link ObservableValue} and the {@link Property#set(T)} to the specified {@link Consumer}
+     * to the specified {@link ObservableValue} and the {@link Property#set(Object)} to the specified {@link Consumer}
      *
      * @param updateProvider the {@link ObservableValue} for the {@link Property#get()} and {@link Property#subscribe(Observer, SubscriptionOption...)}
-     * @param setConsumer    the {@link Consumer} for the {@link Property#set(T)}
+     * @param setConsumer    the {@link Consumer} for the {@link Property#set(Object)}
      * @param <T>            the type of the {@link Property}
      * @return the new wrapper {@link Property}
      */

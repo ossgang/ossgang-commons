@@ -22,11 +22,11 @@
 
 package org.ossgang.commons.monads;
 
-import static java.util.Objects.requireNonNull;
-
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Consumer;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * This utility class implements the concept of a "Maybe" or "Try" {@link Optional}. A Maybe&lt;T&gt; either carries a
@@ -58,6 +58,7 @@ public class Maybe<T> {
     /**
      * Construct an "unsuccessful" {@link Maybe} containing an exception.
      *
+     * @param <T> the type to carry.
      * @param exception the exception to wrap
      * @return the unsuccessful Maybe object
      * @throws NullPointerException if the exception is null
@@ -69,6 +70,7 @@ public class Maybe<T> {
     /**
      * Construct a "successful" {@link Maybe} containing a value.
      *
+     * @param <T> the type to carry.
      * @param value the value to wrap
      * @return the successful Maybe object
      * @throws NullPointerException if the value is null

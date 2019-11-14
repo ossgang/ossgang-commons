@@ -30,7 +30,7 @@ import org.ossgang.commons.observable.SubscriptionOption;
 import java.util.function.Consumer;
 
 /**
- * A {@link Property} that will delegate its {@link #set{Object}}, {@link #get()} and {@link #subscribe(Observer, SubscriptionOption...)}
+ * A {@link Property} that will delegate its {@link Property#set(Object)}, {@link Property#get()} and {@link #subscribe(Observer, SubscriptionOption...)}
  * methods to the provided {@link ObservableValue} and {@link Consumer}.
  *
  * @param <T> the type of the property
