@@ -18,24 +18,24 @@ public class Observables {
     }
 
     /**
-     * Create an {@link ObservableValueSink} with the specified initial value.
+     * Create an {@link Dispatcher} with the specified initial value.
      *
-     * @param initial the initial value of the {@link ObservableValueSink}
+     * @param initial the initial value of the {@link Dispatcher}
      * @param <T> the type of the observable
-     * @return an {@link ObservableValueSink} with the specified initial value
+     * @return an {@link Dispatcher} with the specified initial value
      */
-    public static <T> ObservableValueSink<T> observableValueSink(T initial) {
-        return new SimpleObservableValueSink<>(initial);
+    public static <T> Dispatcher<T> dispatcher(T initial) {
+        return new SimpleDispatcher<>(initial);
     }
 
     /**
-     * Create an {@link ObservableValueSink}.
+     * Create an {@link Dispatcher}.
      *
      * @param <T> the type of the observable
-     * @return an {@link ObservableValueSink}
+     * @return an {@link Dispatcher}
      */
-    public static <T> ObservableValueSink<T> observableValueSink() {
-        return new SimpleObservableValueSink<>(null);
+    public static <T> Dispatcher<T> dispatcher() {
+        return new SimpleDispatcher<>(null);
     }
 
     /**
