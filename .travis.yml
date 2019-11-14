@@ -7,7 +7,7 @@ before_install:
   - chmod +x ./gradlew
 script:
   - ./gradlew check
-  - ./gradlew jacocoTestReport
+  - ./gradlew jacocoTestReport javadoc
 before_deploy:
   - ./gradlew generateLicenseReport
   - ./gradlew javadoc
