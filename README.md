@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/ossgang/ossgang-commons.svg?branch=master)](https://travis-ci.com/ossgang/ossgang-commons)
+
 # ossgang-commons
 A set of shared common classes.
 
