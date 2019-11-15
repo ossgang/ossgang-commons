@@ -1,13 +1,15 @@
 package org.ossgang.commons.property;
 
 import org.junit.Test;
-import org.ossgang.commons.observable.ObservableValue;
+import org.ossgang.commons.observables.ObservableValue;
+import org.ossgang.commons.properties.Properties;
+import org.ossgang.commons.properties.Property;
 
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.ossgang.commons.observable.Observers.withErrorHandling;
+import static org.ossgang.commons.observables.Observers.withErrorHandling;
 
 public class SimplePropertyTest {
 
