@@ -104,7 +104,7 @@ public class Maybe<T> {
      * @return true if the Maybe is in "successful" state, false if not
      * @see #hasException()
      */
-    public boolean isSuccesful() {
+    public boolean isSuccessful() {
         return !hasException();
     }
 
@@ -121,7 +121,7 @@ public class Maybe<T> {
      * Returns true, if this Maybe is in a successful state, if it has a valid non-null value. Usually, a Maybe in a
      * successful state always has a value. The only exception to this is a Maybe&lt;Void&lt; which even in
      * successful state does not have a value. So this method would return {@code false}. Use the method
-     * {@link #isSuccesful()} in such a case.
+     * {@link #isSuccessful()} in such a case.
      *
      * @return true if the the value is available, false if not
      * @see #hasException()
@@ -364,7 +364,7 @@ public class Maybe<T> {
      */
     public Maybe<T> ifSuccessful(Runnable runnable) {
         requireNonNull(runnable, "The runnable must not be null.");
-        if (isSuccesful()) {
+        if (isSuccessful()) {
             runnable.run();
         }
         return this;
