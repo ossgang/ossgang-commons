@@ -25,69 +25,88 @@ package org.ossgang.commons.monads;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.utils.ExceptionUtils.unchecked;
 
 /**
- *
  * TODO andrea
+ *
  * @param <T>
  */
-public abstract class AsyncMaybe<T> {
+public class AsyncMaybe<T> {
 
     private final CompletableFuture<T> future;
+    private final Function<Supplier<T>, Maybe<T>> maybeGenerator;
 
-    protected AsyncMaybe(CompletableFuture<T> future) {
+    protected AsyncMaybe(CompletableFuture<T> future, Function<Supplier<T>, Maybe<T>> maybeGenerator) {
         this.future = future;
+        this.maybeGenerator = maybeGenerator;
+    }
+
+    public static <T> AsyncMaybe<T> fromCompletableFuture(CompletableFuture<T> future) {
+        return new AsyncMaybe<>(future, valueSupplier -> Maybe.attempt(valueSupplier::get));
+    }
+
+    public static AsyncMaybe<Void> fromVoidCompletableFuture(CompletableFuture<Void> future) {
+        return new AsyncMaybe<>(future, valueSupplier -> {
+            try {
+                valueSupplier.get();
+                return Maybe.ofVoid();
+            } catch (Exception e) {
+                return Maybe.ofException(e);
+            }
+        });
     }
 
     /**
-     *
      * TODO andrea
+     *
      * @param runnable
      * @return
      */
     public static AsyncMaybe<Void> attemptAsync(ThrowingRunnable runnable) {
-        return new VoidAsyncMaybe(CompletableFuture.runAsync(unchecked(runnable)));
+        return AsyncMaybe.fromVoidCompletableFuture(CompletableFuture.runAsync(unchecked(runnable)));
     }
 
     /**
-     *
      * TODO andrea
+     *
      * @param supplier
      * @param <T>
      * @return
      */
     public static <T> AsyncMaybe<T> attemptAsync(ThrowingSupplier<T> supplier) {
-        return new GenericAsyncMaybe<>(CompletableFuture.supplyAsync(unchecked(supplier)));
+        return AsyncMaybe.fromCompletableFuture(CompletableFuture.supplyAsync(unchecked(supplier)));
     }
 
     /**
-     *
      * TODO andrea
+     *
      * @param value
      * @param <T>
      * @return
      */
     public static <T> AsyncMaybe<T> ofValue(T value) {
-        return new GenericAsyncMaybe<>(CompletableFuture.completedFuture(value));
+        return AsyncMaybe.fromCompletableFuture(CompletableFuture.completedFuture(value));
     }
 
     /**
-     *
      * TODO andrea
+     *
      * @return
      */
     public static AsyncMaybe<Void> ofVoid() {
         CompletableFuture<Void> future = new CompletableFuture<>();
         future.complete(null);
-        return new VoidAsyncMaybe(future);
+        return AsyncMaybe.fromVoidCompletableFuture(future);
     }
 
     /**
-     *
      * TODO andrea
+     *
      * @param throwable
      * @param <T>
      * @return
@@ -95,38 +114,36 @@ public abstract class AsyncMaybe<T> {
     public static <T> AsyncMaybe<T> ofException(Throwable throwable) {
         CompletableFuture<T> future = new CompletableFuture<>();
         future.completeExceptionally(throwable);
-        return new GenericAsyncMaybe<>(future);
+        return AsyncMaybe.fromCompletableFuture(future);
     }
 
     /**
-     *
      * TODO andrea + test
+     *
      * @param consumer
      * @return
      */
     public AsyncMaybe<T> whenCompleted(ThrowingConsumer<T> consumer) {
-        CompletableFuture<T> whenComplete = future.whenComplete((value, exception) -> {
+        return AsyncMaybe.fromCompletableFuture(future.whenComplete((value, exception) -> {
             if (exception == null) {
                 unchecked(consumer).accept(value);
             }
-        });
-        return new GenericAsyncMaybe<>(whenComplete);
+        }));
     }
 
     /**
-     *
      * TODO andrea + test
+     *
      * @param consumer
      * @return
      */
     public AsyncMaybe<T> whenCompleted(BiConsumer<T, Throwable> consumer) {
-        CompletableFuture<T> whenComplete = future.whenComplete(consumer);
-        return new GenericAsyncMaybe<>(whenComplete);
+        return AsyncMaybe.fromCompletableFuture(future.whenComplete(consumer));
     }
 
     /**
-     *
      * TODO andrea + test
+     *
      * @param consumer
      * @return
      */
@@ -136,7 +153,7 @@ public abstract class AsyncMaybe<T> {
                 unchecked(consumer).accept(exception);
             }
         });
-        return new GenericAsyncMaybe<>(whenComplete);
+        return AsyncMaybe.fromCompletableFuture(whenComplete);
     }
 
     /**
@@ -149,7 +166,7 @@ public abstract class AsyncMaybe<T> {
      */
     public <R> AsyncMaybe<R> map(ThrowingFunction<T, R> function) {
         requireNonNull(function);
-        return new GenericAsyncMaybe<>(this.future.thenApply(unchecked(function)));
+        return AsyncMaybe.fromCompletableFuture(this.future.thenApply(unchecked(function)));
     }
 
     /**
@@ -162,7 +179,7 @@ public abstract class AsyncMaybe<T> {
      */
     public AsyncMaybe<Void> map(ThrowingConsumer<T> function) {
         requireNonNull(function);
-        return new GenericAsyncMaybe<>(future.thenAccept(unchecked(function)));
+        return AsyncMaybe.fromVoidCompletableFuture(future.thenAccept(unchecked(function)));
     }
 
     /**
@@ -176,7 +193,7 @@ public abstract class AsyncMaybe<T> {
      */
     public <R> AsyncMaybe<R> then(ThrowingSupplier<R> supplier) {
         requireNonNull(supplier);
-        return new GenericAsyncMaybe<>(future.thenApply(v -> unchecked(supplier).get()));
+        return AsyncMaybe.fromCompletableFuture(future.thenApply(v -> unchecked(supplier).get()));
     }
 
     /**
@@ -189,7 +206,7 @@ public abstract class AsyncMaybe<T> {
      */
     public AsyncMaybe<Void> then(ThrowingRunnable runnable) {
         requireNonNull(runnable);
-        return new VoidAsyncMaybe(future.thenRun(unchecked(runnable)));
+        return AsyncMaybe.fromVoidCompletableFuture(future.thenRun(unchecked(runnable)));
     }
 
     /**
@@ -202,7 +219,7 @@ public abstract class AsyncMaybe<T> {
      */
     public AsyncMaybe<T> recover(ThrowingFunction<Throwable, T> function) {
         requireNonNull(function);
-        return new GenericAsyncMaybe<>(future.handle((value, exception) -> {
+        return AsyncMaybe.fromCompletableFuture(future.handle((value, exception) -> {
             if (exception != null) {
                 return unchecked(function).apply(exception);
             }
@@ -220,7 +237,7 @@ public abstract class AsyncMaybe<T> {
      */
     public AsyncMaybe<Void> recover(ThrowingConsumer<Throwable> consumer) {
         requireNonNull(consumer);
-        return new VoidAsyncMaybe(future.handle((value, exception) -> {
+        return AsyncMaybe.fromVoidCompletableFuture(future.handle((value, exception) -> {
             if (exception != null) {
                 unchecked(consumer).accept(exception);
             }
@@ -229,27 +246,26 @@ public abstract class AsyncMaybe<T> {
     }
 
     /**
-     *
      * TODO andrea
+     *
      * @return
      */
     public Maybe<T> toMaybeBlocking() {
-        return toMaybeBlocking(future);
+        return maybeGenerator.apply(future::join);
     }
 
     /**
-     *
      * TODO andrea
+     *
      * @return
      */
     public CompletableFuture<T> toCompletableFuture() {
         return future;
     }
 
-    abstract protected Maybe<T> toMaybeBlocking(CompletableFuture<T> future);
-
     /**
      * TODO andrea: decide which criteria to use with hashcode and equals! (+ test)
+     *
      * @param o
      * @return
      */
