@@ -29,7 +29,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
-import static org.ossgang.commons.utils.ExceptionUtils.unchecked;
+import static org.ossgang.commons.utils.Exceptions.unchecked;
 
 /**
  * TODO andrea

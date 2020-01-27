@@ -35,9 +35,9 @@ import java.util.function.Supplier;
  *
  * TODO andrea
  */
-public final class ExceptionUtils {
+public final class Exceptions {
 
-    private ExceptionUtils() {
+    private Exceptions() {
         /* static methods */
     }
 
