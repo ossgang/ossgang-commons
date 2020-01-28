@@ -10,11 +10,11 @@ import static java.time.Duration.ZERO;
 /**
  * Utility functions to use when it is needed to wait for a certain "event" to be resolved.
  */
-public final class AwaitUtils {
+public final class Awaits {
 
     private static final Duration DEFAULT_RETRY_INTERVAL = Duration.ofMillis(100);
 
-    private AwaitUtils() {
+    private Awaits() {
         /* static methods */
     }
 
