@@ -28,10 +28,10 @@ public final class Awaits {
         Instant beforeWaiting = Instant.now();
         while (!builder.condition.get()) {
             if (timeoutEnabled && timeoutExceeded(beforeWaiting, builder.timeout)) {
-                throw new AwaitTimeoutException("Timeout exceeded " + builder.timeout + ": " + builder.message);
+                throw new AwaitTimeoutException("Timeout exceeded " + builder.timeout + ": " + builder.message.get());
             }
             if (count > builder.retryCount) {
-                throw new AwaitRetryCountException("Retry count exceeded " + count + ": " + builder.message);
+                throw new AwaitRetryCountException("Retry count exceeded " + count + ": " + builder.message.get());
             }
             try {
                 if (builder.retryInterval.equals(ZERO)) {
@@ -52,7 +52,7 @@ public final class Awaits {
 
     public static final class AwaitBuilder {
 
-        private String message;
+        private Supplier<String> message;
         private Duration retryInterval;
         private int retryCount;
         private Duration timeout;
@@ -60,12 +60,17 @@ public final class Awaits {
 
         private AwaitBuilder(Supplier<Boolean> condition) {
             this.condition = condition;
-            message = "";
+            message = () -> "";
             retryInterval = DEFAULT_RETRY_INTERVAL;
             retryCount = Integer.MAX_VALUE;
         }
 
         public AwaitBuilder withErrorMessage(String errorMessage) {
+            this.message = () -> errorMessage;
+            return this;
+        }
+
+        public AwaitBuilder withErrorMessage(Supplier<String> errorMessage) {
             this.message = errorMessage;
             return this;
         }
