@@ -8,7 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static org.ossgang.commons.utils.AwaitUtils.awaitFor;
+import static org.ossgang.commons.utils.Awaits.awaitFor;
+
 
 /**
  * An {@link Observer} that is especially useful for testing {@link ObservableValue}s
