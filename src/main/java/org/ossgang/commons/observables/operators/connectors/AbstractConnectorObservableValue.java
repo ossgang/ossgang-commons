@@ -24,6 +24,7 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
     private final Object lock = new Object();
     private ObservableValue<T> upstreamObservable;
     private Subscription upstreamSubscription;
+    private boolean ongoingConnection = false;
     private Property<ConnectorState> connectionState;
 
     protected AbstractConnectorObservableValue(T initial) {
@@ -40,15 +41,20 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
 
     protected void connect(ObservableValue<T> upstream) {
         synchronized (lock) {
-            if (connectionState.get() == CONNECTED) {
-                disconnect();
+            ongoingConnection = true;
+            try {
+                if (connectionState.get() == CONNECTED) {
+                    disconnect();
+                }
+                upstreamObservable = requireNonNull(upstream, "Upstream observable cannot be null! Not connecting");
+                upstreamSubscription = upstreamObservable.subscribe(weakWithErrorAndSubscriptionCountHandling(this,
+                        (self, value) -> self.dispatchValue(value),
+                        (self, exception) -> self.dispatchException(exception),
+                        AbstractConnectorObservableValue::subscriberCountChanged), FIRST_UPDATE);
+                connectionState.set(CONNECTED);
+            } finally {
+                ongoingConnection = false;
             }
-            upstreamObservable = requireNonNull(upstream, "Upstream observable cannot be null! Not connecting");
-            upstreamSubscription = upstreamObservable.subscribe(weakWithErrorAndSubscriptionCountHandling(this,
-                    (self, value) -> self.dispatchValue(value),
-                    (self, exception) -> self.dispatchException(exception),
-                    AbstractConnectorObservableValue::subscriberCountChanged), FIRST_UPDATE);
-            connectionState.set(CONNECTED);
         }
     }
 
@@ -67,9 +73,11 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
         return connectionState;
     }
 
-    private void subscriberCountChanged(Integer count) {
-        if (count <= 0) {
-            unsubscribeAllObservers();
+    private void subscriberCountChanged(int count) {
+        synchronized (lock) {
+            if (count <= 0 && !ongoingConnection) {
+                unsubscribeAllObservers();
+            }
         }
     }
 
