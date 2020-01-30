@@ -42,16 +42,19 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
     protected void connect(ObservableValue<T> upstream) {
         synchronized (lock) {
             ongoingConnection = true;
-            if (connectionState.get() == CONNECTED) {
-                disconnect();
+            try {
+                if (connectionState.get() == CONNECTED) {
+                    disconnect();
+                }
+                upstreamObservable = requireNonNull(upstream, "Upstream observable cannot be null! Not connecting");
+                upstreamSubscription = upstreamObservable.subscribe(weakWithErrorAndSubscriptionCountHandling(this,
+                        (self, value) -> self.dispatchValue(value),
+                        (self, exception) -> self.dispatchException(exception),
+                        AbstractConnectorObservableValue::subscriberCountChanged), FIRST_UPDATE);
+                connectionState.set(CONNECTED);
+            } finally {
+                ongoingConnection = false;
             }
-            upstreamObservable = requireNonNull(upstream, "Upstream observable cannot be null! Not connecting");
-            upstreamSubscription = upstreamObservable.subscribe(weakWithErrorAndSubscriptionCountHandling(this,
-                    (self, value) -> self.dispatchValue(value),
-                    (self, exception) -> self.dispatchException(exception),
-                    AbstractConnectorObservableValue::subscriberCountChanged), FIRST_UPDATE);
-            connectionState.set(CONNECTED);
-            ongoingConnection = false;
         }
     }
 
@@ -70,7 +73,7 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
         return connectionState;
     }
 
-    private void subscriberCountChanged(Integer count) {
+    private void subscriberCountChanged(int count) {
         synchronized (lock) {
             if (count <= 0 && !ongoingConnection) {
                 unsubscribeAllObservers();
