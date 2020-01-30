@@ -24,6 +24,7 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
     private final Object lock = new Object();
     private ObservableValue<T> upstreamObservable;
     private Subscription upstreamSubscription;
+    private boolean ongoingConnection = false;
     private Property<ConnectorState> connectionState;
 
     protected AbstractConnectorObservableValue(T initial) {
@@ -40,6 +41,7 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
 
     protected void connect(ObservableValue<T> upstream) {
         synchronized (lock) {
+            ongoingConnection = true;
             if (connectionState.get() == CONNECTED) {
                 disconnect();
             }
@@ -49,6 +51,7 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
                     (self, exception) -> self.dispatchException(exception),
                     AbstractConnectorObservableValue::subscriberCountChanged), FIRST_UPDATE);
             connectionState.set(CONNECTED);
+            ongoingConnection = false;
         }
     }
 
@@ -68,8 +71,10 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
     }
 
     private void subscriberCountChanged(Integer count) {
-        if (count <= 0) {
-            unsubscribeAllObservers();
+        synchronized (lock) {
+            if (count <= 0 && !ongoingConnection) {
+                unsubscribeAllObservers();
+            }
         }
     }
 
