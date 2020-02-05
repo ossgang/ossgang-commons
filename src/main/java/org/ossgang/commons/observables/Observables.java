@@ -91,6 +91,18 @@ public final class Observables {
     }
 
     /**
+     * Create a constant {@link ObservableValue} holding an exception. This observable is immutable, will always return
+     * null on get(), and it will immediately send the exception to the consumer on subscribe().
+     *
+     * @param throwable the exception to throw
+     * @param <T>   any type, to be compatible with any ObservableValue signature
+     * @return a constant ObservableValue
+     */
+    public static <T> ObservableValue<T> constantException(Throwable throwable) {
+        return new ConstantExceptionObservableValue<>(throwable);
+    }
+
+    /**
      * Create an {@link ObservableValue} from any {@link Observable}. If the observable passed in is an instance of
      * {@link ObservableValue}, it is returned unchanged. Otherwise, a derived observable value is created which
      * subscribes to the upstream observable and caches its latest value.
@@ -246,7 +258,7 @@ public final class Observables {
      * @see UnhandledException
      */
     public static void setUncaughtExceptionHandler(Consumer<Exception> handler) {
-        DispatchingObservable.setUncaughtExceptionHandler(handler);
+        ExceptionHandlers.setUncaughtExceptionHandler(handler);
     }
 
 }
