@@ -15,7 +15,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class UncaughtExceptionHandlerTest {
+public class ExceptionHandlersTest {
 
     private final CompletableFuture<Throwable> exception = new CompletableFuture<>();
 

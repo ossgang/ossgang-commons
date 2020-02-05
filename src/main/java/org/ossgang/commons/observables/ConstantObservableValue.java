@@ -1,5 +1,9 @@
 package org.ossgang.commons.observables;
 
+import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
+
+import static org.ossgang.commons.observables.ExceptionHandlers.dispatchToUncaughtExceptionHandler;
+
 /**
  * A fixed-value, immutable implementation of {@link ObservableValue}. Such an observable always returns the same
  * constant value on get(), and immediately dispatches one single update on subscribe().
@@ -20,7 +24,11 @@ public final class ConstantObservableValue<T> implements ObservableValue<T> {
 
     @Override
     public Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options) {
-        listener.onValue(value);
+        try {
+            listener.onValue(value);
+        } catch (Exception e) {
+            dispatchToUncaughtExceptionHandler(new UpdateDeliveryException(value, e));
+        }
         return () -> {};
     }
 }
