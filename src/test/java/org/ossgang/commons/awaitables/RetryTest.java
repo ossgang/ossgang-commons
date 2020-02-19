@@ -1,0 +1,83 @@
+package org.ossgang.commons.awaitables;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.Timeout;
+import org.ossgang.commons.awaitables.exceptions.AwaitRetryCountException;
+import org.ossgang.commons.awaitables.exceptions.AwaitTimeoutException;
+
+import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.ossgang.commons.awaitables.Retry.retry;
+
+public class RetryTest {
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(5);
+
+    @Test
+    public void retrySuccessful_shouldReturnImmediately() {
+        assertThat(retry(() -> Optional.of(42)).indefinitely()).isEqualTo(42);
+    }
+
+    @Test
+    public void retryFailingWithTimeout_shouldTimeout() {
+        assertThatExceptionOfType(AwaitTimeoutException.class).isThrownBy(
+                () -> retry(Optional::empty).atMost(Duration.ofMillis(20)));
+    }
+
+    @Test
+    public void retryFailingWithLimitedRetries_shouldHitLimit() {
+        assertThatExceptionOfType(AwaitRetryCountException.class).isThrownBy(
+                () -> retry(Optional::empty).withRetryCount(5).withRetryInterval(Duration.ZERO).indefinitely());
+    }
+
+    @Test
+    public void retryFailingWithTimeoutAndErrorMessage_shouldTimeout() {
+        assertThatExceptionOfType(AwaitTimeoutException.class).isThrownBy(
+                () -> retry(Optional::empty).withErrorMessage("ERROR_MESSAGE").atMost(Duration.ofMillis(20)))
+                .withMessageContaining("ERROR_MESSAGE");
+    }
+
+    @Test
+    public void retryFailingWithLimitedRetriesAndErrorMessage_shouldHitLimit() {
+        assertThatExceptionOfType(AwaitRetryCountException.class).isThrownBy(
+                () -> retry(Optional::empty).withErrorMessage("ERROR_MESSAGE").withRetryCount(5).indefinitely())
+                .withMessageContaining("ERROR_MESSAGE");
+    }
+
+    @Test
+    public void retrySuccessfulAfterRetries_shouldReturnAfterConditionFulfilled() throws InterruptedException {
+        AtomicReference<Optional<Integer>> result = new AtomicReference<>(Optional.empty());
+        CompletableFuture<Integer> retryFuture = retry(result::get).asCompletableFuture();
+        MILLISECONDS.sleep(100);
+        assertThat(retryFuture.isDone()).isFalse();
+        result.set(Optional.of(42));
+        assertThat(retryFuture.join()).isEqualTo(42);
+    }
+
+    @Test
+    public void apiMisuse_asCompletableFutureCalledTwice_shouldThrow() {
+        Retry<Boolean> retry = retry(Optional::empty);
+        retry.asCompletableFuture();
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(retry::asCompletableFuture);
+    }
+
+    @Test
+    public void asCompletableFuture_futureCancelled_shouldFreeWorkerThread() throws InterruptedException {
+        ForkJoinPool threadPool = new ForkJoinPool();
+        assertThat(threadPool.isQuiescent()).isTrue();
+        CompletableFuture<Object> completableFuture = retry(Optional::empty).asCompletableFuture(threadPool);
+        MILLISECONDS.sleep(100);
+        assertThat(threadPool.isQuiescent()).isFalse();
+        completableFuture.cancel(true);
+        threadPool.awaitQuiescence(1000, MILLISECONDS);
+        assertThat(threadPool.isQuiescent()).isTrue();
+    }
+}

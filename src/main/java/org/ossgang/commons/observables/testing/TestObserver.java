@@ -8,8 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static org.ossgang.commons.utils.Awaits.awaitFor;
-
+import static org.ossgang.commons.awaitables.Await.await;
 
 /**
  * An {@link Observer} that is especially useful for testing {@link ObservableValue}s
@@ -86,7 +85,7 @@ public class TestObserver<T> implements Observer<T> {
         if (condition.get()) {
             return;
         }
-        awaitFor(condition).withErrorMessage(errorMessage).atMost(timeout);
+        await(condition).withErrorMessage(errorMessage).atMost(timeout);
     }
 
 }
