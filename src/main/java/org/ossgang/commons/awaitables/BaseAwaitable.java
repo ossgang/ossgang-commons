@@ -17,14 +17,15 @@ import static java.time.Duration.ZERO;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.concurrent.Executors.newCachedThreadPool;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.ossgang.commons.awaitables.AwaitDefaults.DEFAULT_RETRY_COUNT;
-import static org.ossgang.commons.awaitables.AwaitDefaults.DEFAULT_RETRY_INTERVAL;
 import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
 @SuppressWarnings("unchecked")
 class BaseAwaitable<T, A extends BaseAwaitable<T, A>> {
     private static final ExecutorService AWAITER_POOL =
             newCachedThreadPool(daemonThreadFactoryWithPrefix("ossgang-Awaitables-awaiter"));
+
+    private static final Duration DEFAULT_RETRY_INTERVAL = Duration.ofMillis(100);
+    private static final int DEFAULT_RETRY_COUNT = Integer.MAX_VALUE;
 
     private Supplier<String> message;
     private Duration retryInterval;
