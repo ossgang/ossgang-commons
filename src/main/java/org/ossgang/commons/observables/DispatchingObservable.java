@@ -38,6 +38,7 @@ import java.util.function.Predicate;
 import static java.util.Collections.newSetFromMap;
 import static java.util.concurrent.Executors.newCachedThreadPool;
 import static org.ossgang.commons.observables.ExceptionHandlers.dispatchToUncaughtExceptionHandler;
+import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
 /**
  * A basic implementation of {@link Observable} managing a set of listeners, and dispatching updates to them.
@@ -50,7 +51,8 @@ import static org.ossgang.commons.observables.ExceptionHandlers.dispatchToUncaug
  */
 public class DispatchingObservable<T> implements Observable<T> {
     private static final Set<Observable<?>> GC_PROTECTION = newSetFromMap(new ConcurrentHashMap<>());
-    private static final ExecutorService DISPATCHER_POOL = newCachedThreadPool(new DispatchingThreadFactory());
+    private static final ExecutorService DISPATCHER_POOL =
+            newCachedThreadPool(daemonThreadFactoryWithPrefix("ossgang-Observable-dispatcher"));
     private final Map<Observer<? super T>, ObservableSubscription> listeners = new ConcurrentHashMap<>();
     private final AtomicInteger listenerCount = new AtomicInteger(0);
 
