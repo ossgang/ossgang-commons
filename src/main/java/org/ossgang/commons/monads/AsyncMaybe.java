@@ -40,10 +40,8 @@ import static org.ossgang.commons.utils.Uncheckeds.*;
  * in the future. It allows to run code asynchronously and then fetch back or react on the result.
  * In order to fetch the result, it is possible to create a {@link Maybe} in a blocking way. Otherwise, reacting on the
  * completion can be achieved via, e.g., {@link #whenValue(ThrowingConsumer)} or {@link #map(ThrowingFunction)}.
- *
- * A Maybe&lt;T&gt; either carries a T or an exception that occurred when producing it.
- *
- * @param <T>
+ * *
+ * @param <T> the type to carry
  */
 public class AsyncMaybe<T> {
 
@@ -66,41 +64,45 @@ public class AsyncMaybe<T> {
     }
 
     /**
-     * TODO andrea
+     * Construct an {@link AsyncMaybe} from the execution of a runnable. The type of the {@link AsyncMaybe} will be Void.
      *
-     * @param runnable
-     * @return
+     * @param runnable the runnable to run
+     * @return An {@link AsyncMaybe} wrapping the execution of the provided runnable
      */
     public static AsyncMaybe<Void> attemptAsync(ThrowingRunnable runnable) {
         return AsyncMaybe.fromVoidCompletableFuture(CompletableFuture.runAsync(uncheckedRunnable(runnable), ASYNC_MAYBE_POOL));
     }
 
     /**
-     * TODO andrea
+     * Construct an {@link AsyncMaybe} from the execution of a supplier.
      *
-     * @param supplier
-     * @param <T>
-     * @return
+     * @param supplier the supplier to use
+     * @param <T> the type of the {@link AsyncMaybe}
+     * @return An {@link AsyncMaybe} wrapping the execution of the provided supplier
      */
     public static <T> AsyncMaybe<T> attemptAsync(ThrowingSupplier<T> supplier) {
         return AsyncMaybe.fromCompletableFuture(CompletableFuture.supplyAsync(uncheckedSupplier(supplier), ASYNC_MAYBE_POOL));
     }
 
     /**
-     * TODO andrea
+
+     * Construct an already "resolved" (without asynchronous calls) "successful" {@link AsyncMaybe} containing a value.
      *
-     * @param value
-     * @param <T>
-     * @return
+     * @param <T> the type to carry
+     * @param value the value to wrap
+     * @return the successful {@link AsyncMaybe} object
+     * @throws NullPointerException if the value is null
      */
     public static <T> AsyncMaybe<T> ofValue(T value) {
-        return AsyncMaybe.fromCompletableFuture(CompletableFuture.completedFuture(value));
+        return AsyncMaybe.fromCompletableFuture(CompletableFuture.completedFuture(requireNonNull(value, "AsyncMaybe cannot have a null value")));
     }
 
     /**
-     * TODO andrea
+     * Construct an already "resolved" (without asynchronous calls) "successful" {@link AsyncMaybe} of Void containing
+     * a null value. This special {@link AsyncMaybe} objects represent a successful execution with no result (e.g. a void function).
+     * Note that ONLY {@link AsyncMaybe} of Void is allowed to carry a null value.
      *
-     * @return
+     * @return the successful {@link AsyncMaybe} of Void object
      */
     public static AsyncMaybe<Void> ofVoid() {
         CompletableFuture<Void> future = new CompletableFuture<>();
@@ -108,16 +110,18 @@ public class AsyncMaybe<T> {
         return AsyncMaybe.fromVoidCompletableFuture(future);
     }
 
+
     /**
-     * TODO andrea
+     * Construct an already "resolved" (without asynchronous calls) "unsuccessful" {@link Maybe} containing an exception.
      *
-     * @param throwable
-     * @param <T>
-     * @return
+     * @param <T> the type to carry
+     * @param exception the exception to wrap
+     * @return the unsuccessful {@link AsyncMaybe} object
+     * @throws NullPointerException if the exception is null
      */
-    public static <T> AsyncMaybe<T> ofException(Throwable throwable) {
+    public static <T> AsyncMaybe<T> ofException(Throwable exception) {
         CompletableFuture<T> future = new CompletableFuture<>();
-        future.completeExceptionally(throwable);
+        future.completeExceptionally(requireNonNull(exception, "AsyncMaybe cannot have a null exception"));
         return AsyncMaybe.fromCompletableFuture(future);
     }
 
@@ -136,10 +140,13 @@ public class AsyncMaybe<T> {
     }
 
     /**
-     * TODO andrea + test
+     * Apply the consumer on a {@link Maybe} representing the "resolved" state of this {@link AsyncMaybe}. The consumer
+     * will be called only when the asynchronous calculations of the result of this {@link AsyncMaybe} are done.
+     * A new {@link AsyncMaybe} is returned with the same result of this {@link AsyncMaybe} (be it an exception or a value).
+     * If the provided consumer throws an exception, the returned {@link AsyncMaybe} will contain the newly thrown exception.
      *
-     * @param consumer
-     * @return
+     * @param consumer the consumer to run
+     * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one thrown in the provided consumer
      */
     public AsyncMaybe<T> whenComplete(ThrowingConsumer<Maybe<T>> consumer) {
         return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync((value, exception) -> {
@@ -152,10 +159,13 @@ public class AsyncMaybe<T> {
     }
 
     /**
-     * TODO andrea + test
+     * Apply the consumer with the value or exception that is contained in the "resolved" state of this {@link AsyncMaybe}.
+     * The consumer will be called only when the asynchronous calculations of the result of this {@link AsyncMaybe} are done.
+     * A new {@link AsyncMaybe} is returned with the same result of this {@link AsyncMaybe} (be it an exception or a value).
+     * If the provided consumer throws an exception, the returned {@link AsyncMaybe} will contain the newly thrown exception.
      *
-     * @param consumer
-     * @return
+     * @param consumer the consumer to run
+     * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one is thrown in the provided consumer
      */
     public AsyncMaybe<T> whenComplete(BiConsumer<T, Throwable> consumer) {
         return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync(consumer, ASYNC_MAYBE_POOL));
