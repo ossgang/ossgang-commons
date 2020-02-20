@@ -26,12 +26,13 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.Executors.newCachedThreadPool;
+import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 import static org.ossgang.commons.utils.Uncheckeds.*;
 
 /**
@@ -46,8 +47,7 @@ import static org.ossgang.commons.utils.Uncheckeds.*;
  */
 public class AsyncMaybe<T> {
 
-    /* TODO add here the named thread factory created in PR #38 */
-    private static final ExecutorService ASYNC_MAYBE_POOL = Executors.newCachedThreadPool();
+    private static final ExecutorService ASYNC_MAYBE_POOL = newCachedThreadPool(daemonThreadFactoryWithPrefix("ossgang-AsyncMaybe-executor"));
 
     private final CompletableFuture<T> future;
     private final Function<ThrowingSupplier<T>, Maybe<T>> maybeGenerator;
