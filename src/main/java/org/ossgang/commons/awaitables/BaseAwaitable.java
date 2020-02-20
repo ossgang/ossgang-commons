@@ -10,6 +10,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -27,26 +28,27 @@ class BaseAwaitable<T, A extends BaseAwaitable<T, A>> {
     private static final Duration DEFAULT_RETRY_INTERVAL = Duration.ofMillis(100);
     private static final int DEFAULT_RETRY_COUNT = Integer.MAX_VALUE;
 
-    private Supplier<String> message;
-    private Duration retryInterval;
-    private int retryCount;
-    private Supplier<Optional<T>> supplier;
-    private final AtomicReference<CompletableFuture<T>> completableFuture = new AtomicReference<>();
+    private final AtomicReference<Supplier<String>> message;
+    private final AtomicReference<Duration> retryInterval;
+    private final AtomicInteger retryCount;
+    private final AtomicReference<CompletableFuture<T>> completableFuture;
+    private final Supplier<Optional<T>> supplier;
 
     BaseAwaitable(Supplier<Optional<T>> supplier) {
         this.supplier = supplier;
-        this.message = () -> "";
-        this.retryInterval = DEFAULT_RETRY_INTERVAL;
-        this.retryCount = DEFAULT_RETRY_COUNT;
+        this.message = new AtomicReference<>(() -> "");
+        this.completableFuture = new AtomicReference<>();
+        this.retryInterval = new AtomicReference<>(DEFAULT_RETRY_INTERVAL);
+        this.retryCount = new AtomicInteger(DEFAULT_RETRY_COUNT);
     }
 
     public A withErrorMessage(String errorMessage) {
-        this.message = () -> errorMessage;
+        message.set(() -> errorMessage);
         return (A) this;
     }
 
     public A withErrorMessage(Supplier<String> errorMessage) {
-        this.message = errorMessage;
+        message.set(errorMessage);
         return (A) this;
     }
 
@@ -54,7 +56,7 @@ class BaseAwaitable<T, A extends BaseAwaitable<T, A>> {
         if (numberOfRetry < 0) {
             throw new IllegalArgumentException("Retry count cannot be negative");
         }
-        this.retryCount = numberOfRetry;
+        retryCount.set(numberOfRetry);
         return (A) this;
     }
 
@@ -62,7 +64,7 @@ class BaseAwaitable<T, A extends BaseAwaitable<T, A>> {
         if (interval.isNegative()) {
             throw new IllegalArgumentException("Retry interval cannot be negative");
         }
-        this.retryInterval = interval;
+        retryInterval.set(interval);
         return (A) this;
     }
 
@@ -73,19 +75,20 @@ class BaseAwaitable<T, A extends BaseAwaitable<T, A>> {
         Instant beforeWaiting = Instant.now();
         while (!(value = supplier.get()).isPresent()) {
             if (timeoutEnabled && timeoutExceeded(beforeWaiting, timeout)) {
-                throw new AwaitTimeoutException("Timeout exceeded " + timeout + ": " + message.get());
+                throw new AwaitTimeoutException("Timeout exceeded " + timeout + userMessage());
             }
-            if (count > retryCount) {
-                throw new AwaitRetryCountException("Retry count exceeded " + count + ": " + message.get());
+            if (count > retryCount.get()) {
+                throw new AwaitRetryCountException("Retry count exceeded " + count + userMessage());
             }
             if (completableFutureCancelled()) {
                 throw new CancellationException("Wrapping CompletableFuture was cancelled.");
             }
             try {
-                if (retryInterval.equals(ZERO)) {
+                Duration interval = retryInterval.get();
+                if (interval.equals(ZERO)) {
                     Thread.yield();
                 } else {
-                    MILLISECONDS.sleep(retryInterval.toMillis());
+                    MILLISECONDS.sleep(interval.toMillis());
                 }
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -93,6 +96,15 @@ class BaseAwaitable<T, A extends BaseAwaitable<T, A>> {
             count++;
         }
         return value.get();
+    }
+
+    private String userMessage() {
+        String userMessage = message.get().get();
+        if (userMessage.isEmpty()) {
+            return "";
+        } else {
+            return ": " + userMessage;
+        }
     }
 
     private boolean completableFutureCancelled() {
