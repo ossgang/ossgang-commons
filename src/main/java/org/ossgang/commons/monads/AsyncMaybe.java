@@ -187,7 +187,7 @@ public class AsyncMaybe<T> {
      * @param function the function to apply
      * @return A successful Maybe&lt;Void&gt; if the function is executed and succeeds. An unsuccessful Maybe otherwise.
      */
-    public AsyncMaybe<Void> map(ThrowingConsumer<T> function) {
+    public AsyncMaybe<Void> then(ThrowingConsumer<T> function) {
         requireNonNull(function);
         return AsyncMaybe.fromVoidCompletableFuture(future.thenAccept(unchecked(function)));
     }

@@ -244,7 +244,7 @@ public class Maybe<T> {
      * @param function the function to apply
      * @return A successful Maybe&lt;Void&gt; if the function is executed and succeeds. An unsuccessful Maybe otherwise.
      */
-    public Maybe<Void> map(ThrowingConsumer<T> function) {
+    public Maybe<Void> then(ThrowingConsumer<T> function) {
         requireNonNull(function);
         if (exception != null) {
             return Maybe.ofException(exception);
