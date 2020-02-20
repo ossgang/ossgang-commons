@@ -23,8 +23,10 @@
 package org.ossgang.commons.monads;
 
 import java.time.Duration;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -33,11 +35,19 @@ import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.utils.Exceptions.unchecked;
 
 /**
- * TODO andrea
+ * This utility class implements the concept of a "Maybe" or "Try" {@link Optional} that can be resolved at some point
+ * in the future. It allows to run code asynchronously and then fetch back or react on the result.
+ * In order to fetch the result, it is possible to create a {@link Maybe} in a blocking way. Otherwise, reacting on the
+ * completion can be achieved via, e.g., {@link #whenValue(ThrowingConsumer)} or {@link #map(ThrowingFunction)}.
+ *
+ * A Maybe&lt;T&gt; either carries a T or an exception that occurred when producing it.
  *
  * @param <T>
  */
 public class AsyncMaybe<T> {
+
+    /* TODO add here the named thread factory created in PR #38 */
+    private static final ExecutorService ASYNC_MAYBE_POOL = Executors.newCachedThreadPool();
 
     private final CompletableFuture<T> future;
     private final Function<ThrowingSupplier<T>, Maybe<T>> maybeGenerator;
@@ -62,7 +72,7 @@ public class AsyncMaybe<T> {
      * @return
      */
     public static AsyncMaybe<Void> attemptAsync(ThrowingRunnable runnable) {
-        return AsyncMaybe.fromVoidCompletableFuture(CompletableFuture.runAsync(unchecked(runnable)));
+        return AsyncMaybe.fromVoidCompletableFuture(CompletableFuture.runAsync(unchecked(runnable), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -73,7 +83,7 @@ public class AsyncMaybe<T> {
      * @return
      */
     public static <T> AsyncMaybe<T> attemptAsync(ThrowingSupplier<T> supplier) {
-        return AsyncMaybe.fromCompletableFuture(CompletableFuture.supplyAsync(unchecked(supplier)));
+        return AsyncMaybe.fromCompletableFuture(CompletableFuture.supplyAsync(unchecked(supplier), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -118,11 +128,11 @@ public class AsyncMaybe<T> {
      * @return
      */
     public AsyncMaybe<T> whenValue(ThrowingConsumer<T> consumer) {
-        return AsyncMaybe.fromCompletableFuture(future.whenComplete((value, exception) -> {
+        return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync((value, exception) -> {
             if (exception == null) {
                 unchecked(consumer).accept(value);
             }
-        }));
+        }, ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -132,13 +142,13 @@ public class AsyncMaybe<T> {
      * @return
      */
     public AsyncMaybe<T> whenComplete(ThrowingConsumer<Maybe<T>> consumer) {
-        return AsyncMaybe.fromCompletableFuture(future.whenComplete((value, exception) -> {
+        return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync((value, exception) -> {
             if (exception != null) {
                 unchecked(consumer).accept(Maybe.ofException(exception));
             } else {
                 unchecked(consumer).accept(maybeGenerator.apply(() -> value));
             }
-        }));
+        }, ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -148,7 +158,7 @@ public class AsyncMaybe<T> {
      * @return
      */
     public AsyncMaybe<T> whenComplete(BiConsumer<T, Throwable> consumer) {
-        return AsyncMaybe.fromCompletableFuture(future.whenComplete(consumer));
+        return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync(consumer, ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -158,101 +168,101 @@ public class AsyncMaybe<T> {
      * @return
      */
     public AsyncMaybe<T> whenException(ThrowingConsumer<Throwable> consumer) {
-        CompletableFuture<T> whenComplete = future.whenComplete((value, exception) -> {
+        CompletableFuture<T> whenComplete = future.whenCompleteAsync((value, exception) -> {
             if (exception != null) {
                 unchecked(consumer).accept(exception);
             }
-        });
+        }, ASYNC_MAYBE_POOL);
         return AsyncMaybe.fromCompletableFuture(whenComplete);
     }
 
     /**
-     * Apply a transformation function if this {@link Maybe} is in a "successful" state. Pass through the exception in
+     * Apply a transformation function if this {@link AsyncMaybe} is in a "successful" state. Pass through the exception in
      * case it is in an "unsuccessful" state. If the transformation function throws, the exception is returned wrapped
-     * in an "unsuccessful" Maybe.
+     * in an "unsuccessful" AsyncMaybe.
      *
      * @param function the function to apply
-     * @return A successful Maybe the new value if the transformation succeeds. An unsuccessful Maybe otherwise.
+     * @return A successful AsyncMaybe the new value if the transformation succeeds. An unsuccessful AsyncMaybe otherwise.
      */
     public <R> AsyncMaybe<R> map(ThrowingFunction<T, R> function) {
         requireNonNull(function);
-        return AsyncMaybe.fromCompletableFuture(this.future.thenApply(unchecked(function)));
+        return AsyncMaybe.fromCompletableFuture(future.thenApplyAsync(unchecked(function), ASYNC_MAYBE_POOL));
     }
 
     /**
-     * Apply a void function if this {@link Maybe} is in a "successful" state. Pass through the exception in case it is
+     * Apply a void function if this {@link AsyncMaybe} is in a "successful" state. Pass through the exception in case it is
      * in an "unsuccessful" state. If the transformation function throws, the exception is returned wrapped in an
-     * "unsuccessful" Maybe. If it succeeds, return an empty Maybe&lt;Void&gt;.
+     * "unsuccessful" AsyncMaybe. If it succeeds, return an empty AsyncMaybe&lt;Void&gt;.
      *
      * @param function the function to apply
-     * @return A successful Maybe&lt;Void&gt; if the function is executed and succeeds. An unsuccessful Maybe otherwise.
+     * @return A successful AsyncMaybe&lt;Void&gt; if the function is executed and succeeds. An unsuccessful AsyncMaybe otherwise.
      */
     public AsyncMaybe<Void> then(ThrowingConsumer<T> function) {
         requireNonNull(function);
-        return AsyncMaybe.fromVoidCompletableFuture(future.thenAccept(unchecked(function)));
+        return AsyncMaybe.fromVoidCompletableFuture(future.thenAcceptAsync(unchecked(function), ASYNC_MAYBE_POOL));
     }
 
     /**
-     * Apply a function if this {@link Maybe} is in a "successful" state. Pass through the exception in case it is in an
-     * "unsuccessful" state. The function does not get the value of the Maybe passed as parameter, which is useful e.g.
-     * for chaining Maybe&lt;Void&gt;. If the function succeeds, its result is returned as a successful Maybe.
+     * Apply a function if this {@link AsyncMaybe} is in a "successful" state. Pass through the exception in case it is in an
+     * "unsuccessful" state. The function does not get the value of the AsyncMaybe passed as parameter, which is useful e.g.
+     * for chaining AsyncMaybe&lt;Void&gt;. If the function succeeds, its result is returned as a successful AsyncMaybe.
      *
      * @param supplier the function to apply
-     * @return A successful Maybe wrapping the return value if the function is executed and succeeds. An unsuccessful
-     * Maybe otherwise.
+     * @return A successful AsyncMaybe wrapping the return value if the function is executed and succeeds. An unsuccessful
+     * AsyncMaybe otherwise.
      */
     public <R> AsyncMaybe<R> then(ThrowingSupplier<R> supplier) {
         requireNonNull(supplier);
-        return AsyncMaybe.fromCompletableFuture(future.thenApply(v -> unchecked(supplier).get()));
+        return AsyncMaybe.fromCompletableFuture(future.thenApplyAsync(v -> unchecked(supplier).get(), ASYNC_MAYBE_POOL));
     }
 
     /**
-     * Apply a void function if this {@link Maybe} is in a "successful" state. Pass through the exception in case it is
-     * in an "unsuccessful" state. The function does not get the value of the Maybe passed as parameter, which is useful
-     * e.g. for chaining Maybe&lt;Void&gt;. If the function succeeds, a successful empty Maybe&lt;Void&gt; is returned.
+     * Apply a void function if this {@link AsyncMaybe} is in a "successful" state. Pass through the exception in case it is
+     * in an "unsuccessful" state. The function does not get the value of the AsyncMaybe passed as parameter, which is useful
+     * e.g. for chaining AsyncMaybe&lt;Void&gt;. If the function succeeds, a successful empty AsyncMaybe&lt;Void&gt; is returned.
      *
      * @param runnable the function to apply
-     * @return A successful Maybe&lt;Void&gt; it the function is executed and succeeds. An unsuccessful Maybe otherwise.
+     * @return A successful AsyncMaybe&lt;Void&gt; it the function is executed and succeeds. An unsuccessful AsyncMaybe otherwise.
      */
     public AsyncMaybe<Void> then(ThrowingRunnable runnable) {
         requireNonNull(runnable);
-        return AsyncMaybe.fromVoidCompletableFuture(future.thenRun(unchecked(runnable)));
+        return AsyncMaybe.fromVoidCompletableFuture(future.thenRunAsync(unchecked(runnable), ASYNC_MAYBE_POOL));
     }
 
     /**
-     * Apply a function if this {@link Maybe} is in a "unsuccessful" state. The function gets passed the exception
-     * wrapped in this maybe. If it returns successfully, it's result is wrapped in a "successful" Maybe. If it
-     * throws, the exception is returned wrapped in an "unsuccessful" Maybe.
+     * Apply a function if this {@link AsyncMaybe} is in a "unsuccessful" state. The function gets passed the exception
+     * wrapped in this maybe. If it returns successfully, it's result is wrapped in a "successful" AsyncMaybe. If it
+     * throws, the exception is returned wrapped in an "unsuccessful" AsyncMaybe.
      *
      * @param function the recovery function to apply
-     * @return A successful Maybe the new value if the function returns. An unsuccessful Maybe if it throws.
+     * @return A successful AsyncMaybe the new value if the function returns. An unsuccessful AsyncMaybe if it throws.
      */
     public AsyncMaybe<T> recover(ThrowingFunction<Throwable, T> function) {
         requireNonNull(function);
-        return AsyncMaybe.fromCompletableFuture(future.handle((value, exception) -> {
+        return AsyncMaybe.fromCompletableFuture(future.handleAsync((value, exception) -> {
             if (exception != null) {
                 return unchecked(function).apply(exception);
             }
             return value;
-        }));
+        }, ASYNC_MAYBE_POOL));
     }
 
     /**
-     * Apply a function if this {@link Maybe} is in a "unsuccessful" state. The function gets passed the exception
-     * wrapped in this maybe. If it returns successfully, a "successful" void Maybe is returned. If it
-     * throws, the exception is returned wrapped in an "unsuccessful" Maybe.
+     * Apply a function if this {@link AsyncMaybe} is in a "unsuccessful" state. The function gets passed the exception
+     * wrapped in this AsyncMaybe. If it returns successfully, a "successful" void AsyncMaybe is returned. If it
+     * throws, the exception is returned wrapped in an "unsuccessful" AsyncMaybe.
      *
      * @param consumer the recovery handler to apply
-     * @return A successful void Maybe the new value if the handler returns. An unsuccessful Maybe if it throws.
+     * @return A successful void AsyncMaybe the new value if the handler returns. An unsuccessful AsyncMaybe if it throws.
      */
     public AsyncMaybe<Void> recover(ThrowingConsumer<Throwable> consumer) {
         requireNonNull(consumer);
-        return AsyncMaybe.fromVoidCompletableFuture(future.handle((value, exception) -> {
+        return AsyncMaybe.fromVoidCompletableFuture(future.handleAsync((value, exception) -> {
             if (exception != null) {
                 unchecked(consumer).accept(exception);
             }
             return null;
-        }));
+        }, ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -283,22 +293,4 @@ public class AsyncMaybe<T> {
         return future;
     }
 
-    /**
-     * TODO andrea: decide which criteria to use with hashcode and equals! (+ test)
-     *
-     * @param o
-     * @return
-     */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        AsyncMaybe<?> that = (AsyncMaybe<?>) o;
-        return Objects.equals(future, that.future);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(future);
-    }
 }
