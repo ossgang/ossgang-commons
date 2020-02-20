@@ -25,6 +25,7 @@ package org.ossgang.commons.monads;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -270,19 +271,7 @@ public class AsyncMaybe<T> {
      * @return
      */
     public Maybe<T> toMaybeBlocking(Duration timeout) {
-        throw new UnsupportedOperationException("Not yet decided how to do it!");
-//        T value = null;
-//        try {
-//            value = future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-//        } catch (InterruptedException | TimeoutException e) {
-//            e.printStackTrace();
-//        } catch (ExecutionException e) {
-//            e.printStackTrace();
-//        }
-//        future.can
-//        return maybeGenerator.apply(() -> {
-//            return null;
-//        });
+        return maybeGenerator.apply(() -> future.get(timeout.toMillis(), TimeUnit.MILLISECONDS));
     }
 
     /**

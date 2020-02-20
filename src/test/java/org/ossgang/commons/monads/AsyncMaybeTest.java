@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -287,7 +288,35 @@ public class AsyncMaybeTest {
     public void toMaybeWithTimeoutThrowsWhenReached() {
         CompletableFuture<Object> future = new CompletableFuture<>();
         Maybe<Object> maybe = AsyncMaybe.fromCompletableFuture(future).toMaybeBlocking(Duration.ofSeconds(2));
+        assertThat(maybe.exception()).isInstanceOf(TimeoutException.class);
+    }
 
+    @Test
+    public void mapIsCalledOnValueAsync() {
+        Maybe<String> result = AsyncMaybe.attemptAsync(() -> "Hello").map(hello -> hello + "World").toMaybeBlocking();
+        assertThat(result.value()).isEqualTo("HelloWorld");
+    }
+
+    @Test
+    public void mapIsCalledOnValue() {
+        Maybe<String> result = AsyncMaybe.ofValue("Hello").map(hello -> hello + "World").toMaybeBlocking();
+        assertThat(result.value()).isEqualTo("HelloWorld");
+    }
+
+    @Test
+    public void mapIsNotCalledOnExceptionAsync() {
+        RuntimeException exception = new RuntimeException("Testing exception");
+        Maybe<String> result = AsyncMaybe.attemptAsync(() -> {
+            throw exception;
+        }).map(any -> "Not called").toMaybeBlocking();
+        assertThat(result.exception()).hasCause(exception);
+    }
+
+    @Test
+    public void mapIsNotCalledOnException() {
+        RuntimeException exception = new RuntimeException("Testing exception");
+        Maybe<String> result = AsyncMaybe.ofException(exception).map(any -> any + "Not called").toMaybeBlocking();
+        assertThat(result.exception()).hasCause(exception);
     }
 
     private static Throwable anyExceptionWithCause(Class<? extends Throwable> throwableClass) {
