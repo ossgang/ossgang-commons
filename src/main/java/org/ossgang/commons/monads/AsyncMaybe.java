@@ -22,11 +22,11 @@
 
 package org.ossgang.commons.monads;
 
+import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.utils.Exceptions.unchecked;
@@ -39,26 +39,19 @@ import static org.ossgang.commons.utils.Exceptions.unchecked;
 public class AsyncMaybe<T> {
 
     private final CompletableFuture<T> future;
-    private final Function<Supplier<T>, Maybe<T>> maybeGenerator;
+    private final Function<ThrowingSupplier<T>, Maybe<T>> maybeGenerator;
 
-    protected AsyncMaybe(CompletableFuture<T> future, Function<Supplier<T>, Maybe<T>> maybeGenerator) {
+    protected AsyncMaybe(CompletableFuture<T> future, Function<ThrowingSupplier<T>, Maybe<T>> maybeGenerator) {
         this.future = future;
         this.maybeGenerator = maybeGenerator;
     }
 
     public static <T> AsyncMaybe<T> fromCompletableFuture(CompletableFuture<T> future) {
-        return new AsyncMaybe<>(future, valueSupplier -> Maybe.attempt(valueSupplier::get));
+        return new AsyncMaybe<>(future, Maybe::attempt);
     }
 
     public static AsyncMaybe<Void> fromVoidCompletableFuture(CompletableFuture<Void> future) {
-        return new AsyncMaybe<>(future, valueSupplier -> {
-            try {
-                valueSupplier.get();
-                return Maybe.ofVoid();
-            } catch (Exception e) {
-                return Maybe.ofException(e);
-            }
-        });
+        return new AsyncMaybe<>(future, valueSupplier -> Maybe.attempt((ThrowingRunnable) future::get));
     }
 
     /**
@@ -123,7 +116,7 @@ public class AsyncMaybe<T> {
      * @param consumer
      * @return
      */
-    public AsyncMaybe<T> whenCompleted(ThrowingConsumer<T> consumer) {
+    public AsyncMaybe<T> whenValue(ThrowingConsumer<T> consumer) {
         return AsyncMaybe.fromCompletableFuture(future.whenComplete((value, exception) -> {
             if (exception == null) {
                 unchecked(consumer).accept(value);
@@ -137,7 +130,23 @@ public class AsyncMaybe<T> {
      * @param consumer
      * @return
      */
-    public AsyncMaybe<T> whenCompleted(BiConsumer<T, Throwable> consumer) {
+    public AsyncMaybe<T> whenComplete(ThrowingConsumer<Maybe<T>> consumer) {
+        return AsyncMaybe.fromCompletableFuture(future.whenComplete((value, exception) -> {
+            if (exception != null) {
+                unchecked(consumer).accept(Maybe.ofException(exception));
+            } else {
+                unchecked(consumer).accept(maybeGenerator.apply(() -> value));
+            }
+        }));
+    }
+
+    /**
+     * TODO andrea + test
+     *
+     * @param consumer
+     * @return
+     */
+    public AsyncMaybe<T> whenComplete(BiConsumer<T, Throwable> consumer) {
         return AsyncMaybe.fromCompletableFuture(future.whenComplete(consumer));
     }
 
@@ -147,7 +156,7 @@ public class AsyncMaybe<T> {
      * @param consumer
      * @return
      */
-    public AsyncMaybe<T> whenCompletedExceptionally(ThrowingConsumer<Throwable> consumer) {
+    public AsyncMaybe<T> whenException(ThrowingConsumer<Throwable> consumer) {
         CompletableFuture<T> whenComplete = future.whenComplete((value, exception) -> {
             if (exception != null) {
                 unchecked(consumer).accept(exception);
@@ -252,6 +261,28 @@ public class AsyncMaybe<T> {
      */
     public Maybe<T> toMaybeBlocking() {
         return maybeGenerator.apply(future::join);
+    }
+
+    /**
+     * TODO andrea
+     *
+     * @param timeout
+     * @return
+     */
+    public Maybe<T> toMaybeBlocking(Duration timeout) {
+        throw new UnsupportedOperationException("Not yet decided how to do it!");
+//        T value = null;
+//        try {
+//            value = future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+//        } catch (InterruptedException | TimeoutException e) {
+//            e.printStackTrace();
+//        } catch (ExecutionException e) {
+//            e.printStackTrace();
+//        }
+//        future.can
+//        return maybeGenerator.apply(() -> {
+//            return null;
+//        });
     }
 
     /**

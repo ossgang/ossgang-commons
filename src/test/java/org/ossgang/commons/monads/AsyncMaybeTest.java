@@ -26,7 +26,9 @@ import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
+import java.time.Duration;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 
@@ -111,6 +113,28 @@ public class AsyncMaybeTest {
         verify(function2, never()).apply(anyInt());
         assertThat(maybe.hasException()).isTrue();
         assertThat(maybe.exception()).hasCauseInstanceOf(MaybeTestException2.class);
+    }
+
+    @Test
+    public void recoverIsCalledWhenException() {
+        CompletableFuture<String> result = new CompletableFuture<>();
+        AsyncMaybe.ofException(new RuntimeException("Exception test"))
+                .recover((ThrowingConsumer<Throwable>) exception -> result.complete(exception.getMessage()));
+        assertThat(result.join()).isEqualTo("Exception test");
+    }
+
+    @Test
+    public void recoverIsIgnoredIfThereIsAValue() {
+        Maybe<Void> maybe = AsyncMaybe.ofValue("Value").recover((ThrowingConsumer<Throwable>) exception -> {
+            throw new IllegalStateException("Cannot reach this point!");
+        }).toMaybeBlocking();
+        assertThat(maybe.hasException()).isFalse();
+    }
+
+    @Test
+    public void recoverFunctionValueIsIgnoredIfThereIsAValue() {
+        Maybe<String> maybe = AsyncMaybe.ofValue("Value").recover(exception -> "Another value").toMaybeBlocking();
+        assertThat(maybe.value()).isEqualTo("Value");
     }
 
     @Test
@@ -211,6 +235,59 @@ public class AsyncMaybeTest {
         Mockito.verify(exceptionConsumer, times(0)).accept(any());
         Mockito.verify(valueConsumer, times(1)).accept(any());
         Mockito.verify(successful, times(1)).run();
+    }
+
+    @Test
+    public void whenValueIsCalled() {
+        CompletableFuture<String> result = new CompletableFuture<>();
+        AsyncMaybe.ofValue("Value").whenValue(result::complete);
+
+        assertThat(result.join()).isEqualTo("Value");
+    }
+
+    @Test
+    public void whenExceptionIsCalled() {
+        CompletableFuture<Throwable> result = new CompletableFuture<>();
+        RuntimeException thrownException = new RuntimeException("Exception test");
+        AsyncMaybe.ofException(thrownException).whenException(result::complete);
+        assertThat(result.join()).isSameAs(thrownException);
+    }
+
+    @Test
+    public void whenCompleteMaybeWithValueIsCalled() {
+        CompletableFuture<String> result = new CompletableFuture<>();
+        AsyncMaybe.ofValue("Value").whenComplete(maybe -> result.complete(maybe.value()));
+        assertThat(result.join()).isEqualTo("Value");
+    }
+
+    @Test
+    public void whenCompleteMaybeWithExceptionIsCalled() {
+        CompletableFuture<Throwable> result = new CompletableFuture<>();
+        RuntimeException thrownException = new RuntimeException("Exception test");
+        AsyncMaybe.ofException(thrownException).whenComplete(maybe -> result.complete(maybe.exception()));
+        assertThat(result.join()).isSameAs(thrownException);
+    }
+
+    @Test
+    public void whenCompleteBiconsumerWithValueIsCalled() {
+        CompletableFuture<String> result = new CompletableFuture<>();
+        AsyncMaybe.ofValue("Value").whenComplete((value, exception) -> result.complete(value));
+        assertThat(result.join()).isEqualTo("Value");
+    }
+
+    @Test
+    public void whenCompleteBiconsumerWithExceptionIsCalled() {
+        CompletableFuture<Throwable> result = new CompletableFuture<>();
+        RuntimeException thrownException = new RuntimeException("Exception test");
+        AsyncMaybe.ofException(thrownException).whenComplete((value, exception) -> result.complete(exception));
+        assertThat(result.join()).isSameAs(thrownException);
+    }
+
+    @Test
+    public void toMaybeWithTimeoutThrowsWhenReached() {
+        CompletableFuture<Object> future = new CompletableFuture<>();
+        Maybe<Object> maybe = AsyncMaybe.fromCompletableFuture(future).toMaybeBlocking(Duration.ofSeconds(2));
+
     }
 
     private static Throwable anyExceptionWithCause(Class<? extends Throwable> throwableClass) {
