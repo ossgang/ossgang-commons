@@ -62,13 +62,6 @@ public class AwaitTest {
     }
 
     @Test
-    public void apiMisuse_asCompletableFutureCalledTwice_shouldThrow() {
-        Await await = await(() -> false);
-        await.asCompletableFuture();
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(await::asCompletableFuture);
-    }
-
-    @Test
     public void asCompletableFuture_futureCancelled_shouldFreeWorkerThread() throws InterruptedException {
         ForkJoinPool threadPool = new ForkJoinPool();
         assertThat(threadPool.isQuiescent()).isTrue();

@@ -69,10 +69,12 @@ public class RetryTest {
     }
 
     @Test
-    public void apiMisuse_asCompletableFutureCalledTwice_shouldThrow() {
+    public void asCompletableFutureCalledTwice_shouldReturnSameFuture() {
         Retry<Boolean> retry = retryUntil(Optional::empty);
-        retry.asCompletableFuture();
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(retry::asCompletableFuture);
+        CompletableFuture<Boolean> future1 = retry.asCompletableFuture();
+        CompletableFuture<Boolean> future2 = retry.asCompletableFuture();
+        assertThat(future1).isSameAs(future2);
+        future1.cancel(true);
     }
 
     @Test

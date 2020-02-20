@@ -31,7 +31,7 @@ class BaseAwaitable<T, A extends BaseAwaitable<T, A>> {
     private Duration retryInterval;
     private int retryCount;
     private Supplier<Optional<T>> supplier;
-    private final AtomicReference<CompletableFuture<?>> completableFuture = new AtomicReference<>();
+    private final AtomicReference<CompletableFuture<T>> completableFuture = new AtomicReference<>();
 
     BaseAwaitable(Supplier<Optional<T>> supplier) {
         this.supplier = supplier;
@@ -108,12 +108,14 @@ class BaseAwaitable<T, A extends BaseAwaitable<T, A>> {
     }
 
     protected CompletableFuture<T> getAsCompletableFuture(Executor executor) {
-        CompletableFuture<T> waitingFuture = supplyAsync(() -> doAwait(ZERO),
-                Optional.ofNullable(executor).orElse(AWAITER_POOL));
-        if (!completableFuture.compareAndSet(null, waitingFuture)) {
-            throw new IllegalStateException("getAsCompletableFuture called twice. Do not share Awaitable objects.");
+        synchronized (completableFuture) {
+            CompletableFuture<T> future = completableFuture.get();
+            if (future == null) {
+                future = supplyAsync(() -> doAwait(ZERO), Optional.ofNullable(executor).orElse(AWAITER_POOL));
+                completableFuture.set(future);
+            }
+            return future;
         }
-        return waitingFuture;
     }
 
     protected T getWaitingIndefinitely() {
