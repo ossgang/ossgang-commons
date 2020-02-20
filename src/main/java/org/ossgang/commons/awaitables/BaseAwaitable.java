@@ -20,6 +20,13 @@ import static java.util.concurrent.Executors.newCachedThreadPool;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
+/**
+ * Base class for {@link Retry} and {@link Await} providing the common parts of the await DSL.
+ * This is an internal class. User code should user {@link Retry} and {@link Await}.
+ *
+ * @param <T> the return type
+ * @param <A> the type of await (e.g. Retry or Await)
+ */
 @SuppressWarnings("unchecked")
 class BaseAwaitable<T, A extends BaseAwaitable<T, A>> {
     private static final ExecutorService AWAITER_POOL =
@@ -42,16 +49,35 @@ class BaseAwaitable<T, A extends BaseAwaitable<T, A>> {
         this.retryCount = new AtomicInteger(DEFAULT_RETRY_COUNT);
     }
 
+    /**
+     * Set an error message to be thrown when the timeout or retry count is exceeded.
+     *
+     * @param errorMessage the error message
+     * @return this instance for chaining
+     */
     public A withErrorMessage(String errorMessage) {
         message.set(() -> errorMessage);
         return (A) this;
     }
 
+    /**
+     * Set an error message to be thrown when the timeout or retry count is exceeded.
+     *
+     * @param errorMessage a supplier for the error message, which is only evaluated if the message is needed
+     * @return this instance for chaining
+     */
     public A withErrorMessage(Supplier<String> errorMessage) {
         message.set(errorMessage);
         return (A) this;
     }
 
+    /**
+     * Set the maxiumum number of times the wait loop is executed. Once this limit is reached, the loop terminates and
+     * a {@link AwaitRetryCountException} is thrown. The default is no limit.
+     *
+     * @param numberOfRetry the maximum number of attempts
+     * @return this instance for chaining
+     */
     public A withRetryCount(int numberOfRetry) {
         if (numberOfRetry < 0) {
             throw new IllegalArgumentException("Retry count cannot be negative");
@@ -60,6 +86,13 @@ class BaseAwaitable<T, A extends BaseAwaitable<T, A>> {
         return (A) this;
     }
 
+    /**
+     * Set the interval at which the wait loop runs and checks for updates. The default value is 100ms. If set to 0,
+     * no sleep will be performed, but the thread will still yield after each iteration.
+     *
+     * @param interval the refresh interval
+     * @return this instance for chaining
+     */
     public A withRetryInterval(Duration interval) {
         if (interval.isNegative()) {
             throw new IllegalArgumentException("Retry interval cannot be negative");
