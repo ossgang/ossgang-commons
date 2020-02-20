@@ -32,7 +32,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
-import static org.ossgang.commons.utils.Exceptions.unchecked;
+import static org.ossgang.commons.utils.Uncheckeds.*;
 
 /**
  * This utility class implements the concept of a "Maybe" or "Try" {@link Optional} that can be resolved at some point
@@ -72,7 +72,7 @@ public class AsyncMaybe<T> {
      * @return
      */
     public static AsyncMaybe<Void> attemptAsync(ThrowingRunnable runnable) {
-        return AsyncMaybe.fromVoidCompletableFuture(CompletableFuture.runAsync(unchecked(runnable), ASYNC_MAYBE_POOL));
+        return AsyncMaybe.fromVoidCompletableFuture(CompletableFuture.runAsync(uncheckedRunnable(runnable), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -83,7 +83,7 @@ public class AsyncMaybe<T> {
      * @return
      */
     public static <T> AsyncMaybe<T> attemptAsync(ThrowingSupplier<T> supplier) {
-        return AsyncMaybe.fromCompletableFuture(CompletableFuture.supplyAsync(unchecked(supplier), ASYNC_MAYBE_POOL));
+        return AsyncMaybe.fromCompletableFuture(CompletableFuture.supplyAsync(uncheckedSupplier(supplier), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -130,7 +130,7 @@ public class AsyncMaybe<T> {
     public AsyncMaybe<T> whenValue(ThrowingConsumer<T> consumer) {
         return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync((value, exception) -> {
             if (exception == null) {
-                unchecked(consumer).accept(value);
+                uncheckedConsumer(consumer).accept(value);
             }
         }, ASYNC_MAYBE_POOL));
     }
@@ -144,9 +144,9 @@ public class AsyncMaybe<T> {
     public AsyncMaybe<T> whenComplete(ThrowingConsumer<Maybe<T>> consumer) {
         return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync((value, exception) -> {
             if (exception != null) {
-                unchecked(consumer).accept(Maybe.ofException(exception));
+                uncheckedConsumer(consumer).accept(Maybe.ofException(exception));
             } else {
-                unchecked(consumer).accept(maybeGenerator.apply(() -> value));
+                uncheckedConsumer(consumer).accept(maybeGenerator.apply(() -> value));
             }
         }, ASYNC_MAYBE_POOL));
     }
@@ -170,7 +170,7 @@ public class AsyncMaybe<T> {
     public AsyncMaybe<T> whenException(ThrowingConsumer<Throwable> consumer) {
         CompletableFuture<T> whenComplete = future.whenCompleteAsync((value, exception) -> {
             if (exception != null) {
-                unchecked(consumer).accept(exception);
+                uncheckedConsumer(consumer).accept(exception);
             }
         }, ASYNC_MAYBE_POOL);
         return AsyncMaybe.fromCompletableFuture(whenComplete);
@@ -186,7 +186,7 @@ public class AsyncMaybe<T> {
      */
     public <R> AsyncMaybe<R> map(ThrowingFunction<T, R> function) {
         requireNonNull(function);
-        return AsyncMaybe.fromCompletableFuture(future.thenApplyAsync(unchecked(function), ASYNC_MAYBE_POOL));
+        return AsyncMaybe.fromCompletableFuture(future.thenApplyAsync(uncheckedFunction(function), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -194,12 +194,12 @@ public class AsyncMaybe<T> {
      * in an "unsuccessful" state. If the transformation function throws, the exception is returned wrapped in an
      * "unsuccessful" AsyncMaybe. If it succeeds, return an empty AsyncMaybe&lt;Void&gt;.
      *
-     * @param function the function to apply
+     * @param consumer the function to apply
      * @return A successful AsyncMaybe&lt;Void&gt; if the function is executed and succeeds. An unsuccessful AsyncMaybe otherwise.
      */
-    public AsyncMaybe<Void> then(ThrowingConsumer<T> function) {
-        requireNonNull(function);
-        return AsyncMaybe.fromVoidCompletableFuture(future.thenAcceptAsync(unchecked(function), ASYNC_MAYBE_POOL));
+    public AsyncMaybe<Void> then(ThrowingConsumer<T> consumer) {
+        requireNonNull(consumer);
+        return AsyncMaybe.fromVoidCompletableFuture(future.thenAcceptAsync(uncheckedConsumer(consumer), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -213,7 +213,7 @@ public class AsyncMaybe<T> {
      */
     public <R> AsyncMaybe<R> then(ThrowingSupplier<R> supplier) {
         requireNonNull(supplier);
-        return AsyncMaybe.fromCompletableFuture(future.thenApplyAsync(v -> unchecked(supplier).get(), ASYNC_MAYBE_POOL));
+        return AsyncMaybe.fromCompletableFuture(future.thenApplyAsync(v -> uncheckedSupplier(supplier).get(), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -226,7 +226,7 @@ public class AsyncMaybe<T> {
      */
     public AsyncMaybe<Void> then(ThrowingRunnable runnable) {
         requireNonNull(runnable);
-        return AsyncMaybe.fromVoidCompletableFuture(future.thenRunAsync(unchecked(runnable), ASYNC_MAYBE_POOL));
+        return AsyncMaybe.fromVoidCompletableFuture(future.thenRunAsync(uncheckedRunnable(runnable), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -241,7 +241,7 @@ public class AsyncMaybe<T> {
         requireNonNull(function);
         return AsyncMaybe.fromCompletableFuture(future.handleAsync((value, exception) -> {
             if (exception != null) {
-                return unchecked(function).apply(exception);
+                return uncheckedFunction(function).apply(exception);
             }
             return value;
         }, ASYNC_MAYBE_POOL));
@@ -259,7 +259,7 @@ public class AsyncMaybe<T> {
         requireNonNull(consumer);
         return AsyncMaybe.fromVoidCompletableFuture(future.handleAsync((value, exception) -> {
             if (exception != null) {
-                unchecked(consumer).accept(exception);
+                uncheckedConsumer(consumer).accept(exception);
             }
             return null;
         }, ASYNC_MAYBE_POOL));
