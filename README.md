@@ -30,6 +30,13 @@ i.e. it has got a public setter. Conceptually it holds the reference to a value 
 A ``Dispatcher<T>`` is an ``ObservableValue<T>`` which can be used to dispatch
 arbitrary values of ``T`` or ``Throwables`` downstream. This feature is particularly useful in the case of event dispatchers, services dispatching updates and in general any kind of 'source' of data.
 
+### Awaitables
+Two sister utilty classes, ``Await`` and ``Retry<T>`` to facilitate wait-polling, with fluent API to configure polling intervals, limit polling iterations, or set timeouts.
+
+``Await`` awaits a particular condition (expressed by a boolean supplier returning true).
+
+``Retry<T>`` evaluates a ``Supplier`` until the produced value passes a provided predicate, and then returns it.
+
 ### Extra Collections
 
 A ``ConcurrentCircularBuffer<T>`` is a lock-free implementation of a circular
