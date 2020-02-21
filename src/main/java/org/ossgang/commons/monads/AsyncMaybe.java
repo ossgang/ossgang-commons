@@ -46,6 +46,7 @@ import static org.ossgang.commons.utils.Uncheckeds.*;
 public class AsyncMaybe<T> {
 
     private static final ExecutorService ASYNC_MAYBE_POOL = newCachedThreadPool(daemonThreadFactoryWithPrefix("ossgang-AsyncMaybe-executor"));
+    private static final String NULL_VALUE_MSG = "AsyncMaybe cannot contain a null value";
 
     private final CompletableFuture<T> future;
     private final Function<ThrowingSupplier<T>, Maybe<T>> maybeGenerator;
@@ -81,7 +82,7 @@ public class AsyncMaybe<T> {
      * @return An {@link AsyncMaybe} wrapping the execution of the provided supplier
      */
     public static <T> AsyncMaybe<T> attemptAsync(ThrowingSupplier<T> supplier) {
-        return AsyncMaybe.fromCompletableFuture(CompletableFuture.supplyAsync(uncheckedSupplier(supplier), ASYNC_MAYBE_POOL));
+        return AsyncMaybe.fromCompletableFuture(CompletableFuture.supplyAsync(() -> requireNonNull(uncheckedSupplier(supplier).get(), NULL_VALUE_MSG), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -94,7 +95,7 @@ public class AsyncMaybe<T> {
      * @throws NullPointerException if the value is null
      */
     public static <T> AsyncMaybe<T> ofValue(T value) {
-        return AsyncMaybe.fromCompletableFuture(CompletableFuture.completedFuture(requireNonNull(value, "AsyncMaybe cannot have a null value")));
+        return AsyncMaybe.fromCompletableFuture(CompletableFuture.completedFuture(requireNonNull(value, NULL_VALUE_MSG)));
     }
 
     /**
@@ -202,7 +203,7 @@ public class AsyncMaybe<T> {
      */
     public <R> AsyncMaybe<R> map(ThrowingFunction<T, R> function) {
         requireNonNull(function);
-        return AsyncMaybe.fromCompletableFuture(future.thenApplyAsync(uncheckedFunction(function), ASYNC_MAYBE_POOL));
+        return AsyncMaybe.fromCompletableFuture(future.thenApplyAsync(v -> requireNonNull(uncheckedFunction(function).apply(v), NULL_VALUE_MSG), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -229,7 +230,7 @@ public class AsyncMaybe<T> {
      */
     public <R> AsyncMaybe<R> then(ThrowingSupplier<R> supplier) {
         requireNonNull(supplier);
-        return AsyncMaybe.fromCompletableFuture(future.thenApplyAsync(v -> uncheckedSupplier(supplier).get(), ASYNC_MAYBE_POOL));
+        return AsyncMaybe.fromCompletableFuture(future.thenApplyAsync(v -> requireNonNull(uncheckedSupplier(supplier).get(), NULL_VALUE_MSG), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -257,7 +258,7 @@ public class AsyncMaybe<T> {
         requireNonNull(function);
         return AsyncMaybe.fromCompletableFuture(future.handleAsync((value, exception) -> {
             if (exception != null) {
-                return uncheckedFunction(function).apply(exception);
+                return requireNonNull(uncheckedFunction(function).apply(exception), NULL_VALUE_MSG);
             }
             return value;
         }, ASYNC_MAYBE_POOL));
