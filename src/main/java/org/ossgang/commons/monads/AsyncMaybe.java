@@ -126,10 +126,13 @@ public class AsyncMaybe<T> {
     }
 
     /**
-     * TODO andrea + test
+     * Apply the consumer with the value that is contained in the, "successful", "resolved" state of this {@link AsyncMaybe}.
+     * The consumer will be called only when the asynchronous calculations of the result of this {@link AsyncMaybe} are done.
+     * A new {@link AsyncMaybe} is returned with the same result of this {@link AsyncMaybe} (be it an exception or a value).
+     * If the provided consumer throws an exception, the returned {@link AsyncMaybe} will contain the newly thrown exception.
      *
-     * @param consumer
-     * @return
+     * @param consumer the consumer to run
+     * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one is thrown in the provided consumer
      */
     public AsyncMaybe<T> whenValue(ThrowingConsumer<T> consumer) {
         return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync((value, exception) -> {
@@ -172,10 +175,13 @@ public class AsyncMaybe<T> {
     }
 
     /**
-     * TODO andrea + test
+     * Apply the consumer with the exception that is contained in the, "unsuccessful",  "resolved" state of this {@link AsyncMaybe}.
+     * The consumer will be called only when the asynchronous calculations of the result of this {@link AsyncMaybe} are done.
+     * A new {@link AsyncMaybe} is returned with the same result of this {@link AsyncMaybe} (be it an exception or a value).
+     * If the provided consumer throws an exception, the returned {@link AsyncMaybe} will contain the newly thrown exception.
      *
-     * @param consumer
-     * @return
+     * @param consumer the consumer to run
+     * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one is thrown in the provided consumer
      */
     public AsyncMaybe<T> whenException(ThrowingConsumer<Throwable> consumer) {
         CompletableFuture<T> whenComplete = future.whenCompleteAsync((value, exception) -> {
@@ -276,28 +282,39 @@ public class AsyncMaybe<T> {
     }
 
     /**
-     * TODO andrea
+     * Transform this {@link AsyncMaybe} into a {@link Maybe} in a blocking way, being the {@link Maybe} a container for
+     * an already resolved value. This method will block the caller thread until this {@link AsyncMaybe} is completed.
+     * Any exception produced during the waiting (e.g. {@link InterruptedException}) will result in an "unsuccessful"
+     * {@link Maybe}.
      *
-     * @return
+     * @return the {@link Maybe} representing the completed state of this {@link AsyncMaybe}
      */
     public Maybe<T> toMaybeBlocking() {
         return maybeGenerator.apply(future::join);
     }
 
     /**
-     * TODO andrea
+     * Transform this {@link AsyncMaybe} into a {@link Maybe} in a blocking way, being the {@link Maybe} a container for
+     * an already resolved value. This method will block the caller thread until this {@link AsyncMaybe} is completed.
+     * Any exception produced during the waiting (e.g. {@link InterruptedException}) will result in an "unsuccessful"
+     * {@link Maybe}.
+     * The specified timeout is used to control for how long this method will block the caller thread. A {@link java.util.concurrent.TimeoutException}
+     * will be thrown in case the timeout is reached and this {@link AsyncMaybe} not completed yet. This exception will
+     * be in the returned, "unsuccessful", {@link Maybe}.
+     * This means that this method can be called more then once if you know the value can be present at some point in the
+     * future.
      *
-     * @param timeout
-     * @return
+     * @param timeout the maximum time this method will block the caller thread
+     * @return the {@link Maybe} representing the completed state of this {@link AsyncMaybe}
      */
     public Maybe<T> toMaybeBlocking(Duration timeout) {
         return maybeGenerator.apply(() -> future.get(timeout.toMillis(), TimeUnit.MILLISECONDS));
     }
 
     /**
-     * TODO andrea
+     * Return the underlying {@link CompletableFuture} that this {@link AsyncMaybe} abstracts.
      *
-     * @return
+     * @return the underlying {@link CompletableFuture} that this {@link AsyncMaybe} abstracts
      */
     public CompletableFuture<T> toCompletableFuture() {
         return future;
