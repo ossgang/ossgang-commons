@@ -184,7 +184,11 @@ public class Maybe<T> {
      */
     public void throwOnException() {
         if (exception != null) {
-            throw new RuntimeException(exception);
+            if (exception instanceof RuntimeException) {
+                throw (RuntimeException) exception;
+            } else {
+                throw new RuntimeException(exception);
+            }
         }
     }
 
