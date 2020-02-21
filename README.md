@@ -13,6 +13,12 @@ like ``map()`` are fully supported.
 As a special case, a ``Maybe<Void>`` may be used for functional-style
 exception handling.
 
+### AsyncMaybe
+
+A variant of `Maybe<T>` that will be resolved at some point in the future. It can be considered an abstraction over the Java `CompletableFuture` with a more consistent API.
+
+It makes heavy usage of the new Java functional style and can be used to easily create asynchronous code (e.g. with `AsyncMaybe#attemptAsync(ThrowingRunnable)` or `AsyncMaybe#attemptAsync(ThrowingSupplier)`).
+
 ### Observable, ObservableValue, Property, Dispatcher
 A simple, lightweight implementation of a value type which can be observed
 for changes. A concept similar to the likely-named JavaFX classes, but
