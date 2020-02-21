@@ -1,10 +1,6 @@
 package org.ossgang.commons.utils;
 
-import org.ossgang.commons.monads.Maybe;
-import org.ossgang.commons.monads.ThrowingConsumer;
-import org.ossgang.commons.monads.ThrowingFunction;
-import org.ossgang.commons.monads.ThrowingRunnable;
-import org.ossgang.commons.monads.ThrowingSupplier;
+import org.ossgang.commons.monads.*;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -32,6 +28,6 @@ public final class Uncheckeds {
     }
 
     public static <T> Consumer<T> uncheckedConsumer(ThrowingConsumer<T> consumer) {
-        return c -> Maybe.ofValue(c).map(consumer).throwOnException();
+        return c -> Maybe.ofValue(c).then(consumer).throwOnException();
     }
 }

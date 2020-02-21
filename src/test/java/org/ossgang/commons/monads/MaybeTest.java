@@ -23,18 +23,15 @@
 package org.ossgang.commons.monads;
 
 import org.junit.Test;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-
-import static org.ossgang.commons.monads.Maybe.attempt;
 
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.ossgang.commons.monads.Maybe.attempt;
 
 public class MaybeTest {
 
@@ -181,7 +178,7 @@ public class MaybeTest {
     @Test
     public void successfulVoidState() {
         Maybe<Void> m = Maybe.ofVoid();
-        assertThat(m.isSuccesful()).isTrue();
+        assertThat(m.isSuccessful()).isTrue();
         assertThat(m.hasValue()).isFalse();
         assertThat(m.hasException()).isFalse();
     }
@@ -200,7 +197,7 @@ public class MaybeTest {
     public void successfulValueState() {
         Maybe<String> m = Maybe.ofValue("42");
         assertThat(m.hasException()).isFalse();
-        assertThat(m.isSuccesful()).isTrue();
+        assertThat(m.isSuccessful()).isTrue();
         assertThat(m.hasValue()).isTrue();
         assertThat(m.value()).isEqualTo("42");
     }
