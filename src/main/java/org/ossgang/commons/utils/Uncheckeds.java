@@ -1,6 +1,9 @@
 package org.ossgang.commons.utils;
 
-import org.ossgang.commons.monads.*;
+import org.ossgang.commons.monads.ThrowingConsumer;
+import org.ossgang.commons.monads.ThrowingFunction;
+import org.ossgang.commons.monads.ThrowingRunnable;
+import org.ossgang.commons.monads.ThrowingSupplier;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -16,18 +19,56 @@ public final class Uncheckeds {
     }
 
     public static <T> Supplier<T> uncheckedSupplier(ThrowingSupplier<T> supplier) {
-        return () -> Maybe.attempt(supplier).value();
-    }
-
-    public static <I, R> Function<I, R> uncheckedFunction(ThrowingFunction<I, R> function) {
-        return i -> Maybe.ofValue(i).map(function).value();
+        return () -> {
+            try {
+                return supplier.get();
+            } catch (Exception e) {
+                throw asUnchecked(e);
+            }
+        };
     }
 
     public static Runnable uncheckedRunnable(ThrowingRunnable runnable) {
-        return () -> Maybe.attempt(runnable).throwOnException();
+        return () -> {
+            try {
+                runnable.run();
+            } catch (Exception e) {
+                throw asUnchecked(e);
+            }
+        };
+    }
+
+    public static <I, R> Function<I, R> uncheckedFunction(ThrowingFunction<I, R> function) {
+        return i -> {
+            try {
+                return function.apply(i);
+            } catch (Exception e) {
+                throw asUnchecked(e);
+            }
+        };
     }
 
     public static <T> Consumer<T> uncheckedConsumer(ThrowingConsumer<T> consumer) {
-        return c -> Maybe.ofValue(c).then(consumer).throwOnException();
+        return c -> {
+            try {
+                consumer.accept(c);
+            } catch (Exception e) {
+                throw asUnchecked(e);
+            }
+        };
+    }
+
+    /**
+     * Returns an unchecked ({@link RuntimeException}) version of the given exception. It avoids wrapping if the
+     * exception is already an unchecked one.
+     *
+     * @param exception the exception to convert to unchecked
+     * @return an unchecked version of the given expression
+     */
+    public static RuntimeException asUnchecked(Throwable exception) {
+        if (exception instanceof RuntimeException) {
+            return (RuntimeException) exception;
+        }
+        return new RuntimeException(exception);
     }
 }
