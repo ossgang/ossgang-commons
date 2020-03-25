@@ -23,8 +23,11 @@
 package org.ossgang.commons.observables;
 
 
+import org.ossgang.commons.monads.Maybe;
+import org.ossgang.commons.observables.operators.BlockingOperators;
 import org.ossgang.commons.observables.operators.DerivedObservableValue;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -81,5 +84,30 @@ public interface Observable<T> {
      */
     default <D> Observable<D> derive(Function<T, Optional<D>> mapper) {
         return DerivedObservableValue.derive(this, mapper);
+    }
+
+    /**
+     * Blocks and awaits the next update on this observable (which can be either a value or an exception), and returns
+     * it as a Maybe&lt;T&gt;. Note that while an exception-update on this observable will be wrapped in a Maybe, this
+     * method throws an AwaitTimeoutException in case the timeout exceeds.
+     *
+     * @param timeout the timeout for the wait
+     * @throws org.ossgang.commons.awaitables.exceptions.AwaitTimeoutException if the timeout is exceeded
+     * @return a Maybe&lt;T&gt; containing either the value or the exception from the next update on this observable
+     */
+    default Maybe<T> awaitNext(Duration timeout) {
+        return BlockingOperators.awaitNext(this, timeout);
+    }
+
+    /**
+     * Blocks and awaits the next value-update on this observable. Any exception-updates are ignored. If no value is
+     * received until the timeout passes, this method throws an AwaitTimeoutException.
+     *
+     * @param timeout the timeout for the wait
+     * @throws org.ossgang.commons.awaitables.exceptions.AwaitTimeoutException if the timeout is exceeded
+     * @return the next value on this observable
+     */
+    default T awaitNextValue(Duration timeout) {
+        return BlockingOperators.awaitNextValue(this, timeout);
     }
 }

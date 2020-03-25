@@ -94,7 +94,11 @@ public class Retry<T> extends BaseAwaitable<T, Retry<T>> {
         }
 
         public Retry<T> until(Predicate<T> predicate) {
-            return retryUntil(() -> Optional.of(supplier.get()).filter(predicate));
+            return retryUntil(() -> Optional.ofNullable(supplier.get()).filter(predicate));
+        }
+
+        public Retry<T> untilNotNull() {
+            return retryUntil(() -> Optional.ofNullable(supplier.get()));
         }
     }
 }
