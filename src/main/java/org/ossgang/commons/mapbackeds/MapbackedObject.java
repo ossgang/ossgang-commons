@@ -1,0 +1,87 @@
+package org.ossgang.commons.mapbackeds;
+
+import static java.util.Objects.requireNonNull;
+
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+class MapbackedObject implements InvocationHandler {
+
+    private final Class<?> intfc;
+    private final Map<String, Object> fieldValues;
+    private final Set<Method> fieldMethods;
+
+    public MapbackedObject(Class<?> intfc, Map<String, Object> fieldValues) {
+        this.intfc = requireNonNull(intfc, "devicePropertyClass must not be null");
+        this.fieldValues = Map.copyOf(fieldValues);
+
+        fieldMethods = Mapbackeds.fieldMethods(intfc);
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        if (method.isDefault()) {
+            return MethodHandles.lookup()
+                    .findSpecial(intfc, method.getName(),
+                            MethodType.methodType(method.getReturnType(), method.getParameterTypes()), intfc)
+                    .bindTo(proxy).invokeWithArguments(args);
+        }
+        if (fieldMethods.contains(method)) {
+            return resolveOnMap(method);
+        }
+        if ("toString".equals(method.getName()) && (args == null)) {
+            return toString();
+        }
+        if ("hashCode".equals(method.getName()) && (args == null)) {
+            return hashCode();
+        }
+        if ("equals".equals(method.getName()) && (args.length == 1)) {
+            return equals(args[0]);
+        }
+
+        throw new IllegalArgumentException(
+                "could not invoke method '" + method.getName() + "' with arguments '" + Arrays.toString(args) + "'");
+
+    }
+
+    Map<String, Object> fieldValues() {
+        return fieldValues;
+    }
+
+    private Object resolveOnMap(Method method) {
+        return fieldValues.get(method.getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(fieldMethods, fieldValues, intfc);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        MapbackedObject other = (MapbackedObject) obj;
+        return Objects.equals(fieldMethods, other.fieldMethods) && Objects.equals(fieldValues, other.fieldValues)
+                && Objects.equals(intfc, other.intfc);
+    }
+
+    @Override
+    public String toString() {
+        return "MapbackedObject [intfc=" + intfc + ", fieldValues=" + fieldValues + ", fieldMethods=" + fieldMethods
+                + "]";
+    }
+}

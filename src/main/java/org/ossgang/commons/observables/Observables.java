@@ -7,8 +7,10 @@ import org.ossgang.commons.observables.operators.connectors.ConnectorObservableV
 import org.ossgang.commons.observables.operators.connectors.ConnectorObservables;
 import org.ossgang.commons.observables.operators.connectors.DynamicConnectorObservableValue;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -260,5 +262,11 @@ public final class Observables {
     public static void setUncaughtExceptionHandler(Consumer<Exception> handler) {
         ExceptionHandlers.setUncaughtExceptionHandler(handler);
     }
+
+    public static ObservableValue<Instant> periodicEvery(long period, TimeUnit unit) {
+        return new PeriodicObservableValue(period, unit);
+    }
+
+
 
 }
