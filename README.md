@@ -59,6 +59,7 @@ Person misterX = Mapbackeds.builder(Person.class) //
          .field(Person::id, 1) //
          .field(Person::name, "MisterX") //
          .build();
+```
 
 The resulting objects respect hashCode, equals and toString and are immutable.
 
