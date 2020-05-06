@@ -11,16 +11,25 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * This is the 'Implementation' of a mapbacked object. It shall never instantiated directly by the user, but always
+ * factory methods or builders from the Mapbackeds class shall be used.
+ * The responsibilities of this class are:
+ * <ul>
+ * <li>delegate getter calls to appropriate lookups in the internal map</li>
+ * <li>delegate calls to equals(), hashCode() and toString() to the internal implementations</li>
+ * <li>delegate calls to default methods of the proxied interface to the real implementations</li>
+ * </ul>
+ */
 class MapbackedObject implements InvocationHandler {
 
     private final Class<?> intfc;
     private final Map<String, Object> fieldValues;
     private final Set<Method> fieldMethods;
 
-    public MapbackedObject(Class<?> intfc, Map<String, Object> fieldValues) {
-        this.intfc = requireNonNull(intfc, "devicePropertyClass must not be null");
+    MapbackedObject(Class<?> intfc, Map<String, Object> fieldValues) {
+        this.intfc = requireNonNull(intfc, "interface must not be null");
         this.fieldValues = Map.copyOf(fieldValues);
-
         fieldMethods = Mapbackeds.fieldMethods(intfc);
     }
 

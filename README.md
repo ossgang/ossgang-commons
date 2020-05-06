@@ -43,6 +43,25 @@ Two sister utilty classes, ``Await`` and ``Retry<T>`` to facilitate wait-polling
 
 ``Retry<T>`` evaluates a ``Supplier`` until the produced value passes a provided predicate, and then returns it.
 
+### Mapbackeds
+Mapbackeds can be used as immutable data containers with a type-save interface. The field types and names are simply defined by defining a java interface.
+
+As an example, assuming a domain object which contains 2 fields:
+```
+private interface Person {
+    long id();
+    String name();
+}
+```
+Then an instance of this person can be created using a builder as follows:
+```
+Person misterX = Mapbackeds.builder(Person.class) //
+         .field(Person::id, 1) //
+         .field(Person::name, "MisterX") //
+         .build();
+
+The resulting objects respect hashCode, equals and toString and are immutable.
+
 ### Extra Collections
 
 A ``ConcurrentCircularBuffer<T>`` is a lock-free implementation of a circular

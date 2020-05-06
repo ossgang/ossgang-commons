@@ -15,16 +15,60 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * This class provides static methods for working with Mapbacked objects. Mapbacked objects are intended to be used e.g.
+ * as very simple immutable domain objects: The only requirement to create a mapbacked object is to define an interface
+ * which contains methods corresponding to field names of the objects. Having this, new objects can be used using a
+ * builder and the interface methods can be used as getters.
+ * NOTE: Only methods with return value and zero arguments are taken into account for storing values. Calling other
+ * methods (which are not default methods) will result in errors.
+ *
+ * @see #builder(Class)
+ * @see #from(Class, Map)
+ */
 public final class Mapbackeds {
 
     private Mapbackeds() {
         throw new UnsupportedOperationException("only static methods");
     }
 
+    /**
+     * Creates a builder for the a mapbacked object, implementing the given interface.
+     * <p/>
+     * As an example, assuming an domain object which contains 2 fields:
+     *
+     * <pre>
+     * private interface Person {
+     *     long id();
+     *
+     *     String name();
+     * }
+     * </pre>
+     *
+     * Then an instance of this person can be created using a builder as follows:
+     *
+     * <pre>
+     * Person misterX = Mapbackeds.builder(Person.class) //
+     *         .field(Person::id, 1) //
+     *         .field(Person::name, "MisterX") //
+     *         .build();
+     * </pre>
+     *
+     * NOTE: Currently, there is no check for null values. Therefore, only partially filled objects (or even empty
+     * ones) would be allowed. Fields which are not set, would return {@code null} in this case. However, be aware that
+     * methods returning primitive types would throw in this case! This behavior might change in future versions.
+     *
+     * @param backedInterface the interface which shall be backed by a map of values.
+     * @throws IllegalArgumentException if the given class is not an interface
+     */
     public static <M> Builder<M> builder(Class<M> backedInterface) {
         return new Builder<>(backedInterface);
     }
 
+    /**
+     * Creates a mapbacked object with the given interface, backed by the given map of field Values. No Consistency
+     * checks are done! This behavior might change in future versions.
+     */
     public static <M> M from(Class<M> backedInterface, Map<String, Object> fieldValues) {
         /*
          * TODO: add consistency checks!
@@ -32,12 +76,31 @@ public final class Mapbackeds {
         return proxy(backedInterface, new MapbackedObject(backedInterface, fieldValues));
     }
 
+    /**
+     * Retrieves the internal map of the given mapbacked object. As this will throw, if the given object is not
+     * mapbacked, it is recommended to check before if the object is a mapbacked, by using the
+     * {@link #isMapbacked(Object)} method.
+     *
+     * @param the mapbacked object from which to retrieve the internal map
+     * @return the internal map of the object
+     * @throws IllegalArgumentException if the given object is not a mapbacked object
+     */
     public static Map<String, Object> mapOf(Object object) {
         Optional<MapbackedObject> handler = handlerFrom(object);
         if (handler.isPresent()) {
             return handler.get().fieldValues();
         }
         throw new IllegalArgumentException("The given object seems not to be a Mapbacked object: " + object);
+    }
+
+    /**
+     * Checks, if the given object is mapbacked
+     *
+     * @param the object to check
+     * @return {@code true} if the given object is mapbacked, {@code false} otherwise
+     */
+    public static boolean isMapbacked(Object object) {
+        return handlerFrom(object).isPresent();
     }
 
     private static Optional<MapbackedObject> handlerFrom(Object object) {
@@ -51,10 +114,6 @@ public final class Mapbackeds {
         }
 
         return Optional.of((MapbackedObject) handler);
-    }
-
-    public static boolean isMapbacked(Object object) {
-        return handlerFrom(object).isPresent();
     }
 
     public static class Builder<M> {
