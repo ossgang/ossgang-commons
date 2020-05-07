@@ -7,6 +7,7 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -29,7 +30,7 @@ class MapbackedObject implements InvocationHandler {
 
     MapbackedObject(Class<?> intfc, Map<String, Object> fieldValues) {
         this.intfc = requireNonNull(intfc, "interface must not be null");
-        this.fieldValues = Map.copyOf(fieldValues);
+        this.fieldValues = new HashMap<>(fieldValues);
         fieldMethods = Mapbackeds.fieldMethods(intfc);
     }
 
@@ -54,13 +55,13 @@ class MapbackedObject implements InvocationHandler {
             return equals(args[0]);
         }
 
-        throw new IllegalArgumentException(
+        throw new UnsupportedOperationException(
                 "could not invoke method '" + method.getName() + "' with arguments '" + Arrays.toString(args) + "'");
 
     }
 
     Map<String, Object> fieldValues() {
-        return fieldValues;
+        return new HashMap<>(fieldValues);
     }
 
     private Object resolveOnMap(Method method) {

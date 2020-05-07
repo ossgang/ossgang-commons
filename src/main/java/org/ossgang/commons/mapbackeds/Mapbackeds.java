@@ -70,9 +70,6 @@ public final class Mapbackeds {
      * checks are done! This behavior might change in future versions.
      */
     public static <M> M from(Class<M> backedInterface, Map<String, Object> fieldValues) {
-        /*
-         * TODO: add consistency checks!
-         */
         return proxy(backedInterface, new MapbackedObject(backedInterface, fieldValues));
     }
 
@@ -121,13 +118,6 @@ public final class Mapbackeds {
         private final Class<M> backedInterface;
         private final Set<Method> fieldMethods;
         private final Map<String, Object> mapBuilder = new HashMap<>();
-
-        /*
-         * TODO: Introduce consistency checks
-         */
-        /*
-         * TODO: allow/disallow nulls
-         */
 
         private Builder(Class<M> backedInterface) {
             this.backedInterface = requireInterface(backedInterface);

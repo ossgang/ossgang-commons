@@ -14,7 +14,7 @@ public class PeriodicObservableValue extends DispatchingObservableValue<Instant>
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     PeriodicObservableValue(long period, TimeUnit unit) {
-        super(null);
+        super(Instant.now());
         executor.scheduleAtFixedRate(() -> dispatchValue(Instant.now()), 0, period, unit);
     }
 
