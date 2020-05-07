@@ -276,8 +276,8 @@ public final class Observables {
     /**
      * Creates an observable value that emits the actual time every given period.
      *
-     * @param the period in the given unit, when to emit
-     * @param the unit for the period
+     * @param period the period in the given unit, when to emit
+     * @param unit the unit for the period
      * @return a periodically emitting obersvable value
      * @throws NullPointerException if the unit is {@code null}
      */
