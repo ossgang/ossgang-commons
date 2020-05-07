@@ -26,7 +26,7 @@ public class PeriodicObservableValueTest {
         List<Duration> diffs = diffs(obs.receivedValues());
 
         assertThat(diffs).allSatisfy(d -> {
-            assertThat(d.toMillis()).isCloseTo(1000L, offset(2L));
+            assertThat(d.toMillis()).isCloseTo(1000L, offset(20L));
         });
 
     }
