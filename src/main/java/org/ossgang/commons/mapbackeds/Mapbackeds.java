@@ -34,7 +34,7 @@ public final class Mapbackeds {
 
     /**
      * Creates a builder for the a mapbacked object, implementing the given interface.
-     * <p/>
+     * <p>
      * As an example, assuming an domain object which contains 2 fields:
      *
      * <pre>
@@ -59,6 +59,7 @@ public final class Mapbackeds {
      * methods returning primitive types would throw in this case! This behavior might change in future versions.
      *
      * @param backedInterface the interface which shall be backed by a map of values.
+     * @return a new builder for the mapbacked object
      * @throws IllegalArgumentException if the given class is not an interface
      */
     public static <M> Builder<M> builder(Class<M> backedInterface) {
@@ -68,6 +69,10 @@ public final class Mapbackeds {
     /**
      * Creates a mapbacked object with the given interface, backed by the given map of field Values. No Consistency
      * checks are done! This behavior might change in future versions.
+     *
+     * @param backedInterface the interface which shall be backed by the map
+     * @param fieldValues the map containing values for all the fields within the object
+     * @return a new instance of the interface with the field values from the given map
      */
     public static <M> M from(Class<M> backedInterface, Map<String, Object> fieldValues) {
         return proxy(backedInterface, new MapbackedObject(backedInterface, fieldValues));
@@ -78,7 +83,7 @@ public final class Mapbackeds {
      * mapbacked, it is recommended to check before if the object is a mapbacked, by using the
      * {@link #isMapbacked(Object)} method.
      *
-     * @param the mapbacked object from which to retrieve the internal map
+     * @param object the mapbacked object from which to retrieve the internal map
      * @return the internal map of the object
      * @throws IllegalArgumentException if the given object is not a mapbacked object
      */
@@ -93,7 +98,7 @@ public final class Mapbackeds {
     /**
      * Checks, if the given object is mapbacked
      *
-     * @param the object to check
+     * @param object the object to check
      * @return {@code true} if the given object is mapbacked, {@code false} otherwise
      */
     public static boolean isMapbacked(Object object) {
