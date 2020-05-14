@@ -2,11 +2,13 @@ package org.ossgang.commons.utils;
 
 import org.ossgang.commons.monads.ThrowingConsumer;
 import org.ossgang.commons.monads.ThrowingFunction;
+import org.ossgang.commons.monads.ThrowingPredicate;
 import org.ossgang.commons.monads.ThrowingRunnable;
 import org.ossgang.commons.monads.ThrowingSupplier;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -52,6 +54,17 @@ public final class Uncheckeds {
         return c -> {
             try {
                 consumer.accept(c);
+            } catch (Exception e) {
+                throw asUnchecked(e);
+            }
+        };
+    }
+
+
+    public static <T> Predicate<T> uncheckedPredicate(ThrowingPredicate<T> predicate) {
+        return c -> {
+            try {
+                return predicate.test(c);
             } catch (Exception e) {
                 throw asUnchecked(e);
             }
