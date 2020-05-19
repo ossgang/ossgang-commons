@@ -67,7 +67,8 @@ jar {
     // OSGi
     bnd([
         'Bundle-Vendor': 'CERN',
-        'Export-Package': '*'
+        'Export-Package': '*',
+        'Import-Package': '' // no dependencies
     ])
 }
 
