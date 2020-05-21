@@ -137,4 +137,6 @@ if (project['DEPLOYMENT']) {
     apply plugin: 'maven-publish'
     apply plugin: 'com.jfrog.bintray'
     apply from: 'https://raw.githubusercontent.com/ossgang/gradle-scripts/master/deployment/bintray-deploy.gradle'
+
+    version = project.ext.getDeploymentVersion()
 }
