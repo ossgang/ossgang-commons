@@ -66,7 +66,7 @@ sourceSets {
 jar {
     // OSGi
     bnd([
-        'Bundle-Vendor': 'CERN',
+        'Bundle-Vendor': 'ossgang',
         'Export-Package': '*',
         'Import-Package': '' // no dependencies
     ])
