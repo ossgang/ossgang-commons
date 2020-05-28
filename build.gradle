@@ -13,6 +13,7 @@ buildscript {
         if (project['CERN_VM']) {
             maven { url 'http://artifactory.cern.ch/ds-jcenter' }
             maven { url 'http://artifactory.cern.ch/development' }
+            maven { url 'http://artifactory.cern.ch/gradle-plugins' }
         } else {
             maven { url 'https://plugins.gradle.org/m2/' }
             jcenter()
@@ -22,6 +23,8 @@ buildscript {
     dependencies {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
         classpath 'com.github.jk1:gradle-license-report:1.5'
+        classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:4.3.1' // OSGi
+        classpath 'biz.aQute.bnd:biz.aQute.bndlib:4.3.1' // OSGi
     }
 }
 
@@ -29,6 +32,7 @@ apply plugin: 'java'
 apply plugin: 'jacoco'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
+apply plugin: 'biz.aQute.bnd.builder' // OSGi
 
 group = project['POM.groupId']
 
@@ -57,6 +61,15 @@ sourceSets {
     main {
         resources { srcDirs = ['src/main/java'] }
     }
+}
+
+jar {
+    // OSGi
+    bnd([
+        'Bundle-Vendor': 'ossgang',
+        'Export-Package': '*',
+        'Import-Package': '' // no dependencies
+    ])
 }
 
 test {
@@ -124,4 +137,6 @@ if (project['DEPLOYMENT']) {
     apply plugin: 'maven-publish'
     apply plugin: 'com.jfrog.bintray'
     apply from: 'https://raw.githubusercontent.com/ossgang/gradle-scripts/master/deployment/bintray-deploy.gradle'
+
+    version = project.ext.getDeploymentVersion()
 }
