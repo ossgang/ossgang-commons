@@ -66,4 +66,4 @@ The resulting objects respect hashCode, equals and toString and are immutable.
 ### Extra Collections
 
 A ``ConcurrentCircularBuffer<T>`` is a lock-free implementation of a circular
-buffer, backed by a ConcurrentHashMap.
+buffer, backed by a `ConcurrentHashMap`.
