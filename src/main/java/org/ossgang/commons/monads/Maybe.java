@@ -25,6 +25,7 @@ package org.ossgang.commons.monads;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.utils.Uncheckeds.asUnchecked;
@@ -235,6 +236,26 @@ public class Maybe<T> {
             return Maybe.ofException(exception);
         }
         return attempt(() -> function.apply(value));
+    }
+
+    /**
+     * Apply a transformation function if this {@link Maybe} is in a "successful" state. Pass through the exception in
+     * case it is in an "unsuccessful" state. The transformation function should return a {@link Maybe}, which will be
+     * returned. If the transformation function throws, the exception is returned wrapped in an "unsuccessful" Maybe.
+     *
+     * @param function the function to apply
+     * @return A successful Maybe the new value if the transformation succeeds. An unsuccessful Maybe otherwise.
+     */
+    public <R> Maybe<R> flatMap(Function<T, Maybe<R>> function) {
+        requireNonNull(function);
+        if (exception != null) {
+            return Maybe.ofException(exception);
+        }
+        try {
+            return function.apply(value);
+        } catch (Exception e) {
+            return Maybe.ofException(exception);
+        }
     }
 
     /**
