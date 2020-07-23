@@ -1,3 +1,22 @@
+/*
+ *
+ * This file is part of ossgang-commons.
+ *
+ * Copyright (c) 2008-2020, CERN. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.ossgang.commons.observables;
 
 import org.assertj.core.api.Assertions;
@@ -5,6 +24,9 @@ import org.junit.Test;
 import org.ossgang.commons.monads.Function3;
 import org.ossgang.commons.monads.Function4;
 import org.ossgang.commons.monads.Function5;
+import org.ossgang.commons.observables.Observable;
+import org.ossgang.commons.observables.ObservableValue;
+import org.ossgang.commons.observables.Observables;
 import org.ossgang.commons.properties.Property;
 
 import java.lang.ref.WeakReference;
