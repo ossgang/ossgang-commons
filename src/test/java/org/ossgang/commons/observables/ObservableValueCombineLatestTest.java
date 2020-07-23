@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.ossgang.commons.monads.Function3;
 import org.ossgang.commons.monads.Function4;
 import org.ossgang.commons.monads.Function5;
-import org.ossgang.commons.observables.operators.Operators;
 import org.ossgang.commons.properties.Property;
 
 import java.lang.ref.WeakReference;
@@ -38,7 +37,7 @@ public class ObservableValueCombineLatestTest {
         inputs.put("string", valueAProperty);
         inputs.put("integer", valueBProperty);
 
-        ObservableValue<String> combineLatest = Operators.combineLatestObjects(inputs, (valuesMap) -> {
+        ObservableValue<String> combineLatest = Observables.combineLatestObjects(inputs, (valuesMap) -> {
             String valueA = (String) valuesMap.get("string");
             @SuppressWarnings("unchecked")
             AtomicReference<Integer> valueB = (AtomicReference<Integer>) valuesMap.get("integer");
@@ -54,7 +53,7 @@ public class ObservableValueCombineLatestTest {
 
         List<Observable<?>> inputs = Arrays.asList(valueAProperty, valueBProperty);
 
-        ObservableValue<String> combineLatest = Operators.combineLatestObjects(inputs, (values) -> {
+        ObservableValue<String> combineLatest = Observables.combineLatestObjects(inputs, (values) -> {
             String valueA = (String) values.get(0);
             @SuppressWarnings("unchecked")
             AtomicReference<Integer> valueB = (AtomicReference<Integer>) values.get(1);
@@ -71,7 +70,7 @@ public class ObservableValueCombineLatestTest {
         BiFunction<String, Integer, String> combiner = (valueA, valueB) ->
                 String.format("%s %s", valueA, valueB);
 
-        ObservableValue<String> combineLatest = Operators.combineLatest(valueAProperty, valueBProperty, combiner);
+        ObservableValue<String> combineLatest = Observables.combineLatest(valueAProperty, valueBProperty, combiner);
 
         Assertions.assertThat(combineLatest.get()).isEqualTo("A 1");
     }
@@ -85,7 +84,7 @@ public class ObservableValueCombineLatestTest {
         Function3<String, Integer, Integer, String> combiner = (valueA, valueB, valueC) ->
                 String.format("%s %s %s", valueA, valueB, valueC);
 
-        ObservableValue<String> combineLatest = Operators.combineLatest(valueAProperty, valueBProperty, valueCProperty,
+        ObservableValue<String> combineLatest = Observables.combineLatest(valueAProperty, valueBProperty, valueCProperty,
                 combiner);
 
         Assertions.assertThat(combineLatest.get()).isEqualTo("A 1 2");
@@ -101,7 +100,7 @@ public class ObservableValueCombineLatestTest {
         Function4<String, Integer, Integer, String, String> combiner = (valueA, valueB, valueC, valueD) ->
                 String.format("%s %s %s %s", valueA, valueB, valueC, valueD);
 
-        ObservableValue<String> combineLatest = Operators.combineLatest(valueAProperty, valueBProperty, valueCProperty,
+        ObservableValue<String> combineLatest = Observables.combineLatest(valueAProperty, valueBProperty, valueCProperty,
                 valueDProperty, combiner);
 
         Assertions.assertThat(combineLatest.get()).isEqualTo("A 1 2 D");
@@ -118,7 +117,7 @@ public class ObservableValueCombineLatestTest {
         Function5<String, Integer, Integer, String, String, String> combiner = (valueA, valueB, valueC, valueD, valueE) ->
                 String.format("%s %s %s %s %s", valueA, valueB, valueC, valueD, valueE);
 
-        ObservableValue<String> combineLatest = Operators.combineLatest(valueAProperty, valueBProperty, valueCProperty,
+        ObservableValue<String> combineLatest = Observables.combineLatest(valueAProperty, valueBProperty, valueCProperty,
                 valueDProperty, valueEProperty, combiner);
 
         Assertions.assertThat(combineLatest.get()).isEqualTo("A 1 2 D E");
@@ -199,7 +198,7 @@ public class ObservableValueCombineLatestTest {
         Property<String> valueB = property("B");
 
         CompletableFuture<List<Object>> mergedValue = new CompletableFuture<>();
-        Operators.combineLatestObjects(asList(valueA, valueB)).subscribe(mergedValue::complete, FIRST_UPDATE);
+        Observables.combineLatestObjects(asList(valueA, valueB)).subscribe(mergedValue::complete, FIRST_UPDATE);
 
         assertThat(mergedValue.get(5, TimeUnit.SECONDS)).containsExactly("A", "B");
     }
@@ -211,7 +210,7 @@ public class ObservableValueCombineLatestTest {
         inputs.put("SECOND", property("B"));
 
         CompletableFuture<Map<String, Object>> valuesFuture = new CompletableFuture<>();
-        Operators.combineLatestObjects(inputs).subscribe(valuesFuture::complete, FIRST_UPDATE);
+        Observables.combineLatestObjects(inputs).subscribe(valuesFuture::complete, FIRST_UPDATE);
 
         Map<String, Object> values = valuesFuture.get(5, TimeUnit.SECONDS);
         assertThat(values.get("FIRST")).isEqualTo("A");
