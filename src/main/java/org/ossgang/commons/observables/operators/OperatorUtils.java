@@ -41,6 +41,14 @@ final class OperatorUtils {
         return inputMap.entrySet().stream().collect(toMap(Map.Entry::getKey, e -> mapper.apply(e.getValue())));
     }
 
+    public static <K, I> Map<K, I> typeTranslator(Map<K, Object> source) {
+        return (Map<K, I>) source;
+    }
+
+    public static <T> List<T> typeTranslator(List<Object> source) {
+        return (List<T>) source;
+    }
+
     private OperatorUtils() {
         throw new UnsupportedOperationException("static only");
     }

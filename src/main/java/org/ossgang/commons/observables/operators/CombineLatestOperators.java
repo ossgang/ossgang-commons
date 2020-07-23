@@ -82,7 +82,7 @@ public final class CombineLatestOperators {
     @SuppressWarnings("unchecked")
     public static <K, I, O> ObservableValue<O> combineLatest(Map<K, ? extends Observable<I>> sourcesMap,
                                                              Function<Map<K, I>, O> combiner) {
-        Function<Map<K, Object>, Map<K, I>> typedTranslator = values -> applyToMapValues(values, v -> (I) v);
+        Function<Map<K, Object>, Map<K, I>> typedTranslator = OperatorUtils::typeTranslator;
         return combineLatestObjects(sourcesMap, typedTranslator.andThen(combiner));
     }
 
@@ -92,7 +92,7 @@ public final class CombineLatestOperators {
     @SuppressWarnings("unchecked")
     public static <I, O> ObservableValue<O> combineLatest(List<? extends Observable<I>> sources,
                                                           Function<List<I>, O> combiner) {
-        Function<List<Object>, List<I>> typedTranslator = values -> values.stream().map(v -> (I) v).collect(toList());
+        Function<List<Object>, List<I>> typedTranslator = OperatorUtils::typeTranslator;
         return combineLatestObjects(toIndexMap(sources), idxMap -> typedTranslator.andThen(combiner).apply(fromIndexMap(idxMap)));
     }
 
@@ -101,8 +101,7 @@ public final class CombineLatestOperators {
      */
     @SuppressWarnings("unchecked")
     public static <K, I> ObservableValue<Map<K, I>> combineLatest(Map<K, ? extends Observable<I>> sourcesMap) {
-        Function<Map<K, Object>, Map<K, I>> typedTranslator = values -> applyToMapValues(values, v -> (I) v);
-        return combineLatestObjects(sourcesMap, typedTranslator);
+        return combineLatestObjects(sourcesMap, OperatorUtils::typeTranslator);
     }
 
     /**
@@ -110,8 +109,7 @@ public final class CombineLatestOperators {
      */
     @SuppressWarnings("unchecked")
     public static <I> ObservableValue<List<I>> combineLatest(List<? extends Observable<I>> sources) {
-        Function<List<Object>, List<I>> typedTranslator = values -> values.stream().map(v -> (I) v).collect(toList());
-        return combineLatestObjects(sources, typedTranslator);
+        return combineLatestObjects(sources, OperatorUtils::typeTranslator);
     }
 
     /**
