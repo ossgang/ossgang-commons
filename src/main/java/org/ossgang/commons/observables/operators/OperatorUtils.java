@@ -8,17 +8,17 @@ import java.util.stream.IntStream;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
-public final class OperatorUtils {
+final class OperatorUtils {
 
-    static <V> Map<Integer, V> toIndexMap(List<V> list) {
+    public static <V> Map<Integer, V> toIndexMap(List<V> list) {
         return IntStream.range(0, list.size()).boxed().collect(toMap(Function.identity(), list::get));
     }
 
-    static <V> List<V> fromIndexMap(Map<Integer, V> map) {
+    public static <V> List<V> fromIndexMap(Map<Integer, V> map) {
         return IntStream.range(0, map.size()).boxed().map(map::get).collect(toList());
     }
 
-    static <K, I, O> Map<K, O> applyToMapValues(Map<K, I> inputMap, Function<I, O> mapper) {
+    public static <K, I, O> Map<K, O> applyToMapValues(Map<K, I> inputMap, Function<I, O> mapper) {
         return inputMap.entrySet().stream().collect(toMap(Map.Entry::getKey, e -> mapper.apply(e.getValue())));
     }
 

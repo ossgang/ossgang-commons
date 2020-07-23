@@ -60,6 +60,7 @@ public final class CombineLatestOperators {
     /**
      * @see org.ossgang.commons.observables.Observables#combineLatest(Map, Function)
      */
+    @SuppressWarnings("unchecked")
     public static <K, I, O> ObservableValue<O> combineLatest(Map<K, ? extends Observable<I>> sourcesMap,
                                                              Function<Map<K, I>, O> combiner) {
         Function<Map<K, Object>, Map<K, I>> typedTranslator = values -> applyToMapValues(values, v -> (I) v);
@@ -69,6 +70,7 @@ public final class CombineLatestOperators {
     /**
      * @see org.ossgang.commons.observables.Observables#combineLatest(List, Function)
      */
+    @SuppressWarnings("unchecked")
     public static <I, O> ObservableValue<O> combineLatest(List<? extends Observable<I>> sources,
                                                           Function<List<I>, O> combiner) {
         Function<List<Object>, List<I>> typedTranslator = values -> values.stream().map(v -> (I) v).collect(toList());
@@ -78,6 +80,7 @@ public final class CombineLatestOperators {
     /**
      * @see org.ossgang.commons.observables.Observables#combineLatest(Map)
      */
+    @SuppressWarnings("unchecked")
     public static <K, I> ObservableValue<Map<K, I>> combineLatest(Map<K, ? extends Observable<I>> sourcesMap) {
         Function<Map<K, Object>, Map<K, I>> typedTranslator = values -> applyToMapValues(values, v -> (I) v);
         return combineLatestObjects(sourcesMap, typedTranslator);
@@ -86,6 +89,7 @@ public final class CombineLatestOperators {
     /**
      * @see org.ossgang.commons.observables.Observables#combineLatest(List)
      */
+    @SuppressWarnings("unchecked")
     public static <I> ObservableValue<List<I>> combineLatest(List<? extends Observable<I>> sources) {
         Function<List<Object>, List<I>> typedTranslator = values -> values.stream().map(v -> (I) v).collect(toList());
         return combineLatestObjects(sources, typedTranslator);
@@ -94,10 +98,10 @@ public final class CombineLatestOperators {
     /**
      * @see org.ossgang.commons.observables.Observables#combineLatest(Observable, Observable, BiFunction)
      */
+    @SuppressWarnings("unchecked")
     public static <I1, I2, O> ObservableValue<O> combineLatest(Observable<I1> source1, Observable<I2> source2,
                                                                BiFunction<I1, I2, O> combiner) {
-        List<Observable<Object>> sourcesListObject = Arrays.asList(
-                (Observable<Object>) source1, (Observable<Object>) source2);
+        List<Observable<?>> sourcesListObject = Arrays.asList(source1, source2);
         Function<List<Object>, O> combinerObject = values -> {
             I1 sourceValue1 = (I1) values.get(0);
             I2 sourceValue2 = (I2) values.get(1);
@@ -109,11 +113,11 @@ public final class CombineLatestOperators {
     /**
      * @see org.ossgang.commons.observables.Observables#combineLatest(Observable, Observable, Observable, Function3)
      */
+    @SuppressWarnings("unchecked")
     public static <I1, I2, I3, O> ObservableValue<O> combineLatest(Observable<I1> source1, Observable<I2> source2,
                                                                    Observable<I3> source3,
                                                                    Function3<I1, I2, I3, O> combiner) {
-        List<Observable<Object>> sourcesListObject = Arrays.asList((Observable<Object>) source1,
-                (Observable<Object>) source2, (Observable<Object>) source3);
+        List<Observable<?>> sourcesListObject = Arrays.asList(source1, source2, source3);
         Function<List<Object>, O> combinerObject = values -> {
             I1 sourceValue1 = (I1) values.get(0);
             I2 sourceValue2 = (I2) values.get(1);
@@ -126,12 +130,11 @@ public final class CombineLatestOperators {
     /**
      * @see org.ossgang.commons.observables.Observables#combineLatest(Observable, Observable, Observable, Observable, Function4)
      */
+    @SuppressWarnings("unchecked")
     public static <I1, I2, I3, I4, O> ObservableValue<O> combineLatest(Observable<I1> source1, Observable<I2> source2,
                                                                        Observable<I3> source3, Observable<I4> source4,
                                                                        Function4<I1, I2, I3, I4, O> combiner) {
-        List<Observable<Object>> sourcesListObject = Arrays.asList(
-                (Observable<Object>) source1, (Observable<Object>) source2, (Observable<Object>) source3,
-                (Observable<Object>) source4);
+        List<Observable<?>> sourcesListObject = Arrays.asList(source1, source2, source3, source4);
         Function<List<Object>, O> combinerObject = values -> {
             I1 sourceValue1 = (I1) values.get(0);
             I2 sourceValue2 = (I2) values.get(1);
@@ -145,13 +148,12 @@ public final class CombineLatestOperators {
     /**
      * @see org.ossgang.commons.observables.Observables#combineLatest(Observable, Observable, Observable, Observable, Observable, Function5)
      */
+    @SuppressWarnings("unchecked")
     public static <I1, I2, I3, I4, I5, O> ObservableValue<O> combineLatest(Observable<I1> source1, Observable<I2> source2,
                                                                            Observable<I3> source3, Observable<I4> source4,
                                                                            Observable<I5> source5,
                                                                            Function5<I1, I2, I3, I4, I5, O> combiner) {
-        List<Observable<Object>> sourcesListObject = Arrays.asList(
-                (Observable<Object>) source1, (Observable<Object>) source2, (Observable<Object>) source3,
-                (Observable<Object>) source4, (Observable<Object>) source5);
+        List<Observable<?>> sourcesListObject = Arrays.asList(source1, source2, source3, source4, source5);
         Function<List<Object>, O> combinerObject = values -> {
             I1 sourceValue1 = (I1) values.get(0);
             I2 sourceValue2 = (I2) values.get(1);
