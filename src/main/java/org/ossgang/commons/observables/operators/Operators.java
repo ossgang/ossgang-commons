@@ -1,3 +1,22 @@
+/*
+ *
+ * This file is part of ossgang-commons.
+ *
+ * Copyright (c) 2008-2020, CERN. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.ossgang.commons.observables.operators;
 
 import org.ossgang.commons.observables.Observable;
@@ -5,13 +24,13 @@ import org.ossgang.commons.observables.ObservableValue;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.IntStream;
 
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 import static org.ossgang.commons.observables.operators.DerivedObservableValue.derive;
+import static org.ossgang.commons.observables.operators.OperatorUtils.fromIndexMap;
+import static org.ossgang.commons.observables.operators.OperatorUtils.toIndexMap;
 
 public final class Operators {
+
     private Operators() {
         throw new UnsupportedOperationException("static only");
     }
@@ -52,7 +71,6 @@ public final class Operators {
         return zip(toIndexMap(sources), idxMap -> combiner.apply(fromIndexMap(idxMap)));
     }
 
-
     /**
      * @see org.ossgang.commons.observables.Observables#zip(Map)
      */
@@ -65,54 +83,6 @@ public final class Operators {
      */
     public static <I> ObservableValue<List<I>> zip(List<? extends Observable<I>> sources) {
         return zip(sources, Function.identity());
-    }
-
-    /**
-     * @see org.ossgang.commons.observables.Observables#combineLatest(Map, Function)
-     */
-    public static <K, I, O> ObservableValue<O> combineLatest(Map<K, ? extends Observable<I>> sourcesMap,
-                                                             Function<Map<K, I>, O> combiner) {
-        Map<K, I> valueMap = new HashMap<>();
-        Set<K> keys = new HashSet<>(sourcesMap.keySet());
-        return derive(sourcesMap, (k, v) -> {
-            synchronized (valueMap) {
-                valueMap.put(k, v);
-                if (valueMap.keySet().containsAll(keys)) {
-                    return Optional.of(combiner.apply(new HashMap<>(valueMap)));
-                }
-                return Optional.empty();
-            }
-        });
-    }
-
-    /**
-     * @see org.ossgang.commons.observables.Observables#combineLatest(List, Function)
-     */
-    public static <I, O> ObservableValue<O> combineLatest(List<? extends Observable<I>> sources,
-                                                          Function<List<I>, O> combiner) {
-        return combineLatest(toIndexMap(sources), idxMap -> combiner.apply(fromIndexMap(idxMap)));
-    }
-
-    /**
-     * @see org.ossgang.commons.observables.Observables#combineLatest(Map)
-     */
-    public static <K, I> ObservableValue<Map<K, I>> combineLatest(Map<K, ? extends Observable<I>> sourcesMap) {
-        return combineLatest(sourcesMap, Function.identity());
-    }
-
-    /**
-     * @see org.ossgang.commons.observables.Observables#combineLatest(List)
-     */
-    public static <I> ObservableValue<List<I>> combineLatest(List<? extends Observable<I>> sources) {
-        return combineLatest(sources, Function.identity());
-    }
-
-    private static <V> Map<Integer, V> toIndexMap(List<V> list) {
-        return IntStream.range(0, list.size()).boxed().collect(toMap(Function.identity(), list::get));
-    }
-
-    private static <V> List<V> fromIndexMap(Map<Integer, V> map) {
-        return IntStream.range(0, map.size()).boxed().map(map::get).collect(toList());
     }
 
 }
