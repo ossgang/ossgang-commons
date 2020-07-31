@@ -29,9 +29,9 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static java.util.stream.Collectors.toList;
 import static org.ossgang.commons.observables.operators.DerivedObservableValue.derive;
-import static org.ossgang.commons.observables.operators.OperatorUtils.*;
+import static org.ossgang.commons.observables.operators.OperatorUtils.fromIndexMap;
+import static org.ossgang.commons.observables.operators.OperatorUtils.toIndexMap;
 
 public final class CombineLatestOperators {
 
@@ -40,6 +40,7 @@ public final class CombineLatestOperators {
      */
     public static <K, O> ObservableValue<O> combineLatestObjects(Map<K, ? extends Observable<?>> sourcesMap,
                                                                  Function<Map<K, Object>, O> combiner) {
+        @SuppressWarnings("unchecked") /* safe, ordering for latest cast is manually ensured */
         Map<K, Observable<Object>> sourcesMapObject = (Map<K, Observable<Object>>) sourcesMap;
         Map<K, Object> valueMap = new HashMap<>();
         Set<K> keys = new HashSet<>(sourcesMapObject.keySet());
@@ -79,7 +80,6 @@ public final class CombineLatestOperators {
     /**
      * @see org.ossgang.commons.observables.Observables#combineLatest(Map, Function)
      */
-    @SuppressWarnings("unchecked")
     public static <K, I, O> ObservableValue<O> combineLatest(Map<K, ? extends Observable<I>> sourcesMap,
                                                              Function<Map<K, I>, O> combiner) {
         Function<Map<K, Object>, Map<K, I>> typedTranslator = OperatorUtils::typeTranslator;
@@ -89,7 +89,6 @@ public final class CombineLatestOperators {
     /**
      * @see org.ossgang.commons.observables.Observables#combineLatest(List, Function)
      */
-    @SuppressWarnings("unchecked")
     public static <I, O> ObservableValue<O> combineLatest(List<? extends Observable<I>> sources,
                                                           Function<List<I>, O> combiner) {
         Function<List<Object>, List<I>> typedTranslator = OperatorUtils::typeTranslator;
@@ -99,7 +98,6 @@ public final class CombineLatestOperators {
     /**
      * @see org.ossgang.commons.observables.Observables#combineLatest(Map)
      */
-    @SuppressWarnings("unchecked")
     public static <K, I> ObservableValue<Map<K, I>> combineLatest(Map<K, ? extends Observable<I>> sourcesMap) {
         return combineLatestObjects(sourcesMap, OperatorUtils::typeTranslator);
     }
@@ -107,7 +105,6 @@ public final class CombineLatestOperators {
     /**
      * @see org.ossgang.commons.observables.Observables#combineLatest(List)
      */
-    @SuppressWarnings("unchecked")
     public static <I> ObservableValue<List<I>> combineLatest(List<? extends Observable<I>> sources) {
         return combineLatestObjects(sources, OperatorUtils::typeTranslator);
     }
