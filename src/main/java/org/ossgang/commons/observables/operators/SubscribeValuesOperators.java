@@ -29,6 +29,9 @@ import java.util.function.BiConsumer;
 
 public final class SubscribeValuesOperators {
 
+    /**
+     * @see Observables#subscribeValues(Observable, Observable, BiConsumer, ValueCombinationPolicy, SubscriptionOption...)
+     */
     @SuppressWarnings("unchecked")
     public static <I1, I2> Subscription subscribeValues(Observable<I1> observable1, Observable<I2> observable2,
                                                         BiConsumer<I1, I2> consumer,
@@ -41,6 +44,9 @@ public final class SubscribeValuesOperators {
         }, subscriptionOptions);
     }
 
+    /**
+     * @see Observables#subscribeValues(Observable, Observable, Observable, Consumer3, ValueCombinationPolicy, SubscriptionOption...)
+     */
     @SuppressWarnings("unchecked")
     public static <I1, I2, I3> Subscription subscribeValues(Observable<I1> observable1, Observable<I2> observable2, Observable<I3> observable3,
                                                             Consumer3<I1, I2, I3> consumer,
@@ -54,6 +60,9 @@ public final class SubscribeValuesOperators {
         }, subscriptionOptions);
     }
 
+    /**
+     * @see Observables#subscribeValues(Observable, Observable, Observable, Observable, Consumer4, ValueCombinationPolicy, SubscriptionOption...)
+     */
     @SuppressWarnings("unchecked")
     public static <I1, I2, I3, I4> Subscription subscribeValues(Observable<I1> observable1, Observable<I2> observable2,
                                                                 Observable<I3> observable3, Observable<I4> observable4,
@@ -69,6 +78,9 @@ public final class SubscribeValuesOperators {
         }, subscriptionOptions);
     }
 
+    /**
+     * @see Observables#subscribeValues(Observable, Observable, Observable, Observable, Observable, Consumer5, ValueCombinationPolicy, SubscriptionOption...)
+     */
     @SuppressWarnings("unchecked")
     public static <I1, I2, I3, I4, I5> Subscription subscribeValues(Observable<I1> observable1, Observable<I2> observable2,
                                                                     Observable<I3> observable3, Observable<I4> observable4,
