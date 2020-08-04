@@ -100,7 +100,7 @@ public final class SubscribeValuesOperators {
 
     private static Observable<List<Object>> observableWithCombinedValues(ValueCombinationPolicy combinationPolicy,
                                                                          List<Observable<?>> observables) {
-        if (combinationPolicy == ValueCombinationPolicy.COMBINE_LATEST) {
+        if (combinationPolicy == ValueCombinationPolicies.COMBINE_LATEST) {
             return Observables.combineLatestObjects(observables);
         }
         throw new IllegalArgumentException("Unsupported value combination policy: " + combinationPolicy);

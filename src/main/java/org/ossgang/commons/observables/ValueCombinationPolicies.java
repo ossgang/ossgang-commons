@@ -19,8 +19,11 @@
 package org.ossgang.commons.observables;
 
 /**
- * Policy for value combination. The actual logic depends on the context it is used.
+ * * Basic {@link ValueCombinationPolicy}.
+ * <br>
+ * Implementation note: at the moment this class is an enum, future versions will be able to migrate to class for
+ * more advanced options without breaking the compatibility.
  */
-public interface ValueCombinationPolicy {
-    /* marker interface for the moment */
+public enum ValueCombinationPolicies implements ValueCombinationPolicy {
+    COMBINE_LATEST
 }

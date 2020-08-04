@@ -33,7 +33,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
 import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
-import static org.ossgang.commons.observables.ValueCombinationPolicy.COMBINE_LATEST;
+import static org.ossgang.commons.observables.ValueCombinationPolicies.COMBINE_LATEST;
 import static org.ossgang.commons.properties.Properties.property;
 
 public class SubscribeValuesTest {

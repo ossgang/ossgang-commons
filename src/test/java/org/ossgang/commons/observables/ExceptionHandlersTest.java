@@ -60,7 +60,7 @@ public class ExceptionHandlersTest {
 
     @Test(expected = TimeoutException.class)
     public void mapThrows_subscriberHandles_shouldNotDeflect() throws Exception {
-        TestObserver testObserver = new TestObserver();
+        TestObserver<Integer> testObserver = new TestObserver<>();
         Property<String> property = Properties.property("A");
         property.map(Integer::valueOf).subscribe(testObserver);
         property.set("THIS-IS-NOT-A-NUMBER");
