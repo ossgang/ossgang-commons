@@ -19,13 +19,12 @@
 
 package org.ossgang.commons.observables;
 
-import org.ossgang.commons.monads.Function3;
-import org.ossgang.commons.monads.Function4;
-import org.ossgang.commons.monads.Function5;
+import org.ossgang.commons.monads.*;
 import org.ossgang.commons.observables.exceptions.UnhandledException;
 import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
 import org.ossgang.commons.observables.operators.CombineLatestOperators;
 import org.ossgang.commons.observables.operators.Operators;
+import org.ossgang.commons.observables.operators.SubscribeValuesOperators;
 import org.ossgang.commons.observables.operators.connectors.ConnectorObservableValue;
 import org.ossgang.commons.observables.operators.connectors.ConnectorObservables;
 import org.ossgang.commons.observables.operators.connectors.DynamicConnectorObservableValue;
@@ -34,10 +33,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 /**
  * Static support class for dealing with {@link Observable} and {@link ObservableValue}.
@@ -218,16 +214,16 @@ public final class Observables {
     }
 
     /**
-     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * Produces an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
      * result of the combiner applied with the latest values of the other inputs.
      * The {@link Map}s are used to avoid matching values by index.
      *
-     * @param sourcesMap the input {@link ObservableValue}s indexed
+     * @param sourcesMap the input {@link Observable}s indexed
      * @param combiner   the combining function that will produce the result
-     * @param <K>        the key for each input {@link ObservableValue} that is used for indexing
+     * @param <K>        the key for each input {@link Observable} that is used for indexing
      * @param <I>        the input type
      * @param <O>        the output type
-     * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * @return an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
      * result of combiner applied with the latest values of the other inputs.
      */
     public static <K, I, O> ObservableValue<O> combineLatest(Map<K, ? extends Observable<I>> sourcesMap,
@@ -236,12 +232,12 @@ public final class Observables {
     }
 
     /**
-     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * Produces an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
      * result of the combiner applied with the latest values of the other inputs.
      * The order of the input values of the combiner is the same as the order of the provided source
-     * {@link ObservableValue}s
+     * {@link Observable}s
      *
-     * @param sources  the input {@link ObservableValue}s
+     * @param sources  the input {@link Observable}s
      * @param combiner the combining function that will produce the result
      * @param <I>      the input type
      * @param <O>      the output type
@@ -254,44 +250,44 @@ public final class Observables {
     }
 
     /**
-     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes a
-     * {@link Map} with the values of each corresponding source {@link ObservableValue}.
+     * Produces an {@link ObservableValue} that on each update of any source {@link Observable} publishes a
+     * {@link Map} with the values of each corresponding source {@link Observable}.
      *
-     * @param sourcesMap the input {@link ObservableValue}s indexed
-     * @param <K>        the key for each input {@link ObservableValue} that is used for indexing
+     * @param sourcesMap the input {@link Observable}s indexed
+     * @param <K>        the key for each input {@link Observable} that is used for indexing
      * @param <I>        the input type
-     * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes a
-     * {@link Map} with the values of each corresponding source {@link ObservableValue}.
+     * @return an {@link ObservableValue} that on each update of any source {@link Observable} publishes a
+     * {@link Map} with the values of each corresponding source {@link Observable}.
      */
     public static <K, I> ObservableValue<Map<K, I>> combineLatest(Map<K, ? extends Observable<I>> sourcesMap) {
         return CombineLatestOperators.combineLatest(sourcesMap);
     }
 
     /**
-     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
-     * a {@link List} containing the values of each {@link ObservableValue}
+     * Produces an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
+     * a {@link List} containing the values of each {@link Observable}
      *
-     * @param sources the input {@link ObservableValue}s
+     * @param sources the input {@link Observable}s
      * @param <I>     the input type
-     * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
-     * a {@link List} containing the values of each {@link ObservableValue}
+     * @return an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
+     * a {@link List} containing the values of each {@link Observable}
      */
     public static <I> ObservableValue<List<I>> combineLatest(List<? extends Observable<I>> sources) {
         return CombineLatestOperators.combineLatest(sources);
     }
 
     /**
-     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * Produces an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
      * result of the combiner applied with the latest values of the other inputs.
      * The {@link Map}s are used to avoid matching values by index.
      * This method does not restrict the type of the input values and, therefore, produces {@link Object}s as result.
      * To be used in special cases when the typed version of the combineLatest operator cannot be used!
      *
-     * @param sourcesMap the input {@link ObservableValue}s indexed
+     * @param sourcesMap the input {@link Observable}s indexed
      * @param combiner   the combining function that will produce the result
-     * @param <K>        the key for each input {@link ObservableValue} that is used for indexing
+     * @param <K>        the key for each input {@link Observable} that is used for indexing
      * @param <O>        the output type
-     * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * @return an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
      * result of combiner applied with the latest values of the other inputs.
      */
     public static <K, O> ObservableValue<O> combineLatestObjects(Map<K, ? extends Observable<?>> sourcesMap,
@@ -300,14 +296,14 @@ public final class Observables {
     }
 
     /**
-     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * Produces an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
      * result of the combiner applied with the latest values of the other inputs.
      * The order of the input values of the combiner is the same as the order of the provided source
-     * {@link ObservableValue}s.
+     * {@link Observable}s.
      * This method does not restrict the type of the input values and, therefore, produces {@link Object}s as result.
      * To be used in special cases when the typed version of the combineLatest operator cannot be used!
      *
-     * @param sources  the input {@link ObservableValue}s
+     * @param sources  the input {@link Observable}s
      * @param combiner the combining function that will produce the result
      * @param <O>      the output type
      * @return an {@link ObservableValue} that on each update of any source publishes the result of the
@@ -319,40 +315,40 @@ public final class Observables {
     }
 
     /**
-     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes a
-     * {@link Map} with the values of each corresponding source {@link ObservableValue}.
+     * Produces an {@link ObservableValue} that on each update of any source {@link Observable} publishes a
+     * {@link Map} with the values of each corresponding source {@link Observable}.
      * This method does not restrict the type of the input values and, therefore, produces {@link Object}s as result.
      * To be used in special cases when the typed version of the combineLatest operator cannot be used!
      *
-     * @param sourcesMap the input {@link ObservableValue}s indexed
-     * @param <K>        the key for each input {@link ObservableValue} that is used for indexing
-     * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes a
-     * {@link Map} with the values of each corresponding source {@link ObservableValue}.
+     * @param sourcesMap the input {@link Observable}s indexed
+     * @param <K>        the key for each input {@link Observable} that is used for indexing
+     * @return an {@link ObservableValue} that on each update of any source {@link Observable} publishes a
+     * {@link Map} with the values of each corresponding source {@link Observable}.
      */
     public static <K> ObservableValue<Map<K, Object>> combineLatestObjects(Map<K, ? extends Observable<?>> sourcesMap) {
         return CombineLatestOperators.combineLatestObjects(sourcesMap);
     }
 
     /**
-     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
-     * a {@link List} containing the values of each {@link ObservableValue}.
+     * Produces an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
+     * a {@link List} containing the values of each {@link Observable}.
      * This method does not restrict the type of the input values and, therefore, produces {@link Object}s as result.
      * To be used in special cases when the typed version of the combineLatest operator cannot be used!
      *
-     * @param sources the input {@link ObservableValue}s
-     * @return an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
-     * a {@link List} containing the values of each {@link ObservableValue}
+     * @param sources the input {@link Observable}s
+     * @return an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
+     * a {@link List} containing the values of each {@link Observable}
      */
     public static ObservableValue<List<Object>> combineLatestObjects(List<? extends Observable<?>> sources) {
         return CombineLatestOperators.combineLatestObjects(sources);
     }
 
     /**
-     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * Produces an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
      * result of the combiner applied with the latest values of the other input.
      *
-     * @param source1  the first input {@link ObservableValue}
-     * @param source2  the second input {@link ObservableValue}
+     * @param source1  the first input {@link Observable}
+     * @param source2  the second input {@link Observable}
      * @param combiner the combining function that will produce the result
      * @param <I1>     the first input value type
      * @param <I2>     the second input value type
@@ -366,12 +362,12 @@ public final class Observables {
     }
 
     /**
-     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * Produces an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
      * result of the combiner applied with the latest values of the other inputs.
      *
-     * @param source1  the first input {@link ObservableValue}
-     * @param source2  the second input {@link ObservableValue}
-     * @param source3  the third input {@link ObservableValue}
+     * @param source1  the first input {@link Observable}
+     * @param source2  the second input {@link Observable}
+     * @param source3  the third input {@link Observable}
      * @param combiner the combining function that will produce the result
      * @param <I1>     the first input value type
      * @param <I2>     the second input value type
@@ -387,13 +383,13 @@ public final class Observables {
     }
 
     /**
-     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * Produces an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
      * result of the combiner applied with the latest values of the other inputs.
      *
-     * @param source1  the first input {@link ObservableValue}
-     * @param source2  the second input {@link ObservableValue}
-     * @param source3  the third input {@link ObservableValue}
-     * @param source4  the fourth input {@link ObservableValue}
+     * @param source1  the first input {@link Observable}
+     * @param source2  the second input {@link Observable}
+     * @param source3  the third input {@link Observable}
+     * @param source4  the fourth input {@link Observable}
      * @param combiner the combining function that will produce the result
      * @param <I1>     the first input value type
      * @param <I2>     the second input value type
@@ -410,14 +406,14 @@ public final class Observables {
     }
 
     /**
-     * Produces an {@link ObservableValue} that on each update of any source {@link ObservableValue} publishes the
+     * Produces an {@link ObservableValue} that on each update of any source {@link Observable} publishes the
      * result of the combiner applied with the latest values of the other inputs.
      *
-     * @param source1  the first input {@link ObservableValue}
-     * @param source2  the second input {@link ObservableValue}
-     * @param source3  the third input {@link ObservableValue}
-     * @param source4  the fourth input {@link ObservableValue}
-     * @param source5  the fifth input {@link ObservableValue}
+     * @param source1  the first input {@link Observable}
+     * @param source2  the second input {@link Observable}
+     * @param source3  the third input {@link Observable}
+     * @param source4  the fourth input {@link Observable}
+     * @param source5  the fifth input {@link Observable}
      * @param combiner the combining function that will produce the result
      * @param <I1>     the first input value type
      * @param <I2>     the second input value type
@@ -433,6 +429,101 @@ public final class Observables {
                                                                            Observable<I5> source5,
                                                                            Function5<I1, I2, I3, I4, I5, O> combiner) {
         return CombineLatestOperators.combineLatest(source1, source2, source3, source4, source5, combiner);
+    }
+
+    /**
+     * Subscribe to the updates of the values of each source {@link Observable}. The provided consumer will be called
+     * according to the policy specified via the provided {@link ValueCombinationPolicy}
+     *
+     * @param source1             the first input {@link Observable}
+     * @param source2             the second input {@link Observable}
+     * @param consumer            the consumer of the values of the input {@link Observable}s
+     * @param combinationPolicy   the combination policy of the values of the input {@link Observable}s
+     * @param subscriptionOptions the subscription options to pass to each input {@link Observable}s
+     * @param <I1>                the first input value type
+     * @param <I2>                the second input value type
+     * @return a Subscription object, which can be used to unsubscribe at a later point
+     */
+    public static <I1, I2> Subscription subscribeValues(Observable<I1> source1, Observable<I2> source2,
+                                                        BiConsumer<I1, I2> consumer,
+                                                        ValueCombinationPolicy combinationPolicy, SubscriptionOption... subscriptionOptions) {
+        return SubscribeValuesOperators.subscribeValues(source1, source2,
+                consumer, combinationPolicy, subscriptionOptions);
+    }
+
+    /**
+     * Subscribe to the updates of the values of each source {@link Observable}. The provided consumer will be called
+     * according to the policy specified via the provided {@link ValueCombinationPolicy}
+     *
+     * @param source1             the first input {@link Observable}
+     * @param source2             the second input {@link Observable}
+     * @param source3             the third input {@link Observable}
+     * @param consumer            the consumer of the values of the input {@link Observable}s
+     * @param combinationPolicy   the combination policy of the values of the input {@link Observable}s
+     * @param subscriptionOptions the subscription options to pass to each input {@link Observable}s
+     * @param <I1>                the first input value type
+     * @param <I2>                the second input value type
+     * @param <I3>                the third input value type
+     * @return a Subscription object, which can be used to unsubscribe at a later point
+     */
+    public static <I1, I2, I3> Subscription subscribeValues(Observable<I1> source1, Observable<I2> source2, Observable<I3> source3,
+                                                            Consumer3<I1, I2, I3> consumer,
+                                                            ValueCombinationPolicy combinationPolicy, SubscriptionOption... subscriptionOptions) {
+        return SubscribeValuesOperators.subscribeValues(source1, source2, source3,
+                consumer, combinationPolicy, subscriptionOptions);
+    }
+
+    /**
+     * Subscribe to the updates of the values of each source {@link Observable}. The provided consumer will be called
+     * according to the policy specified via the provided {@link ValueCombinationPolicy}
+     *
+     * @param source1             the first input {@link Observable}
+     * @param source2             the second input {@link Observable}
+     * @param source3             the third input {@link Observable}
+     * @param source4             the fourth input {@link Observable}
+     * @param consumer            the consumer of the values of the input {@link Observable}s
+     * @param combinationPolicy   the combination policy of the values of the input {@link Observable}s
+     * @param subscriptionOptions the subscription options to pass to each input {@link Observable}s
+     * @param <I1>                the first input value type
+     * @param <I2>                the second input value type
+     * @param <I3>                the third input value type
+     * @param <I4>                the fourth input value type
+     * @return a Subscription object, which can be used to unsubscribe at a later point
+     */
+    public static <I1, I2, I3, I4> Subscription subscribeValues(Observable<I1> source1, Observable<I2> source2,
+                                                                Observable<I3> source3, Observable<I4> source4,
+                                                                Consumer4<I1, I2, I3, I4> consumer,
+                                                                ValueCombinationPolicy combinationPolicy, SubscriptionOption... subscriptionOptions) {
+        return SubscribeValuesOperators.subscribeValues(source1, source2, source3, source4,
+                consumer, combinationPolicy, subscriptionOptions);
+    }
+
+    /**
+     * Subscribe to the updates of the values of each source {@link Observable}. The provided consumer will be called
+     * according to the policy specified via the provided {@link ValueCombinationPolicy}
+     *
+     * @param source1             the first input {@link Observable}
+     * @param source2             the second input {@link Observable}
+     * @param source3             the third input {@link Observable}
+     * @param source4             the fourth input {@link Observable}
+     * @param source5             the fifth input {@link Observable}
+     * @param consumer            the consumer of the values of the input {@link Observable}s
+     * @param combinationPolicy   the combination policy of the values of the input {@link Observable}s
+     * @param subscriptionOptions the subscription options to pass to each input {@link Observable}s
+     * @param <I1>                the first input value type
+     * @param <I2>                the second input value type
+     * @param <I3>                the third input value type
+     * @param <I4>                the fourth input value type
+     * @param <I5>                the fifth input value type
+     * @return a Subscription object, which can be used to unsubscribe at a later point
+     */
+    public static <I1, I2, I3, I4, I5> Subscription subscribeValues(Observable<I1> source1, Observable<I2> source2,
+                                                                    Observable<I3> source3, Observable<I4> source4,
+                                                                    Observable<I5> source5,
+                                                                    Consumer5<I1, I2, I3, I4, I5> consumer,
+                                                                    ValueCombinationPolicy combinationPolicy, SubscriptionOption... subscriptionOptions) {
+        return SubscribeValuesOperators.subscribeValues(source1, source2, source3, source4, source5,
+                consumer, combinationPolicy, subscriptionOptions);
     }
 
     /**

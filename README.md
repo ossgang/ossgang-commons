@@ -36,6 +36,8 @@ i.e. it has got a public setter. Conceptually it holds the reference to a value 
 A ``Dispatcher<T>`` is an ``ObservableValue<T>`` which can be used to dispatch
 arbitrary values of ``T`` or ``Throwables`` downstream. This feature is particularly useful in the case of event dispatchers, services dispatching updates and in general any kind of 'source' of data.
 
+The `Observables` class contains many useful methods to interact, combine and transform `ObservableValue<T>`
+
 ### Awaitables
 Two sister utilty classes, ``Await`` and ``Retry<T>`` to facilitate wait-polling, with fluent API to configure polling intervals, limit polling iterations, or set timeouts.
 
