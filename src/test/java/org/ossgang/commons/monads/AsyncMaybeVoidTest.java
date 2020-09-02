@@ -24,9 +24,20 @@ import org.junit.Test;
 public class AsyncMaybeVoidTest {
 
     @Test
+    public void testWhenCompleteVoid() {
+        AsyncMaybe<Void> async = AsyncMaybe.attemptAsync(() -> {
+        });
+        async.whenComplete(maybe -> {
+        });
+        async.toMaybeBlocking().throwOnException();
+    }
+
+    @Test
     public void testAsyncMaybeVoid_afterWhenValue_shouldNotThrowNPE() {
-        AsyncMaybe<Void> async1 = AsyncMaybe.attemptAsync(() -> {});
-        AsyncMaybe<Void> async2 = async1.whenValue(v -> {});
+        AsyncMaybe<Void> async1 = AsyncMaybe.attemptAsync(() -> {
+        });
+        AsyncMaybe<Void> async2 = async1.whenValue(v -> {
+        });
         async2.toMaybeBlocking().throwOnException();
     }
 
@@ -35,9 +46,10 @@ public class AsyncMaybeVoidTest {
         AsyncMaybe<Void> async1 = AsyncMaybe.attemptAsync(() -> {
             throw new RuntimeException("testAsyncMaybeVoid_afterWhenException_shouldNotThrowNPE");
         });
-        AsyncMaybe<Void> async2 = async1.whenException(e -> {});
+        AsyncMaybe<Void> async2 = async1.whenException(e -> {
+        });
         Maybe<Void> maybe = async2.toMaybeBlocking();
-        Assertions.assertThat(maybe.exception().getCause()).hasMessage("testAsyncMaybeVoid_afterWhenException_shouldNotThrowNPE");
+        Assertions.assertThat(maybe.exception()).hasMessage("testAsyncMaybeVoid_afterWhenException_shouldNotThrowNPE");
     }
 
     @Test
@@ -52,22 +64,28 @@ public class AsyncMaybeVoidTest {
 
     @Test
     public void testAsyncMaybeVoid_afterThenConsumer_shouldNotThrowNPE() {
-        AsyncMaybe<Void> async1 = AsyncMaybe.attemptAsync(() -> {});
-        AsyncMaybe<Void> async2 = async1.then(any -> {});
+        AsyncMaybe<Void> async1 = AsyncMaybe.attemptAsync(() -> {
+        });
+        AsyncMaybe<Void> async2 = async1.then(any -> {
+        });
         async2.toMaybeBlocking().throwOnException();
     }
 
     @Test
     public void testAsyncMaybeVoid_afterThenRunnable_shouldNotThrowNPE() {
-        AsyncMaybe<Void> async1 = AsyncMaybe.attemptAsync(() -> {});
-        AsyncMaybe<Void> async2 = async1.then(() -> {});
+        AsyncMaybe<Void> async1 = AsyncMaybe.attemptAsync(() -> {
+        });
+        AsyncMaybe<Void> async2 = async1.then(() -> {
+        });
         async2.toMaybeBlocking().throwOnException();
     }
 
     @Test
     public void testAsyncMaybeVoid_afterWhenCompleteBiConsumer_shouldNotThrowNPE() {
-        AsyncMaybe<Void> async1 = AsyncMaybe.attemptAsync(() -> {});
-        AsyncMaybe<Void> async2 = async1.whenComplete((any, error) -> {});
+        AsyncMaybe<Void> async1 = AsyncMaybe.attemptAsync(() -> {
+        });
+        AsyncMaybe<Void> async2 = async1.whenComplete((any, error) -> {
+        });
         async2.toMaybeBlocking().throwOnException();
     }
 

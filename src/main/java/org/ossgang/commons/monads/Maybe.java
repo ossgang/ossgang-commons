@@ -246,7 +246,7 @@ public class Maybe<T> {
      * @param function the function to apply
      * @return A successful Maybe the new value if the transformation succeeds. An unsuccessful Maybe otherwise.
      */
-    public <R> Maybe<R> flatMap(Function<T, Maybe<R>> function) {
+    public <R> Maybe<R> flatMap(ThrowingFunction<T, Maybe<R>> function) {
         requireNonNull(function);
         if (exception != null) {
             return Maybe.ofException(exception);
