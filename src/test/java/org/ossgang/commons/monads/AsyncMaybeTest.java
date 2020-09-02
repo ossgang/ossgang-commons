@@ -84,6 +84,7 @@ public class AsyncMaybeTest {
                 .map((Integer v) -> assertThat(v).isEqualTo(-21))//
                 .then(() -> "Success")
                 .toMaybeBlocking();
+        chain.throwOnException();
         assertThat(chain.value()).isEqualTo("Success");
     }
 

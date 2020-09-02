@@ -41,6 +41,7 @@ import static org.ossgang.commons.utils.Uncheckeds.*;
  * In order to fetch the result, it is possible to create a {@link Maybe} in a blocking way. Otherwise, reacting on the
  * completion can be achieved via, e.g., {@link #whenValue(ThrowingConsumer)} or {@link #map(ThrowingFunction)}.
  * *
+ *
  * @param <T> the type to carry
  */
 public class AsyncMaybe<T> {
@@ -49,19 +50,21 @@ public class AsyncMaybe<T> {
     private static final String NULL_VALUE_MSG = "AsyncMaybe cannot contain a null value";
 
     private final CompletableFuture<T> future;
+    private final boolean isVoid;
     private final Function<ThrowingSupplier<T>, Maybe<T>> maybeGenerator;
 
-    protected AsyncMaybe(CompletableFuture<T> future, Function<ThrowingSupplier<T>, Maybe<T>> maybeGenerator) {
+    private AsyncMaybe(CompletableFuture<T> future, boolean isVoid, Function<ThrowingSupplier<T>, Maybe<T>> maybeGenerator) {
         this.future = future;
+        this.isVoid = isVoid;
         this.maybeGenerator = maybeGenerator;
     }
 
     public static <T> AsyncMaybe<T> fromCompletableFuture(CompletableFuture<T> future) {
-        return new AsyncMaybe<>(future, Maybe::attempt);
+        return new AsyncMaybe<>(future, false, Maybe::attempt);
     }
 
     public static AsyncMaybe<Void> fromVoidCompletableFuture(CompletableFuture<Void> future) {
-        return new AsyncMaybe<>(future, valueSupplier -> Maybe.attempt((ThrowingRunnable) future::get));
+        return new AsyncMaybe<>(future, true, valueSupplier -> Maybe.attempt((ThrowingRunnable) future::get));
     }
 
     /**
@@ -78,7 +81,7 @@ public class AsyncMaybe<T> {
      * Construct an {@link AsyncMaybe} from the execution of a supplier.
      *
      * @param supplier the supplier to use
-     * @param <T> the type of the {@link AsyncMaybe}
+     * @param <T>      the type of the {@link AsyncMaybe}
      * @return An {@link AsyncMaybe} wrapping the execution of the provided supplier
      */
     public static <T> AsyncMaybe<T> attemptAsync(ThrowingSupplier<T> supplier) {
@@ -86,10 +89,9 @@ public class AsyncMaybe<T> {
     }
 
     /**
-
      * Construct an already "resolved" (without asynchronous calls) "successful" {@link AsyncMaybe} containing a value.
      *
-     * @param <T> the type to carry
+     * @param <T>   the type to carry
      * @param value the value to wrap
      * @return the successful {@link AsyncMaybe} object
      * @throws NullPointerException if the value is null
@@ -115,7 +117,7 @@ public class AsyncMaybe<T> {
     /**
      * Construct an already "resolved" (without asynchronous calls) "unsuccessful" {@link Maybe} containing an exception.
      *
-     * @param <T> the type to carry
+     * @param <T>       the type to carry
      * @param exception the exception to wrap
      * @return the unsuccessful {@link AsyncMaybe} object
      * @throws NullPointerException if the exception is null
@@ -123,6 +125,25 @@ public class AsyncMaybe<T> {
     public static <T> AsyncMaybe<T> ofException(Throwable exception) {
         CompletableFuture<T> future = new CompletableFuture<>();
         future.completeExceptionally(requireNonNull(exception, "AsyncMaybe cannot have a null exception"));
+        return AsyncMaybe.fromCompletableFuture(future);
+    }
+
+    /**
+     * Handles the case where the {@link CompletableFuture} can be of Void or T depending on the {@link #isVoid} flag.
+     *
+     * @param future to be transformed
+     * @return the corresponding {@link AsyncMaybe}
+     */
+    private AsyncMaybe<T> asyncMaybeFromPotentiallyVoid(CompletableFuture<T> future) {
+        if (isVoid) {
+            try {
+                @SuppressWarnings("unchecked")
+                AsyncMaybe<T> nextMaybe = (AsyncMaybe<T>) AsyncMaybe.fromVoidCompletableFuture((CompletableFuture<Void>) future);
+                return nextMaybe;
+            } catch (Exception e) {
+                throw new IllegalStateException("Cannot make CompletableFuture Void. isVoid flag inconsistent !!");
+            }
+        }
         return AsyncMaybe.fromCompletableFuture(future);
     }
 
@@ -136,7 +157,7 @@ public class AsyncMaybe<T> {
      * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one is thrown in the provided consumer
      */
     public AsyncMaybe<T> whenValue(ThrowingConsumer<T> consumer) {
-        return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync((value, exception) -> {
+        return asyncMaybeFromPotentiallyVoid(future.whenCompleteAsync((value, exception) -> {
             if (exception == null) {
                 uncheckedConsumer(consumer).accept(value);
             }
@@ -153,7 +174,7 @@ public class AsyncMaybe<T> {
      * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one thrown in the provided consumer
      */
     public AsyncMaybe<T> whenComplete(ThrowingConsumer<Maybe<T>> consumer) {
-        return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync((value, exception) -> {
+        return asyncMaybeFromPotentiallyVoid(future.whenCompleteAsync((value, exception) -> {
             if (exception != null) {
                 uncheckedConsumer(consumer).accept(Maybe.ofException(exception));
             } else {
@@ -172,7 +193,7 @@ public class AsyncMaybe<T> {
      * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one is thrown in the provided consumer
      */
     public AsyncMaybe<T> whenComplete(BiConsumer<T, Throwable> consumer) {
-        return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync(consumer, ASYNC_MAYBE_POOL));
+        return asyncMaybeFromPotentiallyVoid(future.whenCompleteAsync(consumer, ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -185,12 +206,11 @@ public class AsyncMaybe<T> {
      * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one is thrown in the provided consumer
      */
     public AsyncMaybe<T> whenException(ThrowingConsumer<Throwable> consumer) {
-        CompletableFuture<T> whenComplete = future.whenCompleteAsync((value, exception) -> {
+        return asyncMaybeFromPotentiallyVoid(future.whenCompleteAsync((value, exception) -> {
             if (exception != null) {
                 uncheckedConsumer(consumer).accept(exception);
             }
-        }, ASYNC_MAYBE_POOL);
-        return AsyncMaybe.fromCompletableFuture(whenComplete);
+        }, ASYNC_MAYBE_POOL));
     }
 
     /**
