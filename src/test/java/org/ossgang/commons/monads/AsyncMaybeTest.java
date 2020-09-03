@@ -23,13 +23,11 @@
 package org.ossgang.commons.monads;
 
 import org.junit.Test;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 import java.time.Duration;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
@@ -84,6 +82,7 @@ public class AsyncMaybeTest {
                 .map((Integer v) -> assertThat(v).isEqualTo(-21))//
                 .then(() -> "Success")
                 .toMaybeBlocking();
+        chain.throwOnException();
         assertThat(chain.value()).isEqualTo("Success");
     }
 
@@ -95,7 +94,7 @@ public class AsyncMaybeTest {
                 .map(this::throwException2)
                 .toMaybeBlocking();
         assertThat(maybe.hasException()).isTrue();
-        assertThat(maybe.exception()).hasCauseInstanceOf(MaybeTestException1.class);
+        assertThat(maybe.exception()).isInstanceOf(MaybeTestException1.class);
         maybe.value(); /* <- throws */
     }
 
@@ -113,7 +112,7 @@ public class AsyncMaybeTest {
         verify(function1, times(1)).apply("HelloWorld");
         verify(function2, never()).apply(anyInt());
         assertThat(maybe.hasException()).isTrue();
-        assertThat(maybe.exception()).hasCauseInstanceOf(MaybeTestException2.class);
+        assertThat(maybe.exception()).isInstanceOf(MaybeTestException2.class);
     }
 
     @Test
@@ -145,7 +144,7 @@ public class AsyncMaybeTest {
         Mockito.when(function1.apply(anyString())).thenReturn("42");
 
         ThrowingFunction<Throwable, Integer> recoveryFunction = mock(ThrowingFunction.class);
-        Mockito.when(recoveryFunction.apply(anyExceptionWithCause(MaybeTestException2.class))).thenReturn(42);
+        Mockito.when(recoveryFunction.apply(any(MaybeTestException2.class))).thenReturn(42);
 
         ThrowingFunction<Integer, String> function2 = mock(ThrowingFunction.class);
         Mockito.when(function2.apply(42)).thenReturn("OK");
@@ -157,7 +156,7 @@ public class AsyncMaybeTest {
                 .map(function2)
                 .toMaybeBlocking();
         verify(function1, times(1)).apply("HelloWorld");
-        verify(recoveryFunction, times(1)).apply(any(CompletionException.class)); /* <-- MaybeTestException2 wrapped by completable future*/
+        verify(recoveryFunction, times(1)).apply(any(MaybeTestException2.class)); /* <-- MaybeTestException2 wrapped by completable future*/
         verify(function2, times(1)).apply(42);
         assertThat(maybe.hasException()).isFalse();
         assertThat(maybe.value()).isEqualTo("OK");
@@ -270,24 +269,8 @@ public class AsyncMaybeTest {
     }
 
     @Test
-    public void whenCompleteBiconsumerWithValueIsCalled() {
-        CompletableFuture<String> result = new CompletableFuture<>();
-        AsyncMaybe.ofValue("Value").whenComplete((value, exception) -> result.complete(value));
-        assertThat(result.join()).isEqualTo("Value");
-    }
-
-    @Test
-    public void whenCompleteBiconsumerWithExceptionIsCalled() {
-        CompletableFuture<Throwable> result = new CompletableFuture<>();
-        RuntimeException thrownException = new RuntimeException("Exception test");
-        AsyncMaybe.ofException(thrownException).whenComplete((value, exception) -> result.complete(exception));
-        assertThat(result.join()).isSameAs(thrownException);
-    }
-
-    @Test
     public void toMaybeWithTimeoutThrowsWhenReached() {
-        CompletableFuture<Object> future = new CompletableFuture<>();
-        Maybe<Object> maybe = AsyncMaybe.fromCompletableFuture(future).toMaybeBlocking(Duration.ofSeconds(2));
+        Maybe<Void> maybe = AsyncMaybe.attemptAsync(() -> Thread.sleep(10000)).toMaybeBlocking(Duration.ofSeconds(2));
         assertThat(maybe.exception()).isInstanceOf(TimeoutException.class);
     }
 
@@ -309,18 +292,14 @@ public class AsyncMaybeTest {
         Maybe<String> result = AsyncMaybe.attemptAsync(() -> {
             throw exception;
         }).map(any -> "Not called").toMaybeBlocking();
-        assertThat(result.exception()).hasCause(exception);
+        assertThat(result.exception()).isEqualTo(exception);
     }
 
     @Test
     public void mapIsNotCalledOnException() {
         RuntimeException exception = new RuntimeException("Testing exception");
         Maybe<String> result = AsyncMaybe.ofException(exception).map(any -> any + "Not called").toMaybeBlocking();
-        assertThat(result.exception()).hasCause(exception);
-    }
-
-    private static Throwable anyExceptionWithCause(Class<? extends Throwable> throwableClass) {
-        return ArgumentMatchers.argThat(t -> throwableClass.isAssignableFrom(t.getCause().getClass()));
+        assertThat(result.exception()).isEqualTo(exception);
     }
 
 }

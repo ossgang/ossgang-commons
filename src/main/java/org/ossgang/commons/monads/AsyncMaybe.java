@@ -1,9 +1,6 @@
-// @formatter:off
-/*******************************************************************************
- *
- * This file is part of ossgang-commons.
- *
- * Copyright (c) 2008-2019, CERN. All rights reserved.
+/*
+ * @formatter:off
+ * Copyright (c) 2008-2020, CERN. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +13,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- ******************************************************************************/
-// @formatter:on
+ * @formatter:on
+ */
 
 package org.ossgang.commons.monads;
 
@@ -27,10 +23,11 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.concurrent.Executors.newCachedThreadPool;
 import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 import static org.ossgang.commons.utils.Uncheckeds.*;
@@ -41,6 +38,7 @@ import static org.ossgang.commons.utils.Uncheckeds.*;
  * In order to fetch the result, it is possible to create a {@link Maybe} in a blocking way. Otherwise, reacting on the
  * completion can be achieved via, e.g., {@link #whenValue(ThrowingConsumer)} or {@link #map(ThrowingFunction)}.
  * *
+ *
  * @param <T> the type to carry
  */
 public class AsyncMaybe<T> {
@@ -48,20 +46,10 @@ public class AsyncMaybe<T> {
     private static final ExecutorService ASYNC_MAYBE_POOL = newCachedThreadPool(daemonThreadFactoryWithPrefix("ossgang-AsyncMaybe-executor"));
     private static final String NULL_VALUE_MSG = "AsyncMaybe cannot contain a null value";
 
-    private final CompletableFuture<T> future;
-    private final Function<ThrowingSupplier<T>, Maybe<T>> maybeGenerator;
+    private final CompletableFuture<Maybe<T>> stage;
 
-    protected AsyncMaybe(CompletableFuture<T> future, Function<ThrowingSupplier<T>, Maybe<T>> maybeGenerator) {
-        this.future = future;
-        this.maybeGenerator = maybeGenerator;
-    }
-
-    public static <T> AsyncMaybe<T> fromCompletableFuture(CompletableFuture<T> future) {
-        return new AsyncMaybe<>(future, Maybe::attempt);
-    }
-
-    public static AsyncMaybe<Void> fromVoidCompletableFuture(CompletableFuture<Void> future) {
-        return new AsyncMaybe<>(future, valueSupplier -> Maybe.attempt((ThrowingRunnable) future::get));
+    private AsyncMaybe(CompletableFuture<Maybe<T>> stage) {
+        this.stage = stage;
     }
 
     /**
@@ -71,31 +59,45 @@ public class AsyncMaybe<T> {
      * @return An {@link AsyncMaybe} wrapping the execution of the provided runnable
      */
     public static AsyncMaybe<Void> attemptAsync(ThrowingRunnable runnable) {
-        return AsyncMaybe.fromVoidCompletableFuture(CompletableFuture.runAsync(uncheckedRunnable(runnable), ASYNC_MAYBE_POOL));
+        requireNonNull(runnable, "AsyncMaybe runnable cannot be null");
+        return new AsyncMaybe<>(supplyAsync(() -> Maybe.attempt(() -> uncheckedRunnable(runnable).run()), ASYNC_MAYBE_POOL));
     }
 
     /**
      * Construct an {@link AsyncMaybe} from the execution of a supplier.
      *
      * @param supplier the supplier to use
-     * @param <T> the type of the {@link AsyncMaybe}
+     * @param <T>      the type of the {@link AsyncMaybe}
      * @return An {@link AsyncMaybe} wrapping the execution of the provided supplier
      */
     public static <T> AsyncMaybe<T> attemptAsync(ThrowingSupplier<T> supplier) {
-        return AsyncMaybe.fromCompletableFuture(CompletableFuture.supplyAsync(() -> requireNonNull(uncheckedSupplier(supplier).get(), NULL_VALUE_MSG), ASYNC_MAYBE_POOL));
+        requireNonNull(supplier, "AsyncMaybe value supplier cannot be null");
+        return new AsyncMaybe<>(supplyAsync(() -> Maybe.attempt(() -> requireNonNullResult(supplier).get()), ASYNC_MAYBE_POOL));
     }
 
     /**
+     * Construct an {@link AsyncMaybe} from the execution of a supplier.
+     *
+     * @param supplier the supplier to use
+     * @param <T>      the type of the {@link AsyncMaybe}
+     * @return An {@link AsyncMaybe} wrapping the execution of the provided supplier
+     */
+    public static <T> AsyncMaybe<T> flatAttemptAsync(ThrowingSupplier<Maybe<T>> supplier) {
+        requireNonNull(supplier, "AsyncMaybe value supplier cannot be null");
+        return new AsyncMaybe<>(supplyAsync(() -> Maybe.flatAttempt(() -> requireNonNullResult(supplier).get()), ASYNC_MAYBE_POOL));
+    }
 
+    /**
      * Construct an already "resolved" (without asynchronous calls) "successful" {@link AsyncMaybe} containing a value.
      *
-     * @param <T> the type to carry
+     * @param <T>   the type to carry
      * @param value the value to wrap
      * @return the successful {@link AsyncMaybe} object
      * @throws NullPointerException if the value is null
      */
     public static <T> AsyncMaybe<T> ofValue(T value) {
-        return AsyncMaybe.fromCompletableFuture(CompletableFuture.completedFuture(requireNonNull(value, NULL_VALUE_MSG)));
+        requireNonNull(value, "AsyncMaybe cannot have a null value");
+        return new AsyncMaybe<>(CompletableFuture.completedFuture(Maybe.ofValue(value)));
     }
 
     /**
@@ -106,24 +108,21 @@ public class AsyncMaybe<T> {
      * @return the successful {@link AsyncMaybe} of Void object
      */
     public static AsyncMaybe<Void> ofVoid() {
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        future.complete(null);
-        return AsyncMaybe.fromVoidCompletableFuture(future);
+        return new AsyncMaybe<>(CompletableFuture.completedFuture(Maybe.ofVoid()));
     }
 
 
     /**
      * Construct an already "resolved" (without asynchronous calls) "unsuccessful" {@link Maybe} containing an exception.
      *
-     * @param <T> the type to carry
+     * @param <T>       the type to carry
      * @param exception the exception to wrap
      * @return the unsuccessful {@link AsyncMaybe} object
      * @throws NullPointerException if the exception is null
      */
     public static <T> AsyncMaybe<T> ofException(Throwable exception) {
-        CompletableFuture<T> future = new CompletableFuture<>();
-        future.completeExceptionally(requireNonNull(exception, "AsyncMaybe cannot have a null exception"));
-        return AsyncMaybe.fromCompletableFuture(future);
+        requireNonNull(exception, "AsyncMaybe cannot have a null exception");
+        return new AsyncMaybe<>(CompletableFuture.completedFuture(Maybe.ofException(exception)));
     }
 
     /**
@@ -136,11 +135,11 @@ public class AsyncMaybe<T> {
      * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one is thrown in the provided consumer
      */
     public AsyncMaybe<T> whenValue(ThrowingConsumer<T> consumer) {
-        return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync((value, exception) -> {
-            if (exception == null) {
-                uncheckedConsumer(consumer).accept(value);
-            }
-        }, ASYNC_MAYBE_POOL));
+        requireNonNull(consumer, "Value consumer cannot be null");
+        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.flatApply(m -> {
+            m.ifValue(uncheckedConsumer(consumer));
+            return m;
+        }), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -153,26 +152,11 @@ public class AsyncMaybe<T> {
      * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one thrown in the provided consumer
      */
     public AsyncMaybe<T> whenComplete(ThrowingConsumer<Maybe<T>> consumer) {
-        return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync((value, exception) -> {
-            if (exception != null) {
-                uncheckedConsumer(consumer).accept(Maybe.ofException(exception));
-            } else {
-                uncheckedConsumer(consumer).accept(maybeGenerator.apply(() -> value));
-            }
-        }, ASYNC_MAYBE_POOL));
-    }
-
-    /**
-     * Apply the consumer with the value or exception that is contained in the "resolved" state of this {@link AsyncMaybe}.
-     * The consumer will be called only when the asynchronous calculations of the result of this {@link AsyncMaybe} are done.
-     * A new {@link AsyncMaybe} is returned with the same result of this {@link AsyncMaybe} (be it an exception or a value).
-     * If the provided consumer throws an exception, the returned {@link AsyncMaybe} will contain the newly thrown exception.
-     *
-     * @param consumer the consumer to run
-     * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one is thrown in the provided consumer
-     */
-    public AsyncMaybe<T> whenComplete(BiConsumer<T, Throwable> consumer) {
-        return AsyncMaybe.fromCompletableFuture(future.whenCompleteAsync(consumer, ASYNC_MAYBE_POOL));
+        requireNonNull(consumer, "Consumer cannot be null");
+        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.flatApply(m -> {
+            consumer.accept(m);
+            return m;
+        }), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -185,12 +169,11 @@ public class AsyncMaybe<T> {
      * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one is thrown in the provided consumer
      */
     public AsyncMaybe<T> whenException(ThrowingConsumer<Throwable> consumer) {
-        CompletableFuture<T> whenComplete = future.whenCompleteAsync((value, exception) -> {
-            if (exception != null) {
-                uncheckedConsumer(consumer).accept(exception);
-            }
-        }, ASYNC_MAYBE_POOL);
-        return AsyncMaybe.fromCompletableFuture(whenComplete);
+        requireNonNull(consumer, "Exception consumer cannot be null");
+        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.flatApply(m -> {
+            m.ifException(uncheckedConsumer(consumer));
+            return m;
+        }), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -202,8 +185,8 @@ public class AsyncMaybe<T> {
      * @return A successful AsyncMaybe the new value if the transformation succeeds. An unsuccessful AsyncMaybe otherwise.
      */
     public <R> AsyncMaybe<R> map(ThrowingFunction<T, R> function) {
-        requireNonNull(function);
-        return AsyncMaybe.fromCompletableFuture(future.thenApplyAsync(v -> requireNonNull(uncheckedFunction(function).apply(v), NULL_VALUE_MSG), ASYNC_MAYBE_POOL));
+        requireNonNull(function, "Mapping function cannot be null");
+        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.map(requireNonNullResult(function)::apply), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -215,8 +198,8 @@ public class AsyncMaybe<T> {
      * @return A successful AsyncMaybe&lt;Void&gt; if the function is executed and succeeds. An unsuccessful AsyncMaybe otherwise.
      */
     public AsyncMaybe<Void> then(ThrowingConsumer<T> consumer) {
-        requireNonNull(consumer);
-        return AsyncMaybe.fromVoidCompletableFuture(future.thenAcceptAsync(uncheckedConsumer(consumer), ASYNC_MAYBE_POOL));
+        requireNonNull(consumer, "Value consumer cannot be null");
+        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.then(consumer), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -229,8 +212,8 @@ public class AsyncMaybe<T> {
      * AsyncMaybe otherwise.
      */
     public <R> AsyncMaybe<R> then(ThrowingSupplier<R> supplier) {
-        requireNonNull(supplier);
-        return AsyncMaybe.fromCompletableFuture(future.thenApplyAsync(v -> requireNonNull(uncheckedSupplier(supplier).get(), NULL_VALUE_MSG), ASYNC_MAYBE_POOL));
+        requireNonNull(supplier, "Value supplier cannot be null");
+        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.then(supplier), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -242,44 +225,34 @@ public class AsyncMaybe<T> {
      * @return A successful AsyncMaybe&lt;Void&gt; it the function is executed and succeeds. An unsuccessful AsyncMaybe otherwise.
      */
     public AsyncMaybe<Void> then(ThrowingRunnable runnable) {
-        requireNonNull(runnable);
-        return AsyncMaybe.fromVoidCompletableFuture(future.thenRunAsync(uncheckedRunnable(runnable), ASYNC_MAYBE_POOL));
+        requireNonNull(runnable, "Runnable cannot be null");
+        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.then(runnable), ASYNC_MAYBE_POOL));
     }
 
     /**
      * Apply a function if this {@link AsyncMaybe} is in a "unsuccessful" state. The function gets passed the exception
-     * wrapped in this maybe. If it returns successfully, it's result is wrapped in a "successful" AsyncMaybe. If it
-     * throws, the exception is returned wrapped in an "unsuccessful" AsyncMaybe.
+     * wrapped in this {@link AsyncMaybe}. If it returns successfully, it's result is wrapped in a "successful" AsyncMaybe. If it
+     * throws, the exception is returned wrapped in an "unsuccessful" {@link AsyncMaybe}.
      *
      * @param function the recovery function to apply
      * @return A successful AsyncMaybe the new value if the function returns. An unsuccessful AsyncMaybe if it throws.
      */
     public AsyncMaybe<T> recover(ThrowingFunction<Throwable, T> function) {
-        requireNonNull(function);
-        return AsyncMaybe.fromCompletableFuture(future.handleAsync((value, exception) -> {
-            if (exception != null) {
-                return requireNonNull(uncheckedFunction(function).apply(exception), NULL_VALUE_MSG);
-            }
-            return value;
-        }, ASYNC_MAYBE_POOL));
+        requireNonNull(function, "Recover function cannot be null");
+        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.recover(function), ASYNC_MAYBE_POOL));
     }
 
     /**
      * Apply a function if this {@link AsyncMaybe} is in a "unsuccessful" state. The function gets passed the exception
-     * wrapped in this AsyncMaybe. If it returns successfully, a "successful" void AsyncMaybe is returned. If it
-     * throws, the exception is returned wrapped in an "unsuccessful" AsyncMaybe.
+     * wrapped in this AsyncMaybe. If it returns successfully, a "successful" void {@link AsyncMaybe} is returned. If it
+     * throws, the exception is returned wrapped in an "unsuccessful" {@link AsyncMaybe}.
      *
      * @param consumer the recovery handler to apply
      * @return A successful void AsyncMaybe the new value if the handler returns. An unsuccessful AsyncMaybe if it throws.
      */
     public AsyncMaybe<Void> recover(ThrowingConsumer<Throwable> consumer) {
-        requireNonNull(consumer);
-        return AsyncMaybe.fromVoidCompletableFuture(future.handleAsync((value, exception) -> {
-            if (exception != null) {
-                uncheckedConsumer(consumer).accept(exception);
-            }
-            return null;
-        }, ASYNC_MAYBE_POOL));
+        requireNonNull(consumer, "Recover consumer cannot be null");
+        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.recover(consumer), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -291,7 +264,7 @@ public class AsyncMaybe<T> {
      * @return the {@link Maybe} representing the completed state of this {@link AsyncMaybe}
      */
     public Maybe<T> toMaybeBlocking() {
-        return maybeGenerator.apply(future::join);
+        return stage.join();
     }
 
     /**
@@ -309,16 +282,27 @@ public class AsyncMaybe<T> {
      * @return the {@link Maybe} representing the completed state of this {@link AsyncMaybe}
      */
     public Maybe<T> toMaybeBlocking(Duration timeout) {
-        return maybeGenerator.apply(() -> future.get(timeout.toMillis(), TimeUnit.MILLISECONDS));
+        return Maybe.attempt(() -> stage.get(timeout.toMillis(), TimeUnit.MILLISECONDS).value());
     }
 
-    /**
-     * Return the underlying {@link CompletableFuture} that this {@link AsyncMaybe} abstracts.
-     *
-     * @return the underlying {@link CompletableFuture} that this {@link AsyncMaybe} abstracts
-     */
-    public CompletableFuture<T> toCompletableFuture() {
-        return future;
+
+    private static <I, O> Function<I, O> requireNonNullResult(ThrowingFunction<I, O> consumer) {
+        return v -> {
+            O result = uncheckedFunction(consumer).apply(v);
+            if (result == null) {
+                throw new IllegalArgumentException(NULL_VALUE_MSG);
+            }
+            return result;
+        };
     }
 
+    private static <I> Supplier<I> requireNonNullResult(ThrowingSupplier<I> supplier) {
+        return () -> {
+            I value = uncheckedSupplier(supplier).get();
+            if (value == null) {
+                throw new IllegalArgumentException(NULL_VALUE_MSG);
+            }
+            return value;
+        };
+    }
 }
