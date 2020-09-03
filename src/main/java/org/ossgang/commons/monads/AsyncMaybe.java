@@ -1,9 +1,6 @@
-// @formatter:off
-/*******************************************************************************
- *
- * This file is part of ossgang-commons.
- *
- * Copyright (c) 2008-2019, CERN. All rights reserved.
+/*
+ * @formatter:off
+ * Copyright (c) 2008-2020, CERN. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +13,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- ******************************************************************************/
-// @formatter:on
+ * @formatter:on
+ */
 
 package org.ossgang.commons.monads;
 
@@ -64,7 +60,7 @@ public class AsyncMaybe<T> {
      * @return An {@link AsyncMaybe} wrapping the execution of the provided runnable
      */
     public static AsyncMaybe<Void> attemptAsync(ThrowingRunnable runnable) {
-        requireNonNull(runnable, "Runnable cannot be null");
+        requireNonNull(runnable, "AsyncMaybe runnable cannot be null");
         return new AsyncMaybe<>(supplyAsync(() -> Maybe.attempt(() -> uncheckedRunnable(runnable).run()), ASYNC_MAYBE_POOL));
     }
 
@@ -76,7 +72,7 @@ public class AsyncMaybe<T> {
      * @return An {@link AsyncMaybe} wrapping the execution of the provided supplier
      */
     public static <T> AsyncMaybe<T> attemptAsync(ThrowingSupplier<T> supplier) {
-        requireNonNull(supplier, "Value supplier cannot be null");
+        requireNonNull(supplier, "AsyncMaybe value supplier cannot be null");
         return new AsyncMaybe<>(supplyAsync(() -> Maybe.attempt(() -> requireNonNullResult(supplier).get()), ASYNC_MAYBE_POOL));
     }
 
@@ -128,6 +124,7 @@ public class AsyncMaybe<T> {
      * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one is thrown in the provided consumer
      */
     public AsyncMaybe<T> whenValue(ThrowingConsumer<T> consumer) {
+        requireNonNull(consumer, "Value consumer cannot be null");
         return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.ifValue(uncheckedConsumer(consumer)), ASYNC_MAYBE_POOL));
     }
 
@@ -141,6 +138,7 @@ public class AsyncMaybe<T> {
      * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one thrown in the provided consumer
      */
     public AsyncMaybe<T> whenComplete(ThrowingConsumer<Maybe<T>> consumer) {
+        requireNonNull(consumer, "Consumer cannot be null");
         return new AsyncMaybe<>(stage.thenApplyAsync(stageResult ->
                 Maybe.attempt(() -> consumer.accept(stageResult)).flatMap(any -> stageResult), ASYNC_MAYBE_POOL));
     }
@@ -157,6 +155,7 @@ public class AsyncMaybe<T> {
      * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one is thrown in the provided consumer
      */
     public AsyncMaybe<T> whenComplete(BiConsumer<T, Throwable> consumer) {
+        requireNonNull(consumer, "Consumer cannot be null");
         return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult
                 .ifValue(v -> consumer.accept(v, null))
                 .ifException(e -> consumer.accept(null, e)), ASYNC_MAYBE_POOL));
@@ -172,6 +171,7 @@ public class AsyncMaybe<T> {
      * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one is thrown in the provided consumer
      */
     public AsyncMaybe<T> whenException(ThrowingConsumer<Throwable> consumer) {
+        requireNonNull(consumer, "Exception consumer cannot be null");
         return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.ifException(uncheckedConsumer(consumer)), ASYNC_MAYBE_POOL));
     }
 
