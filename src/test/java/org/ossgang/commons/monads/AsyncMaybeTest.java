@@ -269,21 +269,6 @@ public class AsyncMaybeTest {
     }
 
     @Test
-    public void whenCompleteBiconsumerWithValueIsCalled() {
-        CompletableFuture<String> result = new CompletableFuture<>();
-        AsyncMaybe.ofValue("Value").whenComplete((value, exception) -> result.complete(value));
-        assertThat(result.join()).isEqualTo("Value");
-    }
-
-    @Test
-    public void whenCompleteBiconsumerWithExceptionIsCalled() {
-        CompletableFuture<Throwable> result = new CompletableFuture<>();
-        RuntimeException thrownException = new RuntimeException("Exception test");
-        AsyncMaybe.ofException(thrownException).whenComplete((value, exception) -> result.complete(exception));
-        assertThat(result.join()).isSameAs(thrownException);
-    }
-
-    @Test
     public void toMaybeWithTimeoutThrowsWhenReached() {
         Maybe<Void> maybe = AsyncMaybe.attemptAsync(() -> Thread.sleep(10000)).toMaybeBlocking(Duration.ofSeconds(2));
         assertThat(maybe.exception()).isInstanceOf(TimeoutException.class);

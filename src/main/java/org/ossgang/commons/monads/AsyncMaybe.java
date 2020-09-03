@@ -23,7 +23,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -77,6 +76,18 @@ public class AsyncMaybe<T> {
     }
 
     /**
+     * Construct an {@link AsyncMaybe} from the execution of a supplier.
+     *
+     * @param supplier the supplier to use
+     * @param <T>      the type of the {@link AsyncMaybe}
+     * @return An {@link AsyncMaybe} wrapping the execution of the provided supplier
+     */
+    public static <T> AsyncMaybe<T> flatAttemptAsync(ThrowingSupplier<Maybe<T>> supplier) {
+        requireNonNull(supplier, "AsyncMaybe value supplier cannot be null");
+        return new AsyncMaybe<>(supplyAsync(() -> Maybe.flatAttempt(() -> requireNonNullResult(supplier).get()), ASYNC_MAYBE_POOL));
+    }
+
+    /**
      * Construct an already "resolved" (without asynchronous calls) "successful" {@link AsyncMaybe} containing a value.
      *
      * @param <T>   the type to carry
@@ -125,7 +136,10 @@ public class AsyncMaybe<T> {
      */
     public AsyncMaybe<T> whenValue(ThrowingConsumer<T> consumer) {
         requireNonNull(consumer, "Value consumer cannot be null");
-        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.ifValue(uncheckedConsumer(consumer)), ASYNC_MAYBE_POOL));
+        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.flatApply(m -> {
+            m.ifValue(uncheckedConsumer(consumer));
+            return m;
+        }), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -139,26 +153,10 @@ public class AsyncMaybe<T> {
      */
     public AsyncMaybe<T> whenComplete(ThrowingConsumer<Maybe<T>> consumer) {
         requireNonNull(consumer, "Consumer cannot be null");
-        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult ->
-                Maybe.attempt(() -> consumer.accept(stageResult)).flatMap(any -> stageResult), ASYNC_MAYBE_POOL));
-    }
-
-    /**
-     * Apply the consumer with the value or exception that is contained in the "resolved" state of this {@link AsyncMaybe}.
-     * Only one of the arguments of the {@link BiConsumer} will have a value, the other will be null depending on the
-     * state of this {@link AsyncMaybe}.
-     * The consumer will be called only when the asynchronous calculations of the result of this {@link AsyncMaybe} are done.
-     * A new {@link AsyncMaybe} is returned with the same result of this {@link AsyncMaybe} (be it an exception or a value).
-     * If the provided consumer throws an exception, the returned {@link AsyncMaybe} will contain the newly thrown exception.
-     *
-     * @param consumer the consumer to run
-     * @return a new {@link AsyncMaybe} with the same result as this {@link AsyncMaybe} or with an exception if one is thrown in the provided consumer
-     */
-    public AsyncMaybe<T> whenComplete(BiConsumer<T, Throwable> consumer) {
-        requireNonNull(consumer, "Consumer cannot be null");
-        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult
-                .ifValue(v -> consumer.accept(v, null))
-                .ifException(e -> consumer.accept(null, e)), ASYNC_MAYBE_POOL));
+        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.flatApply(m -> {
+            consumer.accept(m);
+            return m;
+        }), ASYNC_MAYBE_POOL));
     }
 
     /**
@@ -172,7 +170,10 @@ public class AsyncMaybe<T> {
      */
     public AsyncMaybe<T> whenException(ThrowingConsumer<Throwable> consumer) {
         requireNonNull(consumer, "Exception consumer cannot be null");
-        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.ifException(uncheckedConsumer(consumer)), ASYNC_MAYBE_POOL));
+        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.flatApply(m -> {
+            m.ifException(uncheckedConsumer(consumer));
+            return m;
+        }), ASYNC_MAYBE_POOL));
     }
 
     /**

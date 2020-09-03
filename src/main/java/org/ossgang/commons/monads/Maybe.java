@@ -25,7 +25,6 @@ package org.ossgang.commons.monads;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.utils.Uncheckeds.asUnchecked;
@@ -34,8 +33,8 @@ import static org.ossgang.commons.utils.Uncheckeds.asUnchecked;
  * This utility class implements the concept of a "Maybe" or "Try" {@link Optional}. A Maybe&lt;T&gt; either carries a
  * T or an exception that occurred when producing it.
  *
- * @author michi
  * @param <T> the type to carry.
+ * @author michi
  */
 public class Maybe<T> {
     private final T value;
@@ -60,7 +59,7 @@ public class Maybe<T> {
     /**
      * Construct an "unsuccessful" {@link Maybe} containing an exception.
      *
-     * @param <T> the type to carry.
+     * @param <T>       the type to carry.
      * @param exception the exception to wrap
      * @return the unsuccessful Maybe object
      * @throws NullPointerException if the exception is null
@@ -72,7 +71,7 @@ public class Maybe<T> {
     /**
      * Construct a "successful" {@link Maybe} containing a value.
      *
-     * @param <T> the type to carry.
+     * @param <T>   the type to carry.
      * @param value the value to wrap
      * @return the successful Maybe object
      * @throws NullPointerException if the value is null
@@ -138,7 +137,7 @@ public class Maybe<T> {
      * before if a value is stored by using the {@link #hasValue()} method.
      *
      * @return the value
-     * @throws RuntimeException if this Maybe objects contains an exception
+     * @throws RuntimeException       if this Maybe objects contains an exception
      * @throws NoSuchElementException if the value is {@code null} (can only happen for a successful Maybe&lt;Void&gt;)
      * @see #hasValue()
      */
@@ -195,12 +194,28 @@ public class Maybe<T> {
      *
      * @param supplier the function to run.
      * @return A {@link Maybe} object containing either the return value of the function, or an exception of one
-     *         occurred.
+     * occurred.
      */
     public static <T> Maybe<T> attempt(ThrowingSupplier<T> supplier) {
         requireNonNull(supplier);
         try {
             return Maybe.ofValue(supplier.get());
+        } catch (Exception e) {
+            return Maybe.ofException(e);
+        }
+    }
+
+    /**
+     * Construct a {@link Maybe} from the execution of a function.
+     *
+     * @param supplier the function to run.
+     * @return A {@link Maybe} object containing either the return value of the function, or an exception of one
+     * occurred.
+     */
+    public static <T> Maybe<T> flatAttempt(ThrowingSupplier<Maybe<T>> supplier) {
+        requireNonNull(supplier);
+        try {
+            return supplier.get();
         } catch (Exception e) {
             return Maybe.ofException(e);
         }
@@ -220,6 +235,31 @@ public class Maybe<T> {
         } catch (Exception e) {
             return Maybe.ofException(e);
         }
+    }
+
+    /**
+     * Apply a transformation function if this {@link Maybe}. The transformation function should return a value which will
+     * be wrapped in a "successful" {@link Maybe}. If the transformation function throws, the exception is returned wrapped
+     * in an "unsuccessful" {@link Maybe}.
+     *
+     * @param function the function to apply
+     * @return A successful Maybe the new value if the transformation succeeds. An unsuccessful Maybe otherwise.
+     */
+    public <R> Maybe<R> apply(ThrowingFunction<Maybe<T>, R> function) {
+        requireNonNull(function);
+        return attempt(() -> function.apply(this));
+    }
+
+    /**
+     * Apply a transformation function if this {@link Maybe}. The transformation function should return a {@link Maybe},
+     * which will be returned. If the transformation function throws, the exception is returned wrapped in an "unsuccessful" Maybe.
+     *
+     * @param function the function to apply
+     * @return A successful Maybe the new value if the transformation succeeds. An unsuccessful Maybe otherwise.
+     */
+    public <R> Maybe<R> flatApply(ThrowingFunction<Maybe<T>, Maybe<R>> function) {
+        requireNonNull(function);
+        return flatAttempt(() -> function.apply(this));
     }
 
     /**
@@ -251,11 +291,7 @@ public class Maybe<T> {
         if (exception != null) {
             return Maybe.ofException(exception);
         }
-        try {
-            return function.apply(value);
-        } catch (Exception e) {
-            return Maybe.ofException(exception);
-        }
+        return flatAttempt(() -> function.apply(value));
     }
 
     /**
@@ -281,7 +317,7 @@ public class Maybe<T> {
      *
      * @param supplier the function to apply
      * @return A successful Maybe wrapping the return value if the function is executed and succeeds. An unsuccessful
-     *         Maybe otherwise.
+     * Maybe otherwise.
      */
     public <R> Maybe<R> then(ThrowingSupplier<R> supplier) {
         requireNonNull(supplier);
@@ -347,7 +383,7 @@ public class Maybe<T> {
      * @param consumer the exception handler to apply
      * @return this
      * @throws NullPointerException in case the consumer is {@code null}.
-     * @throws RuntimeException in case the consumer throws any exception
+     * @throws RuntimeException     in case the consumer throws any exception
      */
     public Maybe<T> ifException(Consumer<Throwable> consumer) {
         requireNonNull(consumer, "The consumer must not be null.");
@@ -364,7 +400,7 @@ public class Maybe<T> {
      * @param consumer the handler to which to pass on the value.
      * @return this
      * @throws NullPointerException in case the consumer is {@code null}.
-     * @throws RuntimeException in case the consumer throws any exception
+     * @throws RuntimeException     in case the consumer throws any exception
      */
     public Maybe<T> ifValue(Consumer<T> consumer) {
         requireNonNull(consumer, "The consumer must not be null.");
@@ -382,7 +418,7 @@ public class Maybe<T> {
      * @param runnable the handler to run if this monad is in a successful state
      * @return this
      * @throws NullPointerException in case the runnable is {@code null}.
-     * @throws RuntimeException in case the runnable throws any exception
+     * @throws RuntimeException     in case the runnable throws any exception
      */
     public Maybe<T> ifSuccessful(Runnable runnable) {
         requireNonNull(runnable, "The runnable must not be null.");

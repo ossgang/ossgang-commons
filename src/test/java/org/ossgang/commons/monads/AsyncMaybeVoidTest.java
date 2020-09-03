@@ -81,15 +81,6 @@ public class AsyncMaybeVoidTest {
     }
 
     @Test
-    public void testAsyncMaybeVoid_afterWhenCompleteBiConsumer_shouldNotThrowNPE() {
-        AsyncMaybe<Void> async1 = AsyncMaybe.attemptAsync(() -> {
-        });
-        AsyncMaybe<Void> async2 = async1.whenComplete((any, error) -> {
-        });
-        async2.toMaybeBlocking().throwOnException();
-    }
-
-    @Test
     public void testAsyncMaybeVoid_afterWhenCompleteConsumer_shouldNotThrowNPE() {
         AsyncMaybe<Void> async1 = AsyncMaybe.attemptAsync(() -> {
         });
