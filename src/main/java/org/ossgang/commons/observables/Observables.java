@@ -65,9 +65,10 @@ public final class Observables {
     }
 
     /**
-     * Creates a {@link ConnectorObservableValue} that on each connection will subscribe to the upstream
-     * {@link ObservableValue}
-     * produced by the specified {@link Supplier}
+     * Creates a {@link ConnectorObservableValue} that on each connection (call to {@link ConnectorObservableValue#connect()})
+     * will subscribe to the upstream {@link ObservableValue} produced by the specified {@link Supplier}.
+     * NOTE: The {@link ConnectorObservableValue} will NOT connect immediately, a call to {@link ConnectorObservableValue#connect()}
+     * is needed afterwards.
      *
      * @param upstreamSupplier the supplier of upstream {@link ObservableValue} to be used when connecting
      * @param <T>              the type of the observable
@@ -80,7 +81,10 @@ public final class Observables {
     }
 
     /**
-     * Creates a {@link ConnectorObservableValue} that will connect to the specified upstream {@link ObservableValue}.
+     * Creates a {@link ConnectorObservableValue} that will be connected to the specified upstream {@link ObservableValue} when
+     * {@link ConnectorObservableValue#connect()} is called.
+     * NOTE: The {@link ConnectorObservableValue} will NOT connect immediately, a call to {@link ConnectorObservableValue#connect()}
+     * is needed afterwards.
      *
      * @param upstream the upstream {@link ObservableValue} to connect to
      * @param <T>      the type of the observable
