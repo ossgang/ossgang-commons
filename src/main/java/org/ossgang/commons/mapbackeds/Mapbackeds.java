@@ -158,6 +158,15 @@ public final class Mapbackeds {
 
     public static Set<Method> fieldMethods(Class<?> intfc) {
         requireInterface(intfc);
+        Set<Method> fields = fieldsFrom(intfc);
+        Class<?>[] superinterfaces = intfc.getInterfaces();
+        for (Class<?> supi : superinterfaces) {
+            fields.addAll(fieldMethods(supi));
+        }
+        return fields;
+    }
+
+    private static Set<Method> fieldsFrom(Class<?> intfc) {
         return Arrays.stream(intfc.getDeclaredMethods()) //
                 .filter(m -> m.getParameterCount() == 0) //
                 .filter(m -> !m.isDefault()) //
