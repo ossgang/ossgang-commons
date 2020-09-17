@@ -2,7 +2,6 @@ package org.ossgang.commons.mapbackeds;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.requireNonNull;
-import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
@@ -81,7 +80,7 @@ public final class Mapbackeds {
      * incompatible values with the interface, a call to the corresponding interface methods will fail (which might be
      * much later!)
      *
-     * @param the the interface which shall be backed by a map of values
+     * @param backedInterface the interface which shall be backed by a map of values
      * @param initialFieldValues the initial values for the 'field' methods of the object
      * @throws IllegalArgumentException if the given class is not an interface
      * @throws NullPointerException if the initialFieldValues is {@code null}.
@@ -95,7 +94,7 @@ public final class Mapbackeds {
      * object. This object can in general be of a different type, as long as the return types of the methods, containing
      * in the given interface match. values of fields not contained in the given interface are ignored.
      *
-     * @param the the interface which shall be backed by a map of values
+     * @param backedInterface the interface which shall be backed by a map of values
      * @param initialFieldValueSource a mapbacked object, which shall be used to pre-initialize the field values
      * @throws IllegalArgumentException if the given class is not an interface
      * @throws IllegalArgumentException if the initialFieldValueSource is not a mapbacked object
@@ -246,7 +245,7 @@ public final class Mapbackeds {
     }
 
     public static Set<Method> fieldMethods(Class<?> intfc) {
-        return collectIntfcMethods(intfc, not(Method::isDefault));
+        return collectIntfcMethods(intfc, m -> !m.isDefault());
     }
 
     public static Optional<Method> toStringMethod(Class<?> intfc) {
@@ -279,7 +278,7 @@ public final class Mapbackeds {
                 .collect(Collectors.toSet());
     }
 
-    public static <C extends Class<?>> C requireInterface(C intfc) {
+    public static <C> Class<C> requireInterface(Class<C> intfc) {
         requireNonNull(intfc, "interface must not be null");
         if (!intfc.isInterface()) {
             throw new IllegalArgumentException("Given class '" + intfc + "'is not an interface!");
