@@ -1,6 +1,7 @@
 package org.ossgang.commons.mapbackeds;
 
 import static java.util.Objects.requireNonNull;
+import static org.ossgang.commons.mapbackeds.MapbackedInternals.toStringMethod;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -34,7 +35,7 @@ class MapbackedObject implements InvocationHandler {
         this.intfc = requireNonNull(intfc, "interface must not be null");
         this.fieldValues = new HashMap<>(fieldValues);
         fieldMethods = Mapbackeds.fieldMethods(intfc);
-        toStringMethod = Mapbackeds.toStringMethod(intfc).orElse(null);
+        toStringMethod = toStringMethod(intfc).orElse(null);
     }
 
     @Override
