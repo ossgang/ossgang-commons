@@ -245,7 +245,7 @@ public final class Mapbackeds {
     }
 
     public static Set<Method> fieldMethods(Class<?> intfc) {
-        return collectIntfcMethods(intfc, m -> !m.isDefault());
+        return collectInterfaceMethods(intfc, m -> !m.isDefault());
     }
 
     public static Optional<Method> toStringMethod(Class<?> intfc) {
@@ -258,15 +258,15 @@ public final class Mapbackeds {
     }
 
     private static Set<Method> toStringMethods(Class<?> intfc) {
-        return collectIntfcMethods(intfc, m -> m.isAnnotationPresent(ToString.class));
+        return collectInterfaceMethods(intfc, m -> m.isAnnotationPresent(ToString.class));
     }
 
-    private static Set<Method> collectIntfcMethods(Class<?> intfc, Predicate<Method> methodPredicate) {
+    private static Set<Method> collectInterfaceMethods(Class<?> intfc, Predicate<Method> methodPredicate) {
         requireInterface(intfc);
         Set<Method> fields = findZeroParamMethodsFrom(intfc, methodPredicate);
         Class<?>[] superinterfaces = intfc.getInterfaces();
         for (Class<?> supi : superinterfaces) {
-            fields.addAll(collectIntfcMethods(supi, methodPredicate));
+            fields.addAll(collectInterfaceMethods(supi, methodPredicate));
         }
         return fields;
     }

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.ossgang.commons.mapbackeds.Mapbackeds.builder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
@@ -59,11 +60,7 @@ public class ElementChangeTest {
     }
 
     private static final <T> List<T> list(T... ts) {
-        List<T> list = new ArrayList<>();
-        for (T t : ts) {
-            list.add(t);
-        }
-        return list;
+        return Arrays.asList(ts);
     }
 
 }
