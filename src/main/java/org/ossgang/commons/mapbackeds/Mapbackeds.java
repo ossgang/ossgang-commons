@@ -1,6 +1,5 @@
 package org.ossgang.commons.mapbackeds;
 
-import static java.util.Collections.emptyMap;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -11,7 +10,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -66,40 +64,7 @@ public final class Mapbackeds {
      * @throws IllegalArgumentException if the given class is not an interface
      */
     public static <M> Builder<M> builder(Class<M> backedInterface) {
-        return builder(backedInterface, emptyMap());
-    }
-
-    /**
-     * Creates a builder for a mapbacked object of the given interface, with the given initial values. The passed in map
-     * can be bigger than the field actual fields of the object. Unknown fields will simply be ignored. The rest of the
-     * behaviour is the same as described in {@link #builder(Class)}.
-     * <p>
-     * NOTE: Currently, there is no upfront check of the types of the values within the map. So if the map contains
-     * incompatible values with the interface, a call to the corresponding interface methods will fail (which might be
-     * much later!)
-     *
-     * @param backedInterface the interface which shall be backed by a map of values
-     * @param initialFieldValues the initial values for the 'field' methods of the object
-     * @throws IllegalArgumentException if the given class is not an interface
-     * @throws NullPointerException if the initialFieldValues is {@code null}.
-     */
-    public static <M> Builder<M> builder(Class<M> backedInterface, Map<String, Object> initialFieldValues) {
-        return new Builder<>(backedInterface, initialFieldValues);
-    }
-
-    /**
-     * Creates a builder, with the field values pre-initialized from the given object, assuming that it is a mapbacked
-     * object. This object can in general be of a different type, as long as the return types of the methods, containing
-     * in the given interface match. values of fields not contained in the given interface are ignored.
-     *
-     * @param backedInterface the interface which shall be backed by a map of values
-     * @param initialFieldValueSource a mapbacked object, which shall be used to pre-initialize the field values
-     * @throws IllegalArgumentException if the given class is not an interface
-     * @throws IllegalArgumentException if the initialFieldValueSource is not a mapbacked object
-     * @throws NullPointerException if the initialFieldValues is {@code null}.
-     */
-    public static <M> Builder<M> builder(Class<M> backedInterface, Object initialFieldValueSource) {
-        return builder(backedInterface, mapOf(initialFieldValueSource));
+        return new Builder<>(backedInterface);
     }
 
     /**
@@ -122,8 +87,10 @@ public final class Mapbackeds {
      * @param object the mapbacked object from which to retrieve the internal map
      * @return the internal map of the object
      * @throws IllegalArgumentException if the given object is not a mapbacked object
+     * @throws NullPointerException if the given object is {@code null}
      */
     public static Map<String, Object> mapOf(Object object) {
+        requireNonNull(object, "object must not be null");
         Optional<MapbackedObject> handler = handlerFrom(object);
         if (handler.isPresent()) {
             return handler.get().fieldValues();
@@ -164,21 +131,11 @@ public final class Mapbackeds {
 
         private final Class<M> backedInterface;
         private final Set<Method> fieldMethods;
-        private final Map<String, Object> mapBuilder;
+        private final Map<String, Object> mapBuilder = new HashMap<>();
 
-        /**
-         * Keeps track of the fields which were already set by {@link #field(Function, Object)} calls on this builder.
-         * The reason to not use the keys of the map is, that we might ahv initialized the map with something and still
-         * want to allow to chenge the field once.
-         */
-        private final Set<String> fieldsAlreadySet = new HashSet<>();
-
-        private Builder(Class<M> backedInterface, Map<String, Object> initialFieldValues) {
+        private Builder(Class<M> backedInterface) {
             this.backedInterface = requireInterface(backedInterface);
             this.fieldMethods = fieldMethods(backedInterface);
-
-            requireNonNull(initialFieldValues, "initialFieldValues must not be null");
-            this.mapBuilder = new HashMap<>(filterFor(initialFieldValues, namesOf(fieldMethods)));
         }
 
         private static Set<String> namesOf(Set<Method> methods) {
@@ -190,16 +147,41 @@ public final class Mapbackeds {
                     .collect(toMap(e -> e.getKey(), e -> e.getValue()));
         }
 
+        /**
+         * Adds the field values from the given object to the mapbacked object under creation. This passed in object is
+         * assumed to be a mapbacked object itself.
+         *
+         * @param additionFieldValueSource the object from which to take the field values to add to the object under
+         *            construction
+         */
+        public Builder<M> from(Object additionFieldValueSource) {
+            return from(mapOf(additionFieldValueSource));
+        }
+
+        /**
+         * Adds the field values from the given map to the mapbacked object under creation. The passed in map
+         * can be bigger than the field actual fields of the object. Unknown fields will simply be ignored.
+         * <p>
+         * NOTE: Currently, there is no upfront check of the types of the values within the map. So if the map contains
+         * incompatible values with the interface, a call to the corresponding interface methods will fail (which might
+         * be much later!)
+         *
+         * @param additionalFieldValues the field values to be added
+         * @throws NullPointerException if the passed in mapp is {@code null}
+         * @return this builder
+         */
+        public Builder<M> from(Map<String, Object> additionalFieldValues) {
+            requireNonNull(additionalFieldValues, "additionalFieldValues must not be null.");
+            this.mapBuilder.putAll(filterFor(additionalFieldValues, namesOf(fieldMethods)));
+            return this;
+        }
+
         public <T> Builder<M> field(Function<M, T> fieldAccess, T value) {
             requireNonNull(fieldAccess, "fieldAccess must not be null");
             requireNonNull(value, "value must not be null");
 
             String key = fieldName(fieldAccess);
-            if (fieldsAlreadySet.contains(key)) {
-                throw new IllegalStateException("Value for field '" + key + "' was alread set once!");
-            }
             mapBuilder.put(key, value);
-            fieldsAlreadySet.add(key);
 
             return this;
         }

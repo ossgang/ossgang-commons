@@ -7,6 +7,7 @@ import static org.ossgang.commons.mapbackeds.Mapbackeds.mapOf;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.ossgang.commons.mapbackeds.Mapbackeds.Builder;
 
 public class MapbackedPrefilledTest {
 
@@ -27,7 +28,7 @@ public class MapbackedPrefilledTest {
 
     @Test
     public void overWritingOfFieldWorks() {
-        AnInterface second = Mapbackeds.builder(AnInterface.class, first)//
+        AnInterface second = Mapbackeds.builder(AnInterface.class).from(first)//
                 .field(AnInterface::intValue, 7)//
                 .build();
 
@@ -41,16 +42,19 @@ public class MapbackedPrefilledTest {
         assertThat(first.stringValue()).isEqualTo(ORIGINAL_STRING);
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void overwritingTwiceFails() {
-        Mapbackeds.builder(AnInterface.class, first)//
+    @Test
+    public void overwritingTwiceWorks() {
+        AnInterface second = Mapbackeds.builder(AnInterface.class).from(first)//
                 .field(AnInterface::intValue, 7)//
-                .field(AnInterface::intValue, 8);
+                .field(AnInterface::intValue, 8).build();
+
+        /* last one counts */
+        assertThat(second.intValue()).isEqualTo(8);
     }
 
     @Test
     public void initializingSmallerInterfaceWorks() {
-        AnotherInterface second = builder(AnotherInterface.class, first).build();
+        AnotherInterface second = builder(AnotherInterface.class).from(first).build();
 
         assertThat(second.intValue()).isEqualTo(ORIGINAL_INT);
         assertThat(second.integerValue()).isEqualTo(ORIGINAL_INTEGER);
@@ -60,7 +64,7 @@ public class MapbackedPrefilledTest {
 
     @Test
     public void initializingOverlappingInterfaceWorks() {
-        ThirdInterface second = builder(ThirdInterface.class, first).build();
+        ThirdInterface second = builder(ThirdInterface.class).from(first).build();
 
         assertThat(second.intValue()).isEqualTo(ORIGINAL_INT);
         assertThat(second.integerValue()).isEqualTo(ORIGINAL_INTEGER);
@@ -69,13 +73,13 @@ public class MapbackedPrefilledTest {
 
     @Test
     public void mismapedInterfaceBuilds() {
-        builder(MismatchedInterface.class, first).build();
+        builder(MismatchedInterface.class).from(first).build();
     }
 
     @Test(expected = ClassCastException.class)
     public void mismapedInterfaceThrowsOnGet() {
         /* This is still annoying and should be fixed at some point (throw already at build time) */
-        MismatchedInterface second = builder(MismatchedInterface.class, first).build();
+        MismatchedInterface second = builder(MismatchedInterface.class).from(first).build();
         second.stringValue();
     }
 
