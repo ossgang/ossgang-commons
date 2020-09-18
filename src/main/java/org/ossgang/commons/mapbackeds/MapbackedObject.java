@@ -43,8 +43,11 @@ class MapbackedObject implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if (method.isDefault()) {
-            if (System.getProperty("java.version").compareTo("9") < 0) {
-                /* Unfortunately, this hack has to be used for java 8 */
+            if (MapbackedInternals.isJava8OrLess()) {
+                /*
+                 * Unfortunately, this hack has to be used for java 8 --- and it even doesn not support propert
+                 * polymorphism
+                 */
                 Constructor<Lookup> constructor = Lookup.class.getDeclaredConstructor(Class.class);
                 constructor.setAccessible(true);
                 return constructor.newInstance(intfc).in(intfc).unreflectSpecial(method, intfc).bindTo(proxy)

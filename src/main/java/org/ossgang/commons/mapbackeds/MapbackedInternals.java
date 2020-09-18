@@ -49,12 +49,19 @@ final class MapbackedInternals {
                 .collect(Collectors.toSet());
     }
 
-    public static <C> Class<C> requireInterface(Class<C> intfc) {
+    static <C> Class<C> requireInterface(Class<C> intfc) {
         requireNonNull(intfc, "interface must not be null");
         if (!intfc.isInterface()) {
             throw new IllegalArgumentException("Given class '" + intfc + "'is not an interface!");
         }
         return intfc;
+    }
+
+    static boolean isJava8OrLess() {
+        String versionString = System.getProperty("java.version");
+        String[] parts = versionString.split("\\.");
+        int mainVersion = Integer.parseInt(parts[0]);
+        return (mainVersion < 9);
     }
 
 }
