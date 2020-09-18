@@ -25,6 +25,18 @@ public class CustomToStringTest {
         Mapbackeds.builder(MoreThanOneToString.class).build();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void subToStringWithSameNameAndSignatureIsDetectedAsTwoMethods() {
+        Mapbackeds.builder(SubInterfaceWithDefaultToStringOnSameMethod.class).build();
+    }
+
+    @Test
+    public void overriddenSubToStringMethodWorks() {
+        SubInterfaceWithOverriddenToString object = Mapbackeds.builder(SubInterfaceWithOverriddenToString.class)
+                .build();
+        assertThat(object.toString()).isEqualTo("sub");
+    }
+
     private interface AnInterface {
 
         @ToString
@@ -36,5 +48,29 @@ public class CustomToStringTest {
         @ToString
         String name();
 
+    }
+
+    private interface InterfaceWithDefaultToString {
+
+        @ToString
+        default String name() {
+            return "super";
+        }
+    }
+
+    private interface SubInterfaceWithDefaultToStringOnSameMethod extends InterfaceWithDefaultToString {
+        @Override
+        @ToString
+        default String name() {
+            return "sub";
+        }
+    }
+
+    private interface SubInterfaceWithOverriddenToString extends InterfaceWithDefaultToString {
+        @Override
+        /* Do NOT put the @ToString here, as it is already on the super method. */
+        default String name() {
+            return "sub";
+        }
     }
 }
