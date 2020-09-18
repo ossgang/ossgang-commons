@@ -1,9 +1,12 @@
 package org.ossgang.commons.mapbackeds;
 
 import static java.util.Objects.requireNonNull;
+import static org.ossgang.commons.mapbackeds.MapbackedInternals.toStringMethod;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -28,15 +31,28 @@ class MapbackedObject implements InvocationHandler {
     private final Map<String, Object> fieldValues;
     private final Set<Method> fieldMethods;
 
+    private final Method toStringMethod;
+
     MapbackedObject(Class<?> intfc, Map<String, Object> fieldValues) {
         this.intfc = requireNonNull(intfc, "interface must not be null");
         this.fieldValues = new HashMap<>(fieldValues);
         fieldMethods = Mapbackeds.fieldMethods(intfc);
+        toStringMethod = toStringMethod(intfc).orElse(null);
     }
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if (method.isDefault()) {
+            if (MapbackedInternals.isJava8OrLess()) {
+                /*
+                 * Unfortunately, this hack has to be used for java 8 --- and it even doesn not support propert
+                 * polymorphism
+                 */
+                Constructor<Lookup> constructor = Lookup.class.getDeclaredConstructor(Class.class);
+                constructor.setAccessible(true);
+                return constructor.newInstance(intfc).in(intfc).unreflectSpecial(method, intfc).bindTo(proxy)
+                        .invokeWithArguments(args);
+            }
             return MethodHandles.lookup()
                     .findSpecial(intfc, method.getName(),
                             MethodType.methodType(method.getReturnType(), method.getParameterTypes()), intfc)
@@ -46,6 +62,9 @@ class MapbackedObject implements InvocationHandler {
             return resolveOnMap(method);
         }
         if ("toString".equals(method.getName()) && (args == null)) {
+            if (toStringMethod != null) {
+                return Objects.toString(invoke(proxy, toStringMethod, args));
+            }
             return toString();
         }
         if ("hashCode".equals(method.getName()) && (args == null)) {

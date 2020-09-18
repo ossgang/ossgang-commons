@@ -1,19 +1,20 @@
 package org.ossgang.commons.mapbackeds;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
+import static org.ossgang.commons.mapbackeds.MapbackedInternals.requireInterface;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * This class provides static methods for working with Mapbacked objects. Mapbacked objects are intended to be used e.g.
@@ -86,8 +87,10 @@ public final class Mapbackeds {
      * @param object the mapbacked object from which to retrieve the internal map
      * @return the internal map of the object
      * @throws IllegalArgumentException if the given object is not a mapbacked object
+     * @throws NullPointerException if the given object is {@code null}
      */
     public static Map<String, Object> mapOf(Object object) {
+        requireNonNull(object, "object must not be null");
         Optional<MapbackedObject> handler = handlerFrom(object);
         if (handler.isPresent()) {
             return handler.get().fieldValues();
@@ -118,6 +121,12 @@ public final class Mapbackeds {
         return Optional.of((MapbackedObject) handler);
     }
 
+    /**
+     * The builder for a mapbacked object.
+     * <p>
+     * </p>
+     * This Class it NOT Thread safe!
+     */
     public static class Builder<M> {
 
         private final Class<M> backedInterface;
@@ -129,20 +138,79 @@ public final class Mapbackeds {
             this.fieldMethods = fieldMethods(backedInterface);
         }
 
+        private static Set<String> namesOf(Set<Method> methods) {
+            return methods.stream().map(Method::getName).collect(toSet());
+        }
+
+        private static Map<String, Object> filterFor(Map<String, Object> initialFieldValues, Set<String> methodNames) {
+            return initialFieldValues.entrySet().stream().filter(e -> methodNames.contains(e.getKey()))
+                    .collect(toMap(e -> e.getKey(), e -> e.getValue()));
+        }
+
+        /**
+         * Adds the field values from the given object to the mapbacked object under creation. This passed in object is
+         * assumed to be a mapbacked object itself.
+         *
+         * @param additionFieldValueSource the object from which to take the field values to add to the object under
+         *            construction
+         */
+        public Builder<M> from(Object additionFieldValueSource) {
+            return from(mapOf(additionFieldValueSource));
+        }
+
+        /**
+         * Adds the field values from the given map to the mapbacked object under creation. The passed in map
+         * can be bigger than the field actual fields of the object. Unknown fields will simply be ignored.
+         * <p>
+         * NOTE: Currently, there is no upfront check of the types of the values within the map. So if the map contains
+         * incompatible values with the interface, a call to the corresponding interface methods will fail (which might
+         * be much later!)
+         *
+         * @param additionalFieldValues the field values to be added
+         * @throws NullPointerException if the passed in mapp is {@code null}
+         * @return this builder
+         */
+        public Builder<M> from(Map<String, Object> additionalFieldValues) {
+            requireNonNull(additionalFieldValues, "additionalFieldValues must not be null.");
+            this.mapBuilder.putAll(filterFor(additionalFieldValues, namesOf(fieldMethods)));
+            return this;
+        }
+
         public <T> Builder<M> field(Function<M, T> fieldAccess, T value) {
             requireNonNull(fieldAccess, "fieldAccess must not be null");
             requireNonNull(value, "value must not be null");
 
+            String key = fieldName(fieldAccess);
+            mapBuilder.put(key, value);
+
+            return this;
+        }
+
+        public <T> Builder<M> element(Function<M, List<T>> listAccess, int index, T element) {
+            requireNonNull(listAccess, "fieldAccess must not be null");
+            requireNonNull(element, "element must not be null");
+
+            String key = fieldName(listAccess);
+            if (!mapBuilder.containsKey(key)) {
+                throw new IllegalStateException(
+                        "Value for list field '" + key + "' not set! Set it before changing any element!");
+            }
+
+            List<T> oldList = (List<T>) mapBuilder.get(key);
+            List<T> newList = new ArrayList<>(oldList);
+            newList.set(index, element);
+
+            mapBuilder.put(key, newList);
+
+            return this;
+        }
+
+        private <T> String fieldName(Function<M, T> fieldAccess) {
             MethodCapture capture = new MethodCapture(fieldMethods);
             M proxy = proxy(backedInterface, capture);
             fieldAccess.apply(proxy);
             String key = capture.singleCapturedMethod().getName();
-            if (mapBuilder.containsKey(key)) {
-                throw new IllegalArgumentException("Already a value for method '" + key + "' available!");
-            }
-            mapBuilder.put(key, value);
-
-            return this;
+            return key;
         }
 
         public M build() {
@@ -157,35 +225,13 @@ public final class Mapbackeds {
     }
 
     public static Set<Method> fieldMethods(Class<?> intfc) {
-        requireInterface(intfc);
-        Set<Method> fields = fieldsFrom(intfc);
-        Class<?>[] superinterfaces = intfc.getInterfaces();
-        for (Class<?> supi : superinterfaces) {
-            fields.addAll(fieldMethods(supi));
-        }
-        return fields;
-    }
-
-    private static Set<Method> fieldsFrom(Class<?> intfc) {
-        return Arrays.stream(intfc.getDeclaredMethods()) //
-                .filter(m -> m.getParameterCount() == 0) //
-                .filter(m -> !m.isDefault()) //
-                .collect(Collectors.toSet());
-    }
-
-    public static <C extends Class<?>> C requireInterface(C intfc) {
-        requireNonNull(intfc, "interface must not be null");
-        if (!intfc.isInterface()) {
-            throw new IllegalArgumentException("Given class '" + intfc + "'is not an interface!");
-        }
-        return intfc;
+        return MapbackedInternals.fieldMethods(intfc);
     }
 
     private final static class MethodCapture implements InvocationHandler {
 
         private static final Map<Class<?>, Object> RETURN_VALUES = new HashMap<>();
 
-        // load
         static {
             RETURN_VALUES.put(boolean.class, Boolean.FALSE);
             RETURN_VALUES.put(byte.class, (byte) 0);
