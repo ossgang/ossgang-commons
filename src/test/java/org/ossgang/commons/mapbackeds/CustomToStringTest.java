@@ -58,7 +58,7 @@ public class CustomToStringTest {
         }
     }
 
-    private interface SubInterfaceWithDefaultToStringOnSameMethod extends InterfaceWithDefaultToString {
+    public interface SubInterfaceWithDefaultToStringOnSameMethod extends InterfaceWithDefaultToString {
         @Override
         @ToString
         default String name() {
@@ -66,7 +66,7 @@ public class CustomToStringTest {
         }
     }
 
-    private interface SubInterfaceWithOverriddenToString extends InterfaceWithDefaultToString {
+    public interface SubInterfaceWithOverriddenToString extends InterfaceWithDefaultToString {
         @Override
         /* Do NOT put the @ToString here, as it is already on the super method. */
         default String name() {
