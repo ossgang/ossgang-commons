@@ -5,6 +5,8 @@ import static org.ossgang.commons.mapbackeds.MapbackedInternals.toStringMethod;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -41,6 +43,13 @@ class MapbackedObject implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if (method.isDefault()) {
+            if (System.getProperty("java.version").compareTo("9") < 0) {
+                /* Unfortunately, this hack has to be used for java 8 */
+                Constructor<Lookup> constructor = Lookup.class.getDeclaredConstructor(Class.class);
+                constructor.setAccessible(true);
+                return constructor.newInstance(intfc).in(intfc).unreflectSpecial(method, intfc).bindTo(proxy)
+                        .invokeWithArguments(args);
+            }
             return MethodHandles.lookup()
                     .findSpecial(intfc, method.getName(),
                             MethodType.methodType(method.getReturnType(), method.getParameterTypes()), intfc)
