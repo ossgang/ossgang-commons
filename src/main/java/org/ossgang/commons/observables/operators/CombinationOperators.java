@@ -33,15 +33,21 @@ import static org.ossgang.commons.observables.operators.DerivedObservableValue.d
 import static org.ossgang.commons.observables.operators.OperatorUtils.fromIndexMap;
 import static org.ossgang.commons.observables.operators.OperatorUtils.toIndexMap;
 
-public final class CombineLatestOperators {
+public final class CombinationOperators {
+
+    /**
+     * @see org.ossgang.commons.observables.Observables#merge(Collection)
+     */
+    public static <O, I extends O> ObservableValue<O> merge(Collection<? extends Observable<I>> sources) {
+        return derive(toIndexMap(new ArrayList<>(sources)), (k, v) -> Optional.of(v));
+    }
 
     /**
      * @see org.ossgang.commons.observables.Observables#combineLatestObjects(Map, Function)
      */
     public static <K, O> ObservableValue<O> combineLatestObjects(Map<K, ? extends Observable<?>> sourcesMap,
-                                                                 Function<Map<K, Object>, O> combiner) {
-        @SuppressWarnings("unchecked") /* safe, ordering for latest cast is manually ensured */
-        Map<K, Observable<Object>> sourcesMapObject = (Map<K, Observable<Object>>) sourcesMap;
+            Function<Map<K, Object>, O> combiner) {
+        @SuppressWarnings("unchecked") /* safe, ordering for latest cast is manually ensured */ Map<K, Observable<Object>> sourcesMapObject = (Map<K, Observable<Object>>) sourcesMap;
         Map<K, Object> valueMap = new HashMap<>();
         Set<K> keys = new HashSet<>(sourcesMapObject.keySet());
         return derive(sourcesMapObject, (k, v) -> {
@@ -59,7 +65,7 @@ public final class CombineLatestOperators {
      * @see org.ossgang.commons.observables.Observables#combineLatestObjects(List, Function)
      */
     public static <O> ObservableValue<O> combineLatestObjects(List<? extends Observable<?>> sources,
-                                                              Function<List<Object>, O> combiner) {
+            Function<List<Object>, O> combiner) {
         return combineLatestObjects(toIndexMap(sources), idxMap -> combiner.apply(fromIndexMap(idxMap)));
     }
 
@@ -81,7 +87,7 @@ public final class CombineLatestOperators {
      * @see org.ossgang.commons.observables.Observables#combineLatest(Map, Function)
      */
     public static <K, I, O> ObservableValue<O> combineLatest(Map<K, ? extends Observable<I>> sourcesMap,
-                                                             Function<Map<K, I>, O> combiner) {
+            Function<Map<K, I>, O> combiner) {
         Function<Map<K, Object>, Map<K, I>> typedTranslator = OperatorUtils::typeTranslator;
         return combineLatestObjects(sourcesMap, typedTranslator.andThen(combiner));
     }
@@ -90,9 +96,10 @@ public final class CombineLatestOperators {
      * @see org.ossgang.commons.observables.Observables#combineLatest(List, Function)
      */
     public static <I, O> ObservableValue<O> combineLatest(List<? extends Observable<I>> sources,
-                                                          Function<List<I>, O> combiner) {
+            Function<List<I>, O> combiner) {
         Function<List<Object>, List<I>> typedTranslator = OperatorUtils::typeTranslator;
-        return combineLatestObjects(toIndexMap(sources), idxMap -> typedTranslator.andThen(combiner).apply(fromIndexMap(idxMap)));
+        return combineLatestObjects(toIndexMap(sources),
+                idxMap -> typedTranslator.andThen(combiner).apply(fromIndexMap(idxMap)));
     }
 
     /**
@@ -114,7 +121,7 @@ public final class CombineLatestOperators {
      */
     @SuppressWarnings("unchecked")
     public static <I1, I2, O> ObservableValue<O> combineLatest(Observable<I1> source1, Observable<I2> source2,
-                                                               BiFunction<I1, I2, O> combiner) {
+            BiFunction<I1, I2, O> combiner) {
         List<Observable<?>> sourcesListObject = Arrays.asList(source1, source2);
         Function<List<Object>, O> combinerObject = values -> {
             I1 sourceValue1 = (I1) values.get(0);
@@ -129,8 +136,7 @@ public final class CombineLatestOperators {
      */
     @SuppressWarnings("unchecked")
     public static <I1, I2, I3, O> ObservableValue<O> combineLatest(Observable<I1> source1, Observable<I2> source2,
-                                                                   Observable<I3> source3,
-                                                                   Function3<I1, I2, I3, O> combiner) {
+            Observable<I3> source3, Function3<I1, I2, I3, O> combiner) {
         List<Observable<?>> sourcesListObject = Arrays.asList(source1, source2, source3);
         Function<List<Object>, O> combinerObject = values -> {
             I1 sourceValue1 = (I1) values.get(0);
@@ -146,8 +152,7 @@ public final class CombineLatestOperators {
      */
     @SuppressWarnings("unchecked")
     public static <I1, I2, I3, I4, O> ObservableValue<O> combineLatest(Observable<I1> source1, Observable<I2> source2,
-                                                                       Observable<I3> source3, Observable<I4> source4,
-                                                                       Function4<I1, I2, I3, I4, O> combiner) {
+            Observable<I3> source3, Observable<I4> source4, Function4<I1, I2, I3, I4, O> combiner) {
         List<Observable<?>> sourcesListObject = Arrays.asList(source1, source2, source3, source4);
         Function<List<Object>, O> combinerObject = values -> {
             I1 sourceValue1 = (I1) values.get(0);
@@ -163,10 +168,9 @@ public final class CombineLatestOperators {
      * @see org.ossgang.commons.observables.Observables#combineLatest(Observable, Observable, Observable, Observable, Observable, Function5)
      */
     @SuppressWarnings("unchecked")
-    public static <I1, I2, I3, I4, I5, O> ObservableValue<O> combineLatest(Observable<I1> source1, Observable<I2> source2,
-                                                                           Observable<I3> source3, Observable<I4> source4,
-                                                                           Observable<I5> source5,
-                                                                           Function5<I1, I2, I3, I4, I5, O> combiner) {
+    public static <I1, I2, I3, I4, I5, O> ObservableValue<O> combineLatest(Observable<I1> source1,
+            Observable<I2> source2, Observable<I3> source3, Observable<I4> source4, Observable<I5> source5,
+            Function5<I1, I2, I3, I4, I5, O> combiner) {
         List<Observable<?>> sourcesListObject = Arrays.asList(source1, source2, source3, source4, source5);
         Function<List<Object>, O> combinerObject = values -> {
             I1 sourceValue1 = (I1) values.get(0);
@@ -179,7 +183,7 @@ public final class CombineLatestOperators {
         return combineLatestObjects(sourcesListObject, combinerObject);
     }
 
-    private CombineLatestOperators() {
+    private CombinationOperators() {
         throw new UnsupportedOperationException("static only");
     }
 }

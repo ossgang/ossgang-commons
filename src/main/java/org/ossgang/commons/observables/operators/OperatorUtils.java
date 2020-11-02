@@ -21,16 +21,20 @@ package org.ossgang.commons.observables.operators;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 final class OperatorUtils {
 
     public static <V> Map<Integer, V> toIndexMap(List<V> list) {
-        return IntStream.range(0, list.size()).boxed().collect(toMap(Function.identity(), list::get));
+        return IntStream.range(0, list.size()).boxed() //
+                .collect(toMap(identity(), list::get, throwingMerger(), TreeMap::new));
     }
 
     public static <V> List<V> fromIndexMap(Map<Integer, V> map) {
@@ -51,5 +55,11 @@ final class OperatorUtils {
 
     private OperatorUtils() {
         throw new UnsupportedOperationException("static only");
+    }
+
+    private static <T> BinaryOperator<T> throwingMerger() {
+        return (u, v) -> {
+            throw new IllegalStateException(String.format("Duplicate key %s", u));
+        };
     }
 }

@@ -19,21 +19,32 @@
 
 package org.ossgang.commons.observables;
 
-import org.ossgang.commons.monads.*;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import org.ossgang.commons.monads.Consumer3;
+import org.ossgang.commons.monads.Consumer4;
+import org.ossgang.commons.monads.Consumer5;
+import org.ossgang.commons.monads.Function3;
+import org.ossgang.commons.monads.Function4;
+import org.ossgang.commons.monads.Function5;
 import org.ossgang.commons.observables.exceptions.UnhandledException;
 import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
-import org.ossgang.commons.observables.operators.CombineLatestOperators;
+import org.ossgang.commons.observables.operators.CombinationOperators;
 import org.ossgang.commons.observables.operators.Operators;
 import org.ossgang.commons.observables.operators.SubscribeValuesOperators;
 import org.ossgang.commons.observables.operators.connectors.ConnectorObservableValue;
 import org.ossgang.commons.observables.operators.connectors.ConnectorObservables;
 import org.ossgang.commons.observables.operators.connectors.DynamicConnectorObservableValue;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.function.*;
 
 /**
  * Static support class for dealing with {@link Observable} and {@link ObservableValue}.
@@ -232,7 +243,7 @@ public final class Observables {
      */
     public static <K, I, O> ObservableValue<O> combineLatest(Map<K, ? extends Observable<I>> sourcesMap,
                                                              Function<Map<K, I>, O> combiner) {
-        return CombineLatestOperators.combineLatest(sourcesMap, combiner);
+        return CombinationOperators.combineLatest(sourcesMap, combiner);
     }
 
     /**
@@ -250,7 +261,7 @@ public final class Observables {
      */
     public static <I, O> ObservableValue<O> combineLatest(List<? extends Observable<I>> sources,
                                                           Function<List<I>, O> combiner) {
-        return CombineLatestOperators.combineLatest(sources, combiner);
+        return CombinationOperators.combineLatest(sources, combiner);
     }
 
     /**
@@ -264,7 +275,7 @@ public final class Observables {
      * {@link Map} with the values of each corresponding source {@link Observable}.
      */
     public static <K, I> ObservableValue<Map<K, I>> combineLatest(Map<K, ? extends Observable<I>> sourcesMap) {
-        return CombineLatestOperators.combineLatest(sourcesMap);
+        return CombinationOperators.combineLatest(sourcesMap);
     }
 
     /**
@@ -277,7 +288,7 @@ public final class Observables {
      * a {@link List} containing the values of each {@link Observable}
      */
     public static <I> ObservableValue<List<I>> combineLatest(List<? extends Observable<I>> sources) {
-        return CombineLatestOperators.combineLatest(sources);
+        return CombinationOperators.combineLatest(sources);
     }
 
     /**
@@ -296,7 +307,7 @@ public final class Observables {
      */
     public static <K, O> ObservableValue<O> combineLatestObjects(Map<K, ? extends Observable<?>> sourcesMap,
                                                                  Function<Map<K, Object>, O> combiner) {
-        return CombineLatestOperators.combineLatestObjects(sourcesMap, combiner);
+        return CombinationOperators.combineLatestObjects(sourcesMap, combiner);
     }
 
     /**
@@ -315,7 +326,7 @@ public final class Observables {
      */
     public static <O> ObservableValue<O> combineLatestObjects(List<? extends Observable<?>> sources,
                                                               Function<List<Object>, O> combiner) {
-        return CombineLatestOperators.combineLatestObjects(sources, combiner);
+        return CombinationOperators.combineLatestObjects(sources, combiner);
     }
 
     /**
@@ -330,7 +341,7 @@ public final class Observables {
      * {@link Map} with the values of each corresponding source {@link Observable}.
      */
     public static <K> ObservableValue<Map<K, Object>> combineLatestObjects(Map<K, ? extends Observable<?>> sourcesMap) {
-        return CombineLatestOperators.combineLatestObjects(sourcesMap);
+        return CombinationOperators.combineLatestObjects(sourcesMap);
     }
 
     /**
@@ -344,7 +355,7 @@ public final class Observables {
      * a {@link List} containing the values of each {@link Observable}
      */
     public static ObservableValue<List<Object>> combineLatestObjects(List<? extends Observable<?>> sources) {
-        return CombineLatestOperators.combineLatestObjects(sources);
+        return CombinationOperators.combineLatestObjects(sources);
     }
 
     /**
@@ -362,7 +373,7 @@ public final class Observables {
      */
     public static <I1, I2, O> ObservableValue<O> combineLatest(Observable<I1> source1, Observable<I2> source2,
                                                                BiFunction<I1, I2, O> combiner) {
-        return CombineLatestOperators.combineLatest(source1, source2, combiner);
+        return CombinationOperators.combineLatest(source1, source2, combiner);
     }
 
     /**
@@ -383,7 +394,7 @@ public final class Observables {
     public static <I1, I2, I3, O> ObservableValue<O> combineLatest(Observable<I1> source1, Observable<I2> source2,
                                                                    Observable<I3> source3,
                                                                    Function3<I1, I2, I3, O> combiner) {
-        return CombineLatestOperators.combineLatest(source1, source2, source3, combiner);
+        return CombinationOperators.combineLatest(source1, source2, source3, combiner);
     }
 
     /**
@@ -406,7 +417,7 @@ public final class Observables {
     public static <I1, I2, I3, I4, O> ObservableValue<O> combineLatest(Observable<I1> source1, Observable<I2> source2,
                                                                        Observable<I3> source3, Observable<I4> source4,
                                                                        Function4<I1, I2, I3, I4, O> combiner) {
-        return CombineLatestOperators.combineLatest(source1, source2, source3, source4, combiner);
+        return CombinationOperators.combineLatest(source1, source2, source3, source4, combiner);
     }
 
     /**
@@ -432,7 +443,30 @@ public final class Observables {
                                                                            Observable<I3> source3, Observable<I4> source4,
                                                                            Observable<I5> source5,
                                                                            Function5<I1, I2, I3, I4, I5, O> combiner) {
-        return CombineLatestOperators.combineLatest(source1, source2, source3, source4, source5, combiner);
+        return CombinationOperators.combineLatest(source1, source2, source3, source4, source5, combiner);
+    }
+
+    /**
+     * Produces an {@link ObservableValue} that emits any update of any source {@link Observable}.
+     *
+     * @param sources the source observables
+     * @param <O>     the output type
+     * @return the merged observable
+     */
+    public static <O, I extends O> ObservableValue<O> merge(Collection<? extends Observable<I>> sources) {
+        return CombinationOperators.merge(sources);
+    }
+
+    /**
+     * Produces an {@link ObservableValue} that emits any update of any source {@link Observable}.
+     *
+     * @param sources the source observables
+     * @param <O>     the output type
+     * @return the merged observable
+     */
+    @SafeVarargs
+    public static <O, I extends O> ObservableValue<O> merge(Observable<I>... sources) {
+        return CombinationOperators.merge(Arrays.asList(sources));
     }
 
     /**
