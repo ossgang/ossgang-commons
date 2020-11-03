@@ -19,32 +19,25 @@
 
 package org.ossgang.commons.observables;
 
+import org.ossgang.commons.monads.*;
+import org.ossgang.commons.observables.exceptions.UnhandledException;
+import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
+import org.ossgang.commons.observables.operators.CombinationOperators;
+import org.ossgang.commons.observables.operators.DebouncedObservableValue;
+import org.ossgang.commons.observables.operators.Operators;
+import org.ossgang.commons.observables.operators.SubscribeValuesOperators;
+import org.ossgang.commons.observables.operators.connectors.ConnectorObservableValue;
+import org.ossgang.commons.observables.operators.connectors.ConnectorObservables;
+import org.ossgang.commons.observables.operators.connectors.DynamicConnectorObservableValue;
+
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import org.ossgang.commons.monads.Consumer3;
-import org.ossgang.commons.monads.Consumer4;
-import org.ossgang.commons.monads.Consumer5;
-import org.ossgang.commons.monads.Function3;
-import org.ossgang.commons.monads.Function4;
-import org.ossgang.commons.monads.Function5;
-import org.ossgang.commons.observables.exceptions.UnhandledException;
-import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
-import org.ossgang.commons.observables.operators.CombinationOperators;
-import org.ossgang.commons.observables.operators.Operators;
-import org.ossgang.commons.observables.operators.SubscribeValuesOperators;
-import org.ossgang.commons.observables.operators.connectors.ConnectorObservableValue;
-import org.ossgang.commons.observables.operators.connectors.ConnectorObservables;
-import org.ossgang.commons.observables.operators.connectors.DynamicConnectorObservableValue;
+import java.util.function.*;
 
 /**
  * Static support class for dealing with {@link Observable} and {@link ObservableValue}.
@@ -171,7 +164,7 @@ public final class Observables {
      */
     public static <K, I, O> ObservableValue<O> zip(Map<K, ? extends Observable<I>> sourcesMap,
                                                    Function<Map<K, I>, O> combiner) {
-        return Operators.zip(sourcesMap, combiner);
+        return CombinationOperators.zip(sourcesMap, combiner);
     }
 
     /**
@@ -191,7 +184,7 @@ public final class Observables {
      * {@link Function}.
      */
     public static <I, O> ObservableValue<O> zip(List<? extends Observable<I>> sources, Function<List<I>, O> combiner) {
-        return Operators.zip(sources, combiner);
+        return CombinationOperators.zip(sources, combiner);
     }
 
     /**
@@ -208,7 +201,7 @@ public final class Observables {
      * resulting {@link ObservableValue} values.
      */
     public static <K, I> ObservableValue<Map<K, I>> zip(Map<K, ? extends Observable<I>> sourcesMap) {
-        return Operators.zip(sourcesMap);
+        return CombinationOperators.zip(sourcesMap);
     }
 
     /**
@@ -225,7 +218,7 @@ public final class Observables {
      * {@link ObservableValue}.
      */
     public static <I> ObservableValue<List<I>> zip(List<? extends Observable<I>> sources) {
-        return Operators.zip(sources);
+        return CombinationOperators.zip(sources);
     }
 
     /**
@@ -562,6 +555,21 @@ public final class Observables {
                                                                     ValueCombinationPolicy combinationPolicy, SubscriptionOption... subscriptionOptions) {
         return SubscribeValuesOperators.subscribeValues(source1, source2, source3, source4, source5,
                 consumer, combinationPolicy, subscriptionOptions);
+    }
+
+    /**
+     * Creates an {@link ObservableValue} that only dispatch those items dispatched by the source {@link ObservableValue}
+     * that are not followed by another item within the specified time window.
+     * NOTE: if the source {@link ObservableValue} always dispatch items with a shorter rate then the time window, then
+     * this debounced {@link ObservableValue} will never dispatch !
+     *
+     * @param source         Observable
+     * @param debouncePeriod the time window for debouncing the dispatching of the values
+     * @param <T>            the value type
+     * @return the debounced ObservableValue
+     */
+    public static <T> ObservableValue<T> debounce(Observable<T> source, Duration debouncePeriod) {
+        return new DebouncedObservableValue<>(source, debouncePeriod);
     }
 
     /**
