@@ -22,19 +22,18 @@
 
 package org.ossgang.commons.observables;
 
-import org.ossgang.commons.monads.Maybe;
-
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.observables.SubscriptionOptions.ON_CHANGE;
+import static org.ossgang.commons.utils.Uncheckeds.uncheckedConsumer;
 
 /**
  * A basic implementation of {@link ObservableValue}, based on {@link DispatchingObservable} to handle the update
  * dispatching, and keeping track of the latest value in a thread safe way.
- *
+ * <p>
  * The value is only allowed to be null for an "uninitialized" {@link ObservableValue}. Trying to dispatch an update
  * with a null value will raise an exception.
  *
@@ -52,7 +51,7 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
         Subscription subscription = super.subscribe(listener, options);
         if (optionSet.contains(FIRST_UPDATE)) {
-            Optional.ofNullable(lastValue.get()).ifPresent(value -> Maybe.attempt(() -> dispatch(listener::onValue, value).get()));
+            Optional.ofNullable(lastValue.get()).ifPresent(uncheckedConsumer(value -> dispatch(listener::onValue, value).get()));
         }
         return subscription;
     }

@@ -9,7 +9,7 @@ package org.ossgang.commons.observables;
 public enum SubscriptionOptions implements SubscriptionOption {
     /**
      * On subscription, deliver the actual value (it it exists) as a "first update".
-     * This happens on the subscribing thread, before any other updates are delivered,
+     * This does not happen on the subscribing thread, but it is guaranteed that it is delivered before any other updates,
      * and before subscribe() returns.
      */
     FIRST_UPDATE,
