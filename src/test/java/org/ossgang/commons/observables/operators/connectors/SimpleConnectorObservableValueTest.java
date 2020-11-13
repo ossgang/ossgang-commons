@@ -8,6 +8,7 @@ import org.ossgang.commons.properties.Property;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -20,6 +21,27 @@ public class SimpleConnectorObservableValueTest {
 
     private static final String VALUE_1 = "Value 1";
     private static final String VALUE_2 = "Value 2";
+
+    @Test
+    public void testUpstreamPeriodicConnection() {
+        AtomicInteger count = new AtomicInteger();
+        List<Object> values = Arrays.asList(VALUE_1, VALUE_2);
+        Supplier<ObservableValue<Object>> upstreamFactory = () -> Observables.periodicEvery(1, TimeUnit.SECONDS).map(i -> values.get(count.getAndIncrement() % values.size()));
+        TestObserver<Object> observer = new TestObserver<>();
+
+        SimpleConnectorObservableValue<Object> connector = new SimpleConnectorObservableValue<>(upstreamFactory, null);
+        connector.subscribe(observer);
+
+        connector.connect();
+        connector.disconnect();
+        observer.awaitForValueCountToBe(1);
+
+        connector.connect();
+        connector.disconnect();
+        observer.awaitForValueCountToBe(2);
+
+        assertThat(observer.receivedValues()).containsExactlyElementsOf(values);
+    }
 
     @Test
     public void testUpstreamConnection() {

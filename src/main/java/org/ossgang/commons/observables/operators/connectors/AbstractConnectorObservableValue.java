@@ -22,10 +22,10 @@ import static org.ossgang.commons.observables.weak.WeakObservers.weakWithErrorAn
 public abstract class AbstractConnectorObservableValue<T> extends DispatchingObservableValue<T> {
 
     private final Object lock = new Object();
+    private final Property<ConnectorState> connectionState;
     private ObservableValue<T> upstreamObservable;
     private Subscription upstreamSubscription;
-    private boolean ongoingConnection = false;
-    private Property<ConnectorState> connectionState;
+    private boolean ongoingOperation = false;
 
     protected AbstractConnectorObservableValue(T initial) {
         super(initial);
@@ -41,7 +41,7 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
 
     protected void connect(ObservableValue<T> upstream) {
         synchronized (lock) {
-            ongoingConnection = true;
+            ongoingOperation = true;
             try {
                 if (connectionState.get() == CONNECTED) {
                     disconnect();
@@ -53,18 +53,23 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
                         AbstractConnectorObservableValue::subscriberCountChanged), FIRST_UPDATE);
                 connectionState.set(CONNECTED);
             } finally {
-                ongoingConnection = false;
+                ongoingOperation = false;
             }
         }
     }
 
     protected void disconnect() {
         synchronized (lock) {
-            if (connectionState.get() == CONNECTED) {
-                upstreamSubscription.unsubscribe();
-                upstreamSubscription = null;
-                upstreamObservable = null;
-                connectionState.set(DISCONNECTED);
+            ongoingOperation = true;
+            try {
+                if (connectionState.get() == CONNECTED) {
+                    upstreamSubscription.unsubscribe();
+                    upstreamSubscription = null;
+                    upstreamObservable = null;
+                    connectionState.set(DISCONNECTED);
+                }
+            } finally {
+                ongoingOperation = false;
             }
         }
     }
@@ -75,7 +80,7 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
 
     private void subscriberCountChanged(int count) {
         synchronized (lock) {
-            if (count <= 0 && !ongoingConnection) {
+            if (count <= 0 && !ongoingOperation) {
                 unsubscribeAllObservers();
             }
         }
