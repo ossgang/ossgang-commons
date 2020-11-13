@@ -5,7 +5,7 @@ import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observables;
 import org.ossgang.commons.observables.testing.TestObserver;
 
-import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.ossgang.commons.observables.operators.connectors.ConnectorState.CONNECTED;
@@ -17,9 +17,9 @@ public class SimpleDynamicConnectorObservableValueTest {
     private static final String VALUE_2 = "Value 2";
 
     @Test
-    public void testUpstreamPeriodicConnection() {
-        ObservableValue<Object> upstream1 = Observables.periodicEvery(1, TimeUnit.SECONDS).map( i -> VALUE_1);
-        ObservableValue<Object> upstream2 = Observables.periodicEvery(1, TimeUnit.SECONDS).map( i -> VALUE_2);
+    public void testUpstreamDispatchingObservableConnection() {
+        ObservableValue<Object> upstream1 = Observables.<Object>constant(VALUE_1).map(Function.identity());
+        ObservableValue<Object> upstream2 = Observables.<Object>constant(VALUE_2).map(Function.identity());
         TestObserver<Object> observer = new TestObserver<>();
 
         SimpleDynamicConnectorObservableValue<Object> connector = new SimpleDynamicConnectorObservableValue<>(null);

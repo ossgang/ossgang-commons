@@ -8,8 +8,8 @@ import org.ossgang.commons.properties.Property;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,10 +23,10 @@ public class SimpleConnectorObservableValueTest {
     private static final String VALUE_2 = "Value 2";
 
     @Test
-    public void testUpstreamPeriodicConnection() {
+    public void testUpstreamDispatchingObservableConnection() {
         AtomicInteger count = new AtomicInteger();
         List<Object> values = Arrays.asList(VALUE_1, VALUE_2);
-        Supplier<ObservableValue<Object>> upstreamFactory = () -> Observables.periodicEvery(1, TimeUnit.SECONDS).map(i -> values.get(count.getAndIncrement() % values.size()));
+        Supplier<ObservableValue<Object>> upstreamFactory = () -> Observables.constant(values.get(count.getAndIncrement() % values.size())).map(Function.identity());
         TestObserver<Object> observer = new TestObserver<>();
 
         SimpleConnectorObservableValue<Object> connector = new SimpleConnectorObservableValue<>(upstreamFactory, null);
