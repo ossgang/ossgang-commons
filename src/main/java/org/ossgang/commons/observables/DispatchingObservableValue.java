@@ -48,10 +48,11 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
     @Override
     public Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options) {
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
+        Subscription subscription = super.subscribe(listener, options);
         if (optionSet.contains(FIRST_UPDATE)) {
             Optional.ofNullable(lastValue.get()).ifPresent(listener::onValue);
         }
-        return super.subscribe(listener, options);
+        return subscription;
     }
 
     @Override

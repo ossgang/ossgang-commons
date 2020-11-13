@@ -2,6 +2,7 @@ package org.ossgang.commons.observables.testing;
 
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observer;
+import org.ossgang.commons.observables.Subscription;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -21,18 +22,37 @@ public class TestObserver<T> implements Observer<T> {
     private final Object lock = new Object();
     private final List<T> values = new ArrayList<>();
     private final List<Throwable> exceptions = new ArrayList<>();
+    private boolean subscribed = false;
 
     @Override
     public void onValue(T value) {
         synchronized (lock) {
-            values.add(value);
+            if (subscribed) {
+                values.add(value);
+            }
         }
     }
 
     @Override
     public void onException(Throwable exception) {
         synchronized (lock) {
-            exceptions.add(exception);
+            if (subscribed) {
+                exceptions.add(exception);
+            }
+        }
+    }
+
+    @Override
+    public void onSubscribe(Subscription subscription) {
+        synchronized (lock) {
+            subscribed = true;
+        }
+    }
+
+    @Override
+    public void onUnsubscribe(Subscription subscription) {
+        synchronized (lock) {
+            subscribed = false;
         }
     }
 
