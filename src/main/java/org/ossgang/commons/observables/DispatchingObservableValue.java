@@ -22,6 +22,8 @@
 
 package org.ossgang.commons.observables;
 
+import org.ossgang.commons.monads.Maybe;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -50,7 +52,7 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
         Subscription subscription = super.subscribe(listener, options);
         if (optionSet.contains(FIRST_UPDATE)) {
-            Optional.ofNullable(lastValue.get()).ifPresent(listener::onValue);
+            Optional.ofNullable(lastValue.get()).ifPresent(value -> Maybe.attempt(() -> dispatch(listener::onValue, value).get()));
         }
         return subscription;
     }
