@@ -2,6 +2,7 @@ package org.ossgang.commons.observables.testing;
 
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observer;
+import org.ossgang.commons.observables.Subscription;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -21,18 +22,48 @@ public class TestObserver<T> implements Observer<T> {
     private final Object lock = new Object();
     private final List<T> values = new ArrayList<>();
     private final List<Throwable> exceptions = new ArrayList<>();
+    private final List<ObserverEvent> observerEvents = new ArrayList<>();
+    private boolean subscribed = false;
 
     @Override
     public void onValue(T value) {
         synchronized (lock) {
-            values.add(value);
+            observerEvents.add(ObserverEvent.ON_VALUE);
+            if (subscribed) {
+                values.add(value);
+            }
         }
     }
 
     @Override
     public void onException(Throwable exception) {
         synchronized (lock) {
-            exceptions.add(exception);
+            observerEvents.add(ObserverEvent.ON_EXCEPTION);
+            if (subscribed) {
+                exceptions.add(exception);
+            }
+        }
+    }
+
+    @Override
+    public void onSubscribe(Subscription subscription) {
+        synchronized (lock) {
+            observerEvents.add(ObserverEvent.ON_SUBSCRIBE);
+            subscribed = true;
+        }
+    }
+
+    @Override
+    public void onUnsubscribe(Subscription subscription) {
+        synchronized (lock) {
+            observerEvents.add(ObserverEvent.ON_UNSUBSCRIBE);
+            subscribed = false;
+        }
+    }
+
+    public List<ObserverEvent> receivedEvents() {
+        synchronized (lock) {
+            return new ArrayList<>(observerEvents);
         }
     }
 
@@ -48,6 +79,17 @@ public class TestObserver<T> implements Observer<T> {
         }
     }
 
+    public void awaitForEventCountsToBe(int count) {
+        awaitForEventCountsToBe(count, DEFAULT_TIMEOUT);
+    }
+
+    public void awaitForEventCountsToBe(int count, Duration timeout) {
+        awaitCondition(timeout, "Expected to receive " + count + " events", () -> {
+            synchronized (lock) {
+                return observerEvents.size() >= count;
+            }
+        });
+    }
 
     public void awaitForExceptionCountToBe(int count) {
         awaitForExceptionCountToBe(count, DEFAULT_TIMEOUT);
@@ -88,4 +130,7 @@ public class TestObserver<T> implements Observer<T> {
         await(condition).withErrorMessage(errorMessage).atMost(timeout);
     }
 
+    public enum ObserverEvent {
+        ON_VALUE, ON_EXCEPTION, ON_SUBSCRIBE, ON_UNSUBSCRIBE;
+    }
 }

@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -111,8 +112,8 @@ public class DispatchingObservable<T> implements Observable<T> {
                 .forEach(l -> dispatch(l::onException, exception));
     }
 
-    private <X> void dispatch(Consumer<X> handler, X value) {
-        DISPATCHER_POOL.submit(() -> {
+    protected <X> Future<?> dispatch(Consumer<X> handler, X value) {
+        return DISPATCHER_POOL.submit(() -> {
             try {
                 handler.accept(value);
             } catch (UnhandledException e) {
