@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -281,5 +282,22 @@ public class MaybeTest {
 
         Assertions.assertThat(exception).hasMessage("Another unrelated exception").hasNoCause();
     }
+
+    @Test
+    public void mapExceptionPassesThroughAVoidMaybe() {
+        Optional<Throwable> exception = Maybe.ofVoid()
+                .mapException(e -> new RuntimeException("Never called", e))
+                .optionalException();
+        Assertions.assertThat(exception).isEmpty();
+    }
+
+    @Test
+    public void recoverPassesThroughAVoidMaybe() {
+        Optional<Throwable> exception = Maybe.ofVoid()
+                .recover(e -> null) /* Unnecessarily recovered with Void */
+                .optionalException();
+        Assertions.assertThat(exception).isEmpty();
+    }
+
 
 }

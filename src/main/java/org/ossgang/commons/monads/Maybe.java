@@ -289,7 +289,7 @@ public class Maybe<T> {
     public Maybe<T> mapException(ThrowingFunction<Throwable, Throwable> function) {
         requireNonNull(function);
         if (exception == null) {
-            return Maybe.ofValue(value);
+            return this;
         }
         return flatAttempt(() -> ofException(function.apply(exception)));
     }
@@ -370,7 +370,7 @@ public class Maybe<T> {
     public Maybe<T> recover(ThrowingFunction<Throwable, T> function) {
         requireNonNull(function);
         if (exception == null) {
-            return Maybe.ofValue(value);
+            return this;
         }
         return attempt(() -> function.apply(exception));
     }
