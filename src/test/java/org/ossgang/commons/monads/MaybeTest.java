@@ -22,6 +22,7 @@
 
 package org.ossgang.commons.monads;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -248,6 +249,37 @@ public class MaybeTest {
         Mockito.verify(exceptionConsumer, times(0)).accept(any());
         Mockito.verify(valueConsumer, times(1)).accept(any());
         Mockito.verify(successful, times(1)).run();
+    }
+
+    @Test
+    public void mapExceptionWrapsTheOriginalExceptionForResolvedMaybe() {
+        RuntimeException cause = new RuntimeException("A");
+        Throwable exception = Maybe.ofException(cause)
+                .mapException(c -> new RuntimeException("B", c))
+                .exception();
+
+        Assertions.assertThat(exception).hasMessage("B").hasCause(cause);
+    }
+
+    @Test
+    public void mapExceptionWrapsTheOriginalExceptionForAttemptedMaybe() {
+        RuntimeException cause = new RuntimeException("A");
+        Throwable exception = Maybe.attempt(() -> {
+            throw cause;
+        }).mapException(c -> new RuntimeException("B", c)).exception();
+
+        Assertions.assertThat(exception).hasMessage("B").hasCause(cause);
+    }
+
+    @Test
+    public void mapExceptionCatchesAThrownException() {
+        Throwable exception = Maybe.attempt(() -> {
+            throw new RuntimeException("A");
+        }).mapException(c -> {
+            throw new RuntimeException("Another unrelated exception");
+        }).exception();
+
+        Assertions.assertThat(exception).hasMessage("Another unrelated exception").hasNoCause();
     }
 
 }
