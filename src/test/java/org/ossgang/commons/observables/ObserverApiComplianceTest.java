@@ -28,11 +28,14 @@ public class ObserverApiComplianceTest {
         };
         TestObserver<Object> observer = new TestObserver<>();
         dispatchingObservable.subscribe(observer, FIRST_UPDATE);
+        observer.awaitForEventCountsToBe(1);
         dispatchingObservable.dispatchValue("Value1");
+        observer.awaitForEventCountsToBe(2);
         dispatchingObservable.dispatchException(new RuntimeException("Exception"));
+        observer.awaitForEventCountsToBe(3);
         dispatchingObservable.dispatchValue("Value2");
-
         observer.awaitForEventCountsToBe(4);
+
         Assertions.assertThat(observer.receivedEvents()).containsExactly(ON_SUBSCRIBE, ON_VALUE, ON_EXCEPTION, ON_VALUE);
     }
 

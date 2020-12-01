@@ -279,6 +279,22 @@ public class Maybe<T> {
     }
 
     /**
+     * Apply a transformation function if this {@link Maybe} is in a "unsuccessful" state. Pass through the value in
+     * case it is in an "successful" state. If the transformation function throws, the exception is returned wrapped
+     * in an "unsuccessful" Maybe.
+     *
+     * @param function the function to apply
+     * @return An unsuccessful Maybe the new exception if the transformation succeeds. An unsuccessful Maybe otherwise.
+     */
+    public Maybe<T> mapException(ThrowingFunction<Throwable, Throwable> function) {
+        requireNonNull(function);
+        if (exception == null) {
+            return this;
+        }
+        return flatAttempt(() -> ofException(function.apply(exception)));
+    }
+
+    /**
      * Apply a transformation function if this {@link Maybe} is in a "successful" state. Pass through the exception in
      * case it is in an "unsuccessful" state. The transformation function should return a {@link Maybe}, which will be
      * returned. If the transformation function throws, the exception is returned wrapped in an "unsuccessful" Maybe.
@@ -354,7 +370,7 @@ public class Maybe<T> {
     public Maybe<T> recover(ThrowingFunction<Throwable, T> function) {
         requireNonNull(function);
         if (exception == null) {
-            return Maybe.ofValue(value);
+            return this;
         }
         return attempt(() -> function.apply(exception));
     }

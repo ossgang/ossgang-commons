@@ -246,6 +246,33 @@ public class AsyncMaybeTest {
     }
 
     @Test
+    public void whenSuccessfulIsCalledWithResolvedAsyncMaybe() {
+        CompletableFuture<String> result = new CompletableFuture<>();
+        AsyncMaybe.ofValue(new Object()).whenSuccessful(() -> result.complete("Success"));
+        assertThat(result.join()).isEqualTo("Success");
+    }
+
+    @Test
+    public void whenSuccessfulIsCalledAfterAsyncExecution() {
+        CompletableFuture<String> result = new CompletableFuture<>();
+        AsyncMaybe.attemptAsync(Object::new).whenSuccessful(() -> result.complete("Success"));
+        assertThat(result.join()).isEqualTo("Success");
+    }
+
+    @Test
+    public void whenSuccessfulIsNotCalledInCaseOfException() {
+        CompletableFuture<String> success = new CompletableFuture<>();
+        CompletableFuture<String> completed = new CompletableFuture<>();
+        AsyncMaybe.attemptAsync(() -> {
+            throw new RuntimeException();
+        })
+                .whenSuccessful(() -> success.complete("Success"))
+                .whenComplete(any -> completed.complete("Completed"));
+        assertThat(completed.join()).isEqualTo("Completed");
+        assertThat(success).isNotCompleted();
+    }
+
+    @Test
     public void whenExceptionIsCalled() {
         CompletableFuture<Throwable> result = new CompletableFuture<>();
         RuntimeException thrownException = new RuntimeException("Exception test");

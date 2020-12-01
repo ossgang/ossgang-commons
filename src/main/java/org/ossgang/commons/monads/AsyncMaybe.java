@@ -143,6 +143,23 @@ public class AsyncMaybe<T> {
     }
 
     /**
+     * Call the given runnable if this {@link AsyncMaybe} is un a "successful" state (meaning no exception was thrown).
+     * The consumer will be called only when the asynchronous calculations of the result of this {@link AsyncMaybe} are done.
+     * A new {@link AsyncMaybe} is returned with the same result of this {@link AsyncMaybe}.
+     * If the provided runnable throws an exception, the returned {@link AsyncMaybe} will contain the newly thrown exception.
+     *
+     * @param runnable the handler to run if this monad is in a successful state
+     * @return this
+     */
+    public AsyncMaybe<T> whenSuccessful(ThrowingRunnable runnable) {
+        requireNonNull(runnable, "Runnable cannot be null");
+        return new AsyncMaybe<>(stage.thenApplyAsync(stageResult -> stageResult.flatApply(m -> {
+            m.ifSuccessful(uncheckedRunnable(runnable));
+            return m;
+        }), ASYNC_MAYBE_POOL));
+    }
+
+    /**
      * Apply the consumer on a {@link Maybe} representing the "resolved" state of this {@link AsyncMaybe}. The consumer
      * will be called only when the asynchronous calculations of the result of this {@link AsyncMaybe} are done.
      * A new {@link AsyncMaybe} is returned with the same result of this {@link AsyncMaybe} (be it an exception or a value).

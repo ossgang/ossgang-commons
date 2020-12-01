@@ -22,10 +22,12 @@
 
 package org.ossgang.commons.monads;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -249,5 +251,53 @@ public class MaybeTest {
         Mockito.verify(valueConsumer, times(1)).accept(any());
         Mockito.verify(successful, times(1)).run();
     }
+
+    @Test
+    public void mapExceptionWrapsTheOriginalExceptionForResolvedMaybe() {
+        RuntimeException cause = new RuntimeException("A");
+        Throwable exception = Maybe.ofException(cause)
+                .mapException(c -> new RuntimeException("B", c))
+                .exception();
+
+        Assertions.assertThat(exception).hasMessage("B").hasCause(cause);
+    }
+
+    @Test
+    public void mapExceptionWrapsTheOriginalExceptionForAttemptedMaybe() {
+        RuntimeException cause = new RuntimeException("A");
+        Throwable exception = Maybe.attempt(() -> {
+            throw cause;
+        }).mapException(c -> new RuntimeException("B", c)).exception();
+
+        Assertions.assertThat(exception).hasMessage("B").hasCause(cause);
+    }
+
+    @Test
+    public void mapExceptionCatchesAThrownException() {
+        Throwable exception = Maybe.attempt(() -> {
+            throw new RuntimeException("A");
+        }).mapException(c -> {
+            throw new RuntimeException("Another unrelated exception");
+        }).exception();
+
+        Assertions.assertThat(exception).hasMessage("Another unrelated exception").hasNoCause();
+    }
+
+    @Test
+    public void mapExceptionPassesThroughAVoidMaybe() {
+        Optional<Throwable> exception = Maybe.ofVoid()
+                .mapException(e -> new RuntimeException("Never called", e))
+                .optionalException();
+        Assertions.assertThat(exception).isEmpty();
+    }
+
+    @Test
+    public void recoverPassesThroughAVoidMaybe() {
+        Optional<Throwable> exception = Maybe.ofVoid()
+                .recover(e -> null) /* Unnecessarily recovered with Void */
+                .optionalException();
+        Assertions.assertThat(exception).isEmpty();
+    }
+
 
 }

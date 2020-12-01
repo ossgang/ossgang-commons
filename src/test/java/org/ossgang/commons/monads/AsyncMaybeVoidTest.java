@@ -21,6 +21,10 @@ package org.ossgang.commons.monads;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
+import java.util.concurrent.CompletableFuture;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class AsyncMaybeVoidTest {
 
     @Test
@@ -87,6 +91,21 @@ public class AsyncMaybeVoidTest {
         AsyncMaybe<Void> async2 = async1.whenComplete(maybe -> {
         });
         async2.toMaybeBlocking().throwOnException();
+    }
+
+
+    @Test
+    public void testAsyncMaybeVoid_whenSuccessful_isCalledWithResolvedAsyncMaybe() {
+        CompletableFuture<String> result = new CompletableFuture<>();
+        AsyncMaybe.ofVoid().whenSuccessful(() -> result.complete("Success"));
+        assertThat(result.join()).isEqualTo("Success");
+    }
+
+    @Test
+    public void testAsyncMaybeVoid_whenSuccessful_isCalledAfterAsyncExecution() {
+        CompletableFuture<String> result = new CompletableFuture<>();
+        AsyncMaybe.attemptAsync(() -> {}).whenSuccessful(() -> result.complete("Success"));
+        assertThat(result.join()).isEqualTo("Success");
     }
 
 }
