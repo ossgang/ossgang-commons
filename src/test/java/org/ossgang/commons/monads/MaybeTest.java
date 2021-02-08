@@ -31,8 +31,13 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.ossgang.commons.monads.Maybe.attempt;
 
 public class MaybeTest {
@@ -299,5 +304,19 @@ public class MaybeTest {
         Assertions.assertThat(exception).isEmpty();
     }
 
+    @Test
+    public void alwaysIsAlwaysCalled() {
+        Runnable ofVoidRunnable = mock(Runnable.class);
+        Runnable ofExceptionRunnable = mock(Runnable.class);
+        Runnable ofValueRunnable = mock(Runnable.class);
+
+        Maybe.ofVoid().always(ofVoidRunnable);
+        Maybe.ofException(new RuntimeException("any")).always(ofExceptionRunnable);
+        Maybe.ofValue(new Object()).always(ofValueRunnable);
+
+        Mockito.verify(ofVoidRunnable, times(1)).run();
+        Mockito.verify(ofExceptionRunnable, times(1)).run();
+        Mockito.verify(ofValueRunnable, times(1)).run();
+    }
 
 }

@@ -444,6 +444,21 @@ public class Maybe<T> {
         return this;
     }
 
+    /**
+     * Call the given {@link Runnable} always (regardless of the sate of this  Maybe).
+     * If the given runnable throws when called, then the resulting exception is escalated.
+     *
+     * @param runnable the handler to run
+     * @return this
+     * @throws NullPointerException in case the runnable is {@code null}.
+     * @throws RuntimeException     in case the runnable throws any exception
+     */
+    public Maybe<T> always(Runnable runnable) {
+        requireNonNull(runnable, "The runnable must not be null.");
+        runnable.run();
+        return this;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
