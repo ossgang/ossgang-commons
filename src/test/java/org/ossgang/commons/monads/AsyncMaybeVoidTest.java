@@ -21,6 +21,7 @@ package org.ossgang.commons.monads;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -93,6 +94,22 @@ public class AsyncMaybeVoidTest {
         async2.toMaybeBlocking().throwOnException();
     }
 
+    @Test
+    public void testAsyncMaybeVoid_toMaybeBlockingWithTimeout_shouldNotThrowNPE() {
+        AsyncMaybe.ofVoid().toMaybeBlocking(Duration.ofSeconds(30)).throwOnException();
+    }
+
+    @Test
+    public void toMaybeWithTimeoutSucceedsWithRunnable() {
+        Maybe<Void> maybe = AsyncMaybe.attemptAsync(() -> Thread.sleep(10)).toMaybeBlocking(Duration.ofSeconds(2));
+        assertThat(maybe.isSuccessful()).isTrue();
+    }
+
+    @Test
+    public void toMaybeWithoutTimeoutSucceedsWithRunnable() {
+        Maybe<Void> maybe = AsyncMaybe.attemptAsync(() -> Thread.sleep(10)).toMaybeBlocking();
+        assertThat(maybe.isSuccessful()).isTrue();
+    }
 
     @Test
     public void testAsyncMaybeVoid_whenSuccessful_isCalledWithResolvedAsyncMaybe() {

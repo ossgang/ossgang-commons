@@ -30,7 +30,10 @@ import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.concurrent.Executors.newCachedThreadPool;
 import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
-import static org.ossgang.commons.utils.Uncheckeds.*;
+import static org.ossgang.commons.utils.Uncheckeds.uncheckedConsumer;
+import static org.ossgang.commons.utils.Uncheckeds.uncheckedFunction;
+import static org.ossgang.commons.utils.Uncheckeds.uncheckedRunnable;
+import static org.ossgang.commons.utils.Uncheckeds.uncheckedSupplier;
 
 /**
  * This utility class implements the concept of a "Maybe" or "Try" {@link Optional} that can be resolved at some point
@@ -281,7 +284,11 @@ public class AsyncMaybe<T> {
      * @return the {@link Maybe} representing the completed state of this {@link AsyncMaybe}
      */
     public Maybe<T> toMaybeBlocking() {
-        return stage.join();
+        try {
+            return stage.get();
+        } catch (Exception e) {
+            return Maybe.ofException(e);
+        }
     }
 
     /**
@@ -299,7 +306,11 @@ public class AsyncMaybe<T> {
      * @return the {@link Maybe} representing the completed state of this {@link AsyncMaybe}
      */
     public Maybe<T> toMaybeBlocking(Duration timeout) {
-        return Maybe.attempt(() -> stage.get(timeout.toMillis(), TimeUnit.MILLISECONDS).value());
+        try {
+            return stage.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            return Maybe.ofException(e);
+        }
     }
 
 

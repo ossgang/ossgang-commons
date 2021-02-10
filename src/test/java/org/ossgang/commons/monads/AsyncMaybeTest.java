@@ -22,6 +22,7 @@
 
 package org.ossgang.commons.monads;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -34,7 +35,11 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class AsyncMaybeTest {
 
@@ -327,6 +332,25 @@ public class AsyncMaybeTest {
         RuntimeException exception = new RuntimeException("Testing exception");
         Maybe<String> result = AsyncMaybe.ofException(exception).map(any -> any + "Not called").toMaybeBlocking();
         assertThat(result.exception()).isEqualTo(exception);
+    }
+
+    @Test
+    public void toMaybeBlockingWithTimeoutWorks() {
+        Assertions.assertThat(AsyncMaybe.ofValue(42).toMaybeBlocking(Duration.ofSeconds(30)).value()).isEqualTo(42);
+    }
+
+    @Test
+    public void toMaybeWithTimeoutSucceedsWithSupplier() {
+        Maybe<Integer> maybe = AsyncMaybe.attemptAsync(() -> 42).toMaybeBlocking(Duration.ofSeconds(2));
+        assertThat(maybe.isSuccessful()).isTrue();
+        assertThat(maybe.value()).isEqualTo(42);
+    }
+
+    @Test
+    public void toMaybeWithoutTimeoutSucceedsWithSupplier() {
+        Maybe<Integer> maybe = AsyncMaybe.attemptAsync(() -> 42).toMaybeBlocking();
+        assertThat(maybe.isSuccessful()).isTrue();
+        assertThat(maybe.value()).isEqualTo(42);
     }
 
 }
