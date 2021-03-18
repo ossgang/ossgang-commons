@@ -66,6 +66,7 @@ public interface Property<T> extends ObservableValue<T> {
      * 
      * @param updateFunction a side-effect-free function
      * @return the updated value
+     * @throws NullPointerException if the updateFunction itself the result of it is {@code null}.
      */
     default T updateAndGet(UnaryOperator<T> updateFunction) {
         return update(updateFunction).newValue();
@@ -78,6 +79,7 @@ public interface Property<T> extends ObservableValue<T> {
      * 
      * @param updateFunction a side-effect-free function
      * @return the previous value
+     * @throws NullPointerException if the updateFunction itself the result of it is {@code null}.
      */
     default T getAndUpdate(UnaryOperator<T> updateFunction) {
         return update(updateFunction).oldValue();
@@ -90,9 +92,10 @@ public interface Property<T> extends ObservableValue<T> {
      * 
      * @param updateFunction a side-effect-free function
      * @return a transition object, containing both, the previous and the updated value
+     * @throws NullPointerException if the updateFunction itself the result of it is {@code null}.
      */
     default Transition<T> update(UnaryOperator<T> updateFunction) {
-        Objects.requireNonNull(updateFunction, "updateFunction must not be null.");
+        requireNonNull(updateFunction, "updateFunction must not be null.");
         return accumulate(null, (old, update) -> updateFunction.apply(old));
     }
 
@@ -106,6 +109,7 @@ public interface Property<T> extends ObservableValue<T> {
      * @param the update value
      * @param accumulatorFunction a side-effect-free function of two arguments
      * @return the updated value
+     * @throws NullPointerException if the accumulatorFunction itself the result of it is {@code null}.
      */
     default T accumulateAndGet(T x, BinaryOperator<T> accumulatorFunction) {
         return accumulate(x, accumulatorFunction).newValue();
@@ -120,6 +124,7 @@ public interface Property<T> extends ObservableValue<T> {
      * @param the update value
      * @param accumulatorFunction a side-effect-free function of two arguments
      * @return the previous value
+     * @throws NullPointerException if the accumulatorFunction itself the result of it is {@code null}.
      */
     default T getAndAccumulate(T x, BinaryOperator<T> accumulatorFunction) {
         return accumulate(x, accumulatorFunction).oldValue();
@@ -135,6 +140,7 @@ public interface Property<T> extends ObservableValue<T> {
      * @param the update value
      * @param accumulatorFunction a side-effect-free function of two arguments
      * @return a transition object, containing both, the previous and the updated value
+     * @throws NullPointerException if the accumulatorFunction itself the result of it is {@code null}.
      */
     Transition<T> accumulate(T x, BinaryOperator<T> accumulatorFunction);
 
