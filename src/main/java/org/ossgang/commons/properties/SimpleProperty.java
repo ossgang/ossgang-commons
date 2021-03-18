@@ -38,4 +38,12 @@ public class SimpleProperty<T> extends DispatchingObservableValue<T> implements 
     public void set(T value) {
         dispatchValue(value);
     }
+    
+    
+//    public T getAndAccumulate(T x, BinaryOperator<T> accumulatorFunction) {
+//        super.update( ar -> get)
+//    }
+    
+    
+    
 }
