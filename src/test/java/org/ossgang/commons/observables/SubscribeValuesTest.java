@@ -18,13 +18,9 @@
 
 package org.ossgang.commons.observables;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
-import org.ossgang.commons.monads.Consumer3;
-import org.ossgang.commons.monads.Consumer4;
-import org.ossgang.commons.monads.Consumer5;
-import org.ossgang.commons.observables.operators.SubscribeValuesOperators;
-import org.ossgang.commons.properties.Property;
+import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
+import static org.ossgang.commons.observables.ValueCombinationPolicies.COMBINE_LATEST;
+import static org.ossgang.commons.properties.Properties.property;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -32,9 +28,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
-import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
-import static org.ossgang.commons.observables.ValueCombinationPolicies.COMBINE_LATEST;
-import static org.ossgang.commons.properties.Properties.property;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
+import org.ossgang.commons.monads.Consumer3;
+import org.ossgang.commons.monads.Consumer4;
+import org.ossgang.commons.monads.Consumer5;
+import org.ossgang.commons.observables.operators.SubscribeValuesOperators;
+import org.ossgang.commons.properties.Property;
 
 public class SubscribeValuesTest {
 

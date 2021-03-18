@@ -19,15 +19,12 @@
 
 package org.ossgang.commons.observables.operators;
 
+import static org.ossgang.commons.observables.operators.DerivedObservableValue.derive;
+
+import java.util.Optional;
+
 import org.ossgang.commons.observables.Observable;
 import org.ossgang.commons.observables.ObservableValue;
-
-import java.util.*;
-import java.util.function.Function;
-
-import static org.ossgang.commons.observables.operators.DerivedObservableValue.derive;
-import static org.ossgang.commons.observables.operators.OperatorUtils.fromIndexMap;
-import static org.ossgang.commons.observables.operators.OperatorUtils.toIndexMap;
 
 public final class Operators {
 

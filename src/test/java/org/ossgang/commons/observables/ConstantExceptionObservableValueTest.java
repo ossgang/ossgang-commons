@@ -1,14 +1,14 @@
 package org.ossgang.commons.observables;
 
-import org.junit.Test;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.observables.Observers.withErrorHandling;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.ossgang.commons.observables.Observers.withErrorHandling;
+import org.junit.Test;
 
 public class ConstantExceptionObservableValueTest {
     @Test

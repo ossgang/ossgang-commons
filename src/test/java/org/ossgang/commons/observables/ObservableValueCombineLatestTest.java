@@ -19,15 +19,12 @@
 
 package org.ossgang.commons.observables;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
-import org.ossgang.commons.monads.Function3;
-import org.ossgang.commons.monads.Function4;
-import org.ossgang.commons.monads.Function5;
-import org.ossgang.commons.observables.Observable;
-import org.ossgang.commons.observables.ObservableValue;
-import org.ossgang.commons.observables.Observables;
-import org.ossgang.commons.properties.Property;
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.GcTests.forceGc;
+import static org.ossgang.commons.observables.Observables.combineLatest;
+import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
+import static org.ossgang.commons.properties.Properties.property;
 
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
@@ -41,12 +38,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
-import static java.util.Arrays.asList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.ossgang.commons.GcTests.forceGc;
-import static org.ossgang.commons.observables.Observables.combineLatest;
-import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
-import static org.ossgang.commons.properties.Properties.property;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
+import org.ossgang.commons.monads.Function3;
+import org.ossgang.commons.monads.Function4;
+import org.ossgang.commons.monads.Function5;
+import org.ossgang.commons.properties.Property;
 
 public class ObservableValueCombineLatestTest {
 

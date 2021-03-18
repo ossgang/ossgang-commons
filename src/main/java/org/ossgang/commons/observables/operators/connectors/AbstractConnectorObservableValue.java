@@ -1,18 +1,18 @@
 package org.ossgang.commons.observables.operators.connectors;
 
-import org.ossgang.commons.observables.DispatchingObservableValue;
-import org.ossgang.commons.observables.ObservableValue;
-import org.ossgang.commons.observables.Subscription;
-import org.ossgang.commons.properties.Properties;
-import org.ossgang.commons.properties.Property;
-
-import java.util.function.Supplier;
-
 import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.observables.operators.connectors.ConnectorState.CONNECTED;
 import static org.ossgang.commons.observables.operators.connectors.ConnectorState.DISCONNECTED;
 import static org.ossgang.commons.observables.weak.WeakObservers.weakWithErrorAndSubscriptionCountHandling;
+
+import java.util.function.Supplier;
+
+import org.ossgang.commons.observables.DispatchingObservableValue;
+import org.ossgang.commons.observables.ObservableValue;
+import org.ossgang.commons.observables.Subscription;
+import org.ossgang.commons.properties.Properties;
+import org.ossgang.commons.properties.Property;
 
 /**
  * Base implementation for the {@link ConnectorObservableValue} and {@link DynamicConnectorObservableValue}.

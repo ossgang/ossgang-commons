@@ -22,12 +22,14 @@
 
 package org.ossgang.commons.properties;
 
+import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
+
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observer;
 import org.ossgang.commons.observables.Subscription;
 import org.ossgang.commons.observables.SubscriptionOption;
-
-import java.util.function.Consumer;
+import org.ossgang.commons.observables.Transition;
 
 /**
  * A {@link Property} that will delegate its {@link Property#set(Object)}, {@link Property#get()} and {@link #subscribe(Observer, SubscriptionOption...)}
@@ -57,5 +59,11 @@ public class WrapperProperty<T> implements Property<T>, ObservableValue<T> {
     @Override
     public Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options) {
         return observableValue.subscribe(listener, options);
+    }
+
+    @Override
+    public Transition<T> accumulate(T x, BinaryOperator<T> accumulatorFunction) {
+        // XXX Not sure yet what to do here ...?
+        throw new UnsupportedOperationException("accumulate currently not supperted on wrapped property ...");
     }
 }

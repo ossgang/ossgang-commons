@@ -1,9 +1,7 @@
 package org.ossgang.commons.mapbackeds;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class CustomToStringTest {

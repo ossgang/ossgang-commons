@@ -1,20 +1,20 @@
 package org.ossgang.commons.observables.operators;
 
-import org.junit.Test;
-import org.ossgang.commons.awaitables.exceptions.AwaitTimeoutException;
-import org.ossgang.commons.monads.Maybe;
-import org.ossgang.commons.observables.Dispatcher;
-
-import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.ossgang.commons.monads.Maybe.attempt;
 import static org.ossgang.commons.observables.Observables.dispatcher;
+
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
+import org.junit.Test;
+import org.ossgang.commons.awaitables.exceptions.AwaitTimeoutException;
+import org.ossgang.commons.monads.Maybe;
+import org.ossgang.commons.observables.Dispatcher;
 
 public class BlockingOperatorsTest {
     public static final Duration TIMEOUT = Duration.ofSeconds(10);

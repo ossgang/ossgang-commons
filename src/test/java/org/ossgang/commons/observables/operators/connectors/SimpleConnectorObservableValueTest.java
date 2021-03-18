@@ -1,10 +1,9 @@
 package org.ossgang.commons.observables.operators.connectors;
 
-import org.junit.Test;
-import org.ossgang.commons.observables.ObservableValue;
-import org.ossgang.commons.observables.Observables;
-import org.ossgang.commons.observables.testing.TestObserver;
-import org.ossgang.commons.properties.Property;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
+import static org.ossgang.commons.observables.operators.connectors.ConnectorState.CONNECTED;
+import static org.ossgang.commons.observables.operators.connectors.ConnectorState.DISCONNECTED;
 
 import java.util.Arrays;
 import java.util.List;
@@ -12,10 +11,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
-import static org.ossgang.commons.observables.operators.connectors.ConnectorState.CONNECTED;
-import static org.ossgang.commons.observables.operators.connectors.ConnectorState.DISCONNECTED;
+import org.junit.Test;
+import org.ossgang.commons.observables.ObservableValue;
+import org.ossgang.commons.observables.Observables;
+import org.ossgang.commons.observables.testing.TestObserver;
+import org.ossgang.commons.properties.Property;
 
 public class SimpleConnectorObservableValueTest {
 

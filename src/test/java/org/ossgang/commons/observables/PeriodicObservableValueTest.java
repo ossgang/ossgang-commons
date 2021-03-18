@@ -1,7 +1,8 @@
 package org.ossgang.commons.observables;
 
-import org.junit.Test;
-import org.ossgang.commons.observables.testing.TestObserver;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.data.Offset.offset;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -9,9 +10,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.data.Offset.offset;
+import org.junit.Test;
+import org.ossgang.commons.observables.testing.TestObserver;
 
 public class PeriodicObservableValueTest {
 

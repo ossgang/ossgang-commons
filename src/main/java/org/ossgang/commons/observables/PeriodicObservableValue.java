@@ -7,8 +7,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.ossgang.commons.utils.NamedDaemonThreadFactory;
-
 /**
  * Creates an observable value that emits periodically at the given rate. The value emitted is the current time (as
  * instant). Emitting is done on a single thread.

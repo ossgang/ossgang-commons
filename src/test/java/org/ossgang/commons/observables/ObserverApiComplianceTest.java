@@ -1,13 +1,15 @@
 package org.ossgang.commons.observables;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
-import org.ossgang.commons.observables.testing.TestObserver;
+import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
+import static org.ossgang.commons.observables.testing.TestObserver.ObserverEvent.ON_EXCEPTION;
+import static org.ossgang.commons.observables.testing.TestObserver.ObserverEvent.ON_SUBSCRIBE;
+import static org.ossgang.commons.observables.testing.TestObserver.ObserverEvent.ON_VALUE;
 
 import java.util.concurrent.CompletableFuture;
 
-import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
-import static org.ossgang.commons.observables.testing.TestObserver.ObserverEvent.*;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
+import org.ossgang.commons.observables.testing.TestObserver;
 
 public class ObserverApiComplianceTest {
 

@@ -18,14 +18,19 @@
 
 package org.ossgang.commons.observables.operators;
 
-import org.ossgang.commons.monads.Consumer3;
-import org.ossgang.commons.monads.Consumer4;
-import org.ossgang.commons.monads.Consumer5;
-import org.ossgang.commons.observables.*;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
+
+import org.ossgang.commons.monads.Consumer3;
+import org.ossgang.commons.monads.Consumer4;
+import org.ossgang.commons.monads.Consumer5;
+import org.ossgang.commons.observables.Observable;
+import org.ossgang.commons.observables.Observables;
+import org.ossgang.commons.observables.Subscription;
+import org.ossgang.commons.observables.SubscriptionOption;
+import org.ossgang.commons.observables.ValueCombinationPolicies;
+import org.ossgang.commons.observables.ValueCombinationPolicy;
 
 public final class SubscribeValuesOperators {
 

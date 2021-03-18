@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
-import org.ossgang.commons.mapbackeds.Mapbackeds;
 
 public class MapbackedsTest {
 

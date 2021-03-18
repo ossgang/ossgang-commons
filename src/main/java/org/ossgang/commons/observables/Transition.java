@@ -5,15 +5,16 @@ import static java.util.Objects.requireNonNull;
 import java.util.Objects;
 
 /**
- * Represents a transition from an old value of an observable value to a new one. This is used in update operations of
+ * Represents a transition from an old value of an observable value to a new one. This is used in accumulate operations
+ * of
  * properties.
  */
-public class ValueTransition<T> {
+public class Transition<T> {
 
     private final T oldValue;
     private final T newValue;
 
-    private ValueTransition(T oldValue, T newValue) {
+    private Transition(T oldValue, T newValue) {
         this.oldValue = oldValue; /* The old value is allowed to be null */
         this.newValue = requireNonNull(newValue, "new value must not be null");
     }
@@ -24,8 +25,8 @@ public class ValueTransition<T> {
      * @param oldValue the old value (before the transition)
      * @param newValue the new value (after the transition)
      */
-    public static <T> ValueTransition<T> fromTo(T oldValue, T newValue) {
-        return new ValueTransition<>(oldValue, newValue);
+    public static <T> Transition<T> fromTo(T oldValue, T newValue) {
+        return new Transition<>(oldValue, newValue);
     }
 
     public T oldValue() {
@@ -52,13 +53,13 @@ public class ValueTransition<T> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        ValueTransition<?> other = (ValueTransition<?>) obj;
+        Transition<?> other = (Transition<?>) obj;
         return Objects.equals(newValue, other.newValue) && Objects.equals(oldValue, other.oldValue);
     }
 
     @Override
     public String toString() {
-        return "OldAndNew [oldValue=" + oldValue + ", newValue=" + newValue + "]";
+        return "Transition [oldValue=" + oldValue + ", newValue=" + newValue + "]";
     }
 
 }

@@ -1,15 +1,15 @@
 package org.ossgang.commons.observables.operators.buffer;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+
 import org.ossgang.commons.collections.ConcurrentCircularBuffer;
 import org.ossgang.commons.observables.Observable;
 import org.ossgang.commons.observables.Observer;
 import org.ossgang.commons.observables.SubscriptionOptions;
 import org.ossgang.commons.properties.Properties;
 import org.ossgang.commons.properties.Property;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * Represents a buffer that can be used as a mapping function for {@link Observable#derive(Function)} method.

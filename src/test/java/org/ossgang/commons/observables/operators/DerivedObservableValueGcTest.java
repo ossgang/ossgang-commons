@@ -1,5 +1,16 @@
 package org.ossgang.commons.observables.operators;
 
+import static java.lang.Integer.parseInt;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.GcTests.forceGc;
+import static org.ossgang.commons.observables.operators.DerivedObservableValue.derive;
+
+import java.lang.ref.WeakReference;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.junit.Test;
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observer;
@@ -7,17 +18,6 @@ import org.ossgang.commons.observables.Subscription;
 import org.ossgang.commons.observables.SubscriptionOption;
 import org.ossgang.commons.properties.Properties;
 import org.ossgang.commons.properties.Property;
-
-import java.lang.ref.WeakReference;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static java.lang.Integer.parseInt;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.ossgang.commons.GcTests.forceGc;
-import static org.ossgang.commons.observables.operators.DerivedObservableValue.derive;
 
 public class DerivedObservableValueGcTest {
     private CompletableFuture<Integer> methodReferenceUpdateValue = new CompletableFuture<>();

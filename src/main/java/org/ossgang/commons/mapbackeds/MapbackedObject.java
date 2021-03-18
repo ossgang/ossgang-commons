@@ -4,8 +4,8 @@ import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.mapbackeds.MapbackedInternals.toStringMethod;
 
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;

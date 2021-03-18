@@ -1,8 +1,8 @@
 package org.ossgang.commons.observables;
 
-import org.ossgang.commons.monads.Maybe;
-
 import java.util.function.Consumer;
+
+import org.ossgang.commons.monads.Maybe;
 
 /**
  * Utility class to create {@link Observer} instances.
