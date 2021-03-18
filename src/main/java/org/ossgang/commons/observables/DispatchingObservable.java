@@ -91,22 +91,22 @@ public class DispatchingObservable<T> implements Observable<T> {
         allSubscriptions.forEach(Subscription::unsubscribe);
     }
 
-    protected final void dispatchValue(T newValue) {
+    protected void dispatchValue(T newValue) {
         dispatchValue(newValue, any -> true);
     }
 
-    protected final void dispatchValue(T newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
+    protected void dispatchValue(T newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
         listeners.entrySet().stream() //
                 .filter(entry -> optionPredicate.test(entry.getValue().options)) //
                 .map(Map.Entry::getKey) //
                 .forEach(l -> dispatch(l::onValue, newValue));
     }
 
-    protected final void dispatchException(Throwable exception) {
+    protected void dispatchException(Throwable exception) {
         dispatchException(exception, any -> true);
     }
 
-    protected final void dispatchException(Throwable exception, Predicate<Set<SubscriptionOption>> optionPredicate) {
+    protected void dispatchException(Throwable exception, Predicate<Set<SubscriptionOption>> optionPredicate) {
         AtomicBoolean wasDispatched = new AtomicBoolean(false);
         listeners.entrySet().stream() //
                 .filter(entry -> optionPredicate.test(entry.getValue().options)) //
