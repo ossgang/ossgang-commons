@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -102,14 +103,28 @@ public class DispatchingObservable<T> implements Observable<T> {
     }
 
     protected void dispatchException(Throwable exception) {
-        listeners.keySet().forEach(l -> dispatch(l::onException, exception));
+        AtomicBoolean wasDispatched = new AtomicBoolean(false);
+        listeners.keySet().forEach(l -> {
+            dispatch(l::onException, exception);
+            wasDispatched.set(true);
+        });
+        if (!wasDispatched.get()) {
+            dispatchToUncaughtExceptionHandler(new UnhandledException(exception));
+        }
     }
 
     protected void dispatchException(Throwable exception, Predicate<Set<SubscriptionOption>> optionPredicate) {
+        AtomicBoolean wasDispatched = new AtomicBoolean(false);
         listeners.entrySet().stream() //
                 .filter(entry -> optionPredicate.test(entry.getValue().options)) //
                 .map(Map.Entry::getKey) //
-                .forEach(l -> dispatch(l::onException, exception));
+                .forEach(l -> {
+                    dispatch(l::onException, exception);
+                    wasDispatched.set(true);
+                });
+        if (!wasDispatched.get()) {
+            dispatchToUncaughtExceptionHandler(new UnhandledException(exception));
+        }
     }
 
     protected <X> Future<?> dispatch(Consumer<X> handler, X value) {
