@@ -91,29 +91,22 @@ public class DispatchingObservable<T> implements Observable<T> {
         allSubscriptions.forEach(Subscription::unsubscribe);
     }
 
-    protected void dispatchValue(T newValue) {
-        listeners.keySet().forEach(l -> dispatch(l::onValue, newValue));
+    protected final void dispatchValue(T newValue) {
+        dispatchValue(newValue, any -> true);
     }
 
-    protected void dispatchValue(T newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
+    protected final void dispatchValue(T newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
         listeners.entrySet().stream() //
                 .filter(entry -> optionPredicate.test(entry.getValue().options)) //
                 .map(Map.Entry::getKey) //
                 .forEach(l -> dispatch(l::onValue, newValue));
     }
 
-    protected void dispatchException(Throwable exception) {
-        AtomicBoolean wasDispatched = new AtomicBoolean(false);
-        listeners.keySet().forEach(l -> {
-            dispatch(l::onException, exception);
-            wasDispatched.set(true);
-        });
-        if (!wasDispatched.get()) {
-            dispatchToUncaughtExceptionHandler(new UnhandledException(exception));
-        }
+    protected final void dispatchException(Throwable exception) {
+        dispatchException(exception, any -> true);
     }
 
-    protected void dispatchException(Throwable exception, Predicate<Set<SubscriptionOption>> optionPredicate) {
+    protected final void dispatchException(Throwable exception, Predicate<Set<SubscriptionOption>> optionPredicate) {
         AtomicBoolean wasDispatched = new AtomicBoolean(false);
         listeners.entrySet().stream() //
                 .filter(entry -> optionPredicate.test(entry.getValue().options)) //
