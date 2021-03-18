@@ -39,8 +39,20 @@ public class ExceptionHandlersTest {
 
     @Test
     public void mapThrows_subscriberDoesNotHandle_shouldDeflect() throws Exception {
-        Property<String> property = Properties.property("A");
+        Property<String> property = Properties.property();
         property.map(Integer::valueOf).subscribe(System.out::println);
+        property.set("THIS-IS-NOT-A-NUMBER");
+
+        assertThat(exception.get(1, SECONDS))
+                .isInstanceOf(UnhandledException.class)
+                .hasMessageContaining("THIS-IS-NOT-A-NUMBER")
+                .hasCauseInstanceOf(NumberFormatException.class);
+    }
+
+    @Test
+    public void mapThrows_noSubscriberIsPresent_shouldDeflect() throws Exception {
+        Property<String> property = Properties.property();
+        property.map(Integer::valueOf);
         property.set("THIS-IS-NOT-A-NUMBER");
 
         assertThat(exception.get(1, SECONDS))
@@ -61,7 +73,7 @@ public class ExceptionHandlersTest {
     @Test(expected = TimeoutException.class)
     public void mapThrows_subscriberHandles_shouldNotDeflect() throws Exception {
         TestObserver<Integer> testObserver = new TestObserver<>();
-        Property<String> property = Properties.property("A");
+        Property<String> property = Properties.property();
         property.map(Integer::valueOf).subscribe(testObserver);
         property.set("THIS-IS-NOT-A-NUMBER");
 
