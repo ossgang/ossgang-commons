@@ -1,8 +1,8 @@
 package org.ossgang.commons.observables;
 
-import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
-
 import static org.ossgang.commons.observables.ExceptionHandlers.dispatchToUncaughtExceptionHandler;
+
+import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
 
 /**
  * A fixed-value, immutable implementation of {@link ObservableValue}. Such an observable always returns the same

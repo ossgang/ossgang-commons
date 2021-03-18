@@ -1,13 +1,13 @@
 package org.ossgang.commons.observables.testing;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.ossgang.commons.observables.Dispatcher;
 import org.ossgang.commons.observables.Observables;
 import org.ossgang.commons.properties.Properties;
 import org.ossgang.commons.properties.Property;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestObserverTest {
 

@@ -19,19 +19,27 @@
 
 package org.ossgang.commons.observables.operators;
 
+import static org.ossgang.commons.observables.operators.DerivedObservableValue.derive;
+import static org.ossgang.commons.observables.operators.OperatorUtils.fromIndexMap;
+import static org.ossgang.commons.observables.operators.OperatorUtils.toIndexMap;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 import org.ossgang.commons.monads.Function3;
 import org.ossgang.commons.monads.Function4;
 import org.ossgang.commons.monads.Function5;
 import org.ossgang.commons.observables.Observable;
 import org.ossgang.commons.observables.ObservableValue;
-
-import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-
-import static org.ossgang.commons.observables.operators.DerivedObservableValue.derive;
-import static org.ossgang.commons.observables.operators.OperatorUtils.fromIndexMap;
-import static org.ossgang.commons.observables.operators.OperatorUtils.toIndexMap;
 
 public final class CombinationOperators {
 

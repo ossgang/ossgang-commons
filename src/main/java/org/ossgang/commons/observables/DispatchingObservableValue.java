@@ -22,14 +22,18 @@
 
 package org.ossgang.commons.observables;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-
 import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.observables.SubscriptionOptions.ON_CHANGE;
 import static org.ossgang.commons.utils.Uncheckeds.uncheckedConsumer;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BinaryOperator;
 
 /**
  * A basic implementation of {@link ObservableValue}, based on {@link DispatchingObservable} to handle the update
@@ -61,22 +65,37 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
     @Override
     protected void dispatchValue(T newValue) {
         requireNonNull(newValue, "null value not allowed");
-        update(ar -> ValueTransition.fromTo(ar.getAndSet(newValue), newValue));
+        accumulate(newValue, (old, update) -> update);
     }
 
     /**
-     * applies the given function onto the internal atomic reference and publishes the resulting new value downstream.
-     * This is exposed in order to be used by subclasses to perform atomic operations other than simple set.
-     * NB: the client of this method has to take care that the operation itself is atomic!
+     * This is the most generic way to update the internal reference: It uses and accumulator function to transit from
+     * the current value to a new one. The new value will be the result of the accumulator function with the current
+     * value as first parameter and the update value as second parameter.
+     * 
+     * @param x the update value
+     * @param accumulatorFunction a side-effect-free function of two arguments
+     * @return a transition object, containing both, the original value and the updated (new) value
      */
-    protected ValueTransition<T> update(Function<AtomicReference<T>, ValueTransition<T>> operation) {
-        ValueTransition<T> transition = operation.apply(lastValue);
+    protected Transition<T> accumulate(T x, BinaryOperator<T> accumulatorFunction) {
+        AtomicReference<T> newValue = new AtomicReference<>();
+        T oldValue = lastValue.getAndAccumulate(x, (old, update) -> {
+            T v = accumulatorFunction.apply(old, update);
+            requireNonNull(v, "updated value must not be null.");
+            newValue.set(v);
+            return v;
+        });
+        Transition<T> transition = Transition.fromTo(oldValue, newValue.get());
+        dispatch(transition);
+        return transition;
+    }
+
+    private void dispatch(Transition<T> transition) {
         if (Objects.equals(transition.oldValue(), transition.newValue())) {
             super.dispatchValue(transition.newValue(), s -> !s.contains(ON_CHANGE));
         } else {
             super.dispatchValue(transition.newValue());
         }
-        return transition;
     }
 
     @Override

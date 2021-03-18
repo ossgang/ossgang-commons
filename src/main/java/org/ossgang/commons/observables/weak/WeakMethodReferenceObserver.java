@@ -22,14 +22,14 @@
 
 package org.ossgang.commons.observables.weak;
 
-import org.ossgang.commons.observables.Observer;
-import org.ossgang.commons.observables.Subscription;
-
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
+
+import org.ossgang.commons.observables.Observer;
+import org.ossgang.commons.observables.Subscription;
 
 /**
  * An observer based on a weak reference to an object, and class method references to consumers for values (and,

@@ -19,7 +19,25 @@
 
 package org.ossgang.commons.observables;
 
-import org.ossgang.commons.monads.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import org.ossgang.commons.monads.Consumer3;
+import org.ossgang.commons.monads.Consumer4;
+import org.ossgang.commons.monads.Consumer5;
+import org.ossgang.commons.monads.Function3;
+import org.ossgang.commons.monads.Function4;
+import org.ossgang.commons.monads.Function5;
 import org.ossgang.commons.observables.exceptions.UnhandledException;
 import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
 import org.ossgang.commons.observables.operators.CombinationOperators;
@@ -29,15 +47,6 @@ import org.ossgang.commons.observables.operators.SubscribeValuesOperators;
 import org.ossgang.commons.observables.operators.connectors.ConnectorObservableValue;
 import org.ossgang.commons.observables.operators.connectors.ConnectorObservables;
 import org.ossgang.commons.observables.operators.connectors.DynamicConnectorObservableValue;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.function.*;
 
 /**
  * Static support class for dealing with {@link Observable} and {@link ObservableValue}.

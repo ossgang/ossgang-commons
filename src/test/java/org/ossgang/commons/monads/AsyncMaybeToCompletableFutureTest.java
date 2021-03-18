@@ -18,12 +18,12 @@
 
 package org.ossgang.commons.monads;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
 public class AsyncMaybeToCompletableFutureTest {
 

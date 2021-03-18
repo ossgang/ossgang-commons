@@ -22,11 +22,11 @@
 
 package org.ossgang.commons.observables;
 
-import org.ossgang.commons.observables.operators.DerivedObservableValue;
-
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import org.ossgang.commons.observables.operators.DerivedObservableValue;
 
 /**
  * An observable of type T which has an actual value.

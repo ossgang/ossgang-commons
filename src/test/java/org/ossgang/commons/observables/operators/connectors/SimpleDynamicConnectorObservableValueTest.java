@@ -1,15 +1,15 @@
 package org.ossgang.commons.observables.operators.connectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.observables.operators.connectors.ConnectorState.CONNECTED;
+import static org.ossgang.commons.observables.operators.connectors.ConnectorState.DISCONNECTED;
+
+import java.util.function.Function;
+
 import org.junit.Test;
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observables;
 import org.ossgang.commons.observables.testing.TestObserver;
-
-import java.util.function.Function;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.ossgang.commons.observables.operators.connectors.ConnectorState.CONNECTED;
-import static org.ossgang.commons.observables.operators.connectors.ConnectorState.DISCONNECTED;
 
 public class SimpleDynamicConnectorObservableValueTest {
 

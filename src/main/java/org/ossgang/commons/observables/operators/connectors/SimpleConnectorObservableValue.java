@@ -1,12 +1,12 @@
 package org.ossgang.commons.observables.operators.connectors;
 
-import org.ossgang.commons.observables.ObservableValue;
-import org.ossgang.commons.properties.Property;
+import static java.util.Objects.requireNonNull;
+import static org.ossgang.commons.properties.Properties.wrapperProperty;
 
 import java.util.function.Supplier;
 
-import static java.util.Objects.requireNonNull;
-import static org.ossgang.commons.properties.Properties.wrapperProperty;
+import org.ossgang.commons.observables.ObservableValue;
+import org.ossgang.commons.properties.Property;
 
 /**
  * Simple implementation of a {@link ConnectorObservableValue}

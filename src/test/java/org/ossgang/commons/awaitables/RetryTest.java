@@ -1,10 +1,10 @@
 package org.ossgang.commons.awaitables;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
-import org.ossgang.commons.awaitables.exceptions.AwaitRetryCountException;
-import org.ossgang.commons.awaitables.exceptions.AwaitTimeoutException;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.ossgang.commons.awaitables.Retry.retry;
+import static org.ossgang.commons.awaitables.Retry.retryUntil;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -12,11 +12,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.ossgang.commons.awaitables.Retry.retry;
-import static org.ossgang.commons.awaitables.Retry.retryUntil;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.Timeout;
+import org.ossgang.commons.awaitables.exceptions.AwaitRetryCountException;
+import org.ossgang.commons.awaitables.exceptions.AwaitTimeoutException;
 
 public class RetryTest {
     @Rule

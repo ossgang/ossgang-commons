@@ -22,11 +22,11 @@
 
 package org.ossgang.commons.properties;
 
+import java.util.function.Consumer;
+
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observer;
 import org.ossgang.commons.observables.SubscriptionOption;
-
-import java.util.function.Consumer;
 
 /**
  * Static entry point to create properties.

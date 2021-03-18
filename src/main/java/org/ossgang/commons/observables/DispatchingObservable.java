@@ -22,8 +22,10 @@
 
 package org.ossgang.commons.observables;
 
-import org.ossgang.commons.observables.exceptions.UnhandledException;
-import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
+import static java.util.Collections.newSetFromMap;
+import static java.util.concurrent.Executors.newCachedThreadPool;
+import static org.ossgang.commons.observables.ExceptionHandlers.dispatchToUncaughtExceptionHandler;
+import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -37,10 +39,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static java.util.Collections.newSetFromMap;
-import static java.util.concurrent.Executors.newCachedThreadPool;
-import static org.ossgang.commons.observables.ExceptionHandlers.dispatchToUncaughtExceptionHandler;
-import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
+import org.ossgang.commons.observables.exceptions.UnhandledException;
+import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
 
 /**
  * A basic implementation of {@link Observable} managing a set of listeners, and dispatching updates to them.

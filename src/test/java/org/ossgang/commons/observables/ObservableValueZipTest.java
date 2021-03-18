@@ -1,9 +1,10 @@
 package org.ossgang.commons.observables;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.ossgang.commons.observables.testing.TestObserver;
-import org.ossgang.commons.properties.Property;
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.GcTests.forceGc;
+import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
+import static org.ossgang.commons.properties.Properties.property;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -11,11 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import static java.util.Arrays.asList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.ossgang.commons.GcTests.forceGc;
-import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
-import static org.ossgang.commons.properties.Properties.property;
+import org.junit.Before;
+import org.junit.Test;
+import org.ossgang.commons.observables.testing.TestObserver;
+import org.ossgang.commons.properties.Property;
 
 public class ObservableValueZipTest {
 

@@ -1,7 +1,10 @@
 package org.ossgang.commons.awaitables;
 
-import org.ossgang.commons.awaitables.exceptions.AwaitRetryCountException;
-import org.ossgang.commons.awaitables.exceptions.AwaitTimeoutException;
+import static java.time.Duration.ZERO;
+import static java.util.concurrent.CompletableFuture.supplyAsync;
+import static java.util.concurrent.Executors.newCachedThreadPool;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -14,11 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import static java.time.Duration.ZERO;
-import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static java.util.concurrent.Executors.newCachedThreadPool;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
+import org.ossgang.commons.awaitables.exceptions.AwaitRetryCountException;
+import org.ossgang.commons.awaitables.exceptions.AwaitTimeoutException;
 
 /**
  * Base class for {@link Retry} and {@link Await} providing the common parts of the await DSL.

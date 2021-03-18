@@ -22,7 +22,12 @@
 
 package org.ossgang.commons.properties;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.function.BinaryOperator;
+
 import org.ossgang.commons.observables.DispatchingObservableValue;
+import org.ossgang.commons.observables.Transition;
 
 /**
  * Simple implementation of a {@link Property}
@@ -30,6 +35,7 @@ import org.ossgang.commons.observables.DispatchingObservableValue;
  * @param <T> the type of the property
  */
 public class SimpleProperty<T> extends DispatchingObservableValue<T> implements Property<T> {
+    
     SimpleProperty(T initial) {
         super(initial);
     }
@@ -38,12 +44,11 @@ public class SimpleProperty<T> extends DispatchingObservableValue<T> implements 
     public void set(T value) {
         dispatchValue(value);
     }
-    
-    
-//    public T getAndAccumulate(T x, BinaryOperator<T> accumulatorFunction) {
-//        super.update( ar -> get)
-//    }
-    
-    
-    
+
+    @Override
+    public Transition<T> accumulate(T x, BinaryOperator<T> accumulatorFunction) {
+        requireNonNull(accumulatorFunction, "accumulatorFunction must not be null.");
+        return super.accumulate(x, accumulatorFunction);
+    }
+
 }
