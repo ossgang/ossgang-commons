@@ -24,6 +24,7 @@ package org.ossgang.commons.observables;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
@@ -51,7 +52,8 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
         Subscription subscription = super.subscribe(listener, options);
         if (optionSet.contains(FIRST_UPDATE)) {
-            Optional.ofNullable(lastValue.get()).ifPresent(uncheckedConsumer(value -> dispatch(listener::onValue, value).get()));
+            Optional.ofNullable(lastValue.get())
+                    .ifPresent(uncheckedConsumer(value -> dispatch(listener::onValue, value).get()));
         }
         return subscription;
     }
@@ -59,11 +61,22 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
     @Override
     protected void dispatchValue(T newValue) {
         requireNonNull(newValue, "null value not allowed");
-        if (Objects.equals(lastValue.getAndSet(newValue), newValue)) {
-            super.dispatchValue(newValue, s -> !s.contains(ON_CHANGE));
+        update(ar -> ValueTransition.fromTo(ar.getAndSet(newValue), newValue));
+    }
+
+    /**
+     * applies the given function onto the internal atomic reference and publishes the resulting new value downstream.
+     * This is exposed in order to be used by subclasses to perform atomic operations other than simple set.
+     * NB: the client of this method has to take care that the operation itself is atomic!
+     */
+    protected ValueTransition<T> update(Function<AtomicReference<T>, ValueTransition<T>> operation) {
+        ValueTransition<T> transition = operation.apply(lastValue);
+        if (Objects.equals(transition.oldValue(), transition.newValue())) {
+            super.dispatchValue(transition.newValue(), s -> !s.contains(ON_CHANGE));
         } else {
-            super.dispatchValue(newValue);
+            super.dispatchValue(transition.newValue());
         }
+        return transition;
     }
 
     @Override
