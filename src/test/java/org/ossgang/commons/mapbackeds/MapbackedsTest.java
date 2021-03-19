@@ -1,11 +1,13 @@
 package org.ossgang.commons.mapbackeds;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 import static org.ossgang.commons.mapbackeds.Mapbackeds.builder;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class MapbackedsTest {
@@ -23,9 +25,7 @@ public class MapbackedsTest {
 
     @Test
     public void builderWithPrimitives() {
-        AnInterface object = builder(AnInterface.class)//
-                .field(AnInterface::intValue, ANY_INT)//
-                .build();
+        AnInterface object = anInstance();
 
         assertThat(object.intValue()).isEqualTo(ANY_INT);
     }
@@ -48,6 +48,11 @@ public class MapbackedsTest {
         System.out.println(object.toString());
     }
 
+    @Test
+    public void two_instances_are_equal() {
+        Assertions.assertThat(anInstance()).isEqualTo(anInstance());
+    }
+    
     @Test(expected = IllegalArgumentException.class)
     public void proxyingObject() {
         Mapbackeds.mapOf("Any Non Mapbacked");
@@ -55,9 +60,13 @@ public class MapbackedsTest {
 
     @Test
     public void mapOfBackedObjectIsCorrect() {
-        AnInterface object = builder(AnInterface.class).field(AnInterface::intValue, ANY_INT).build();
+        AnInterface object = anInstance();
         Map<String, Object> map = Mapbackeds.mapOf(object);
         assertThat(map).isEqualTo(mapOf("intValue", ANY_INT));
+    }
+
+    private AnInterface anInstance() {
+        return builder(AnInterface.class).field(AnInterface::intValue, ANY_INT).build();
     }
 
     private static Map<String, Integer> mapOf(String string, int anyInt) {

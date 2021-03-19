@@ -108,7 +108,7 @@ public final class Mapbackeds {
         return handlerFrom(object).isPresent();
     }
 
-    private static Optional<MapbackedObject> handlerFrom(Object object) {
+    static Optional<MapbackedObject> handlerFrom(Object object) {
         if (!(object instanceof Proxy)) {
             return Optional.empty();
         }
