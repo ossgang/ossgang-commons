@@ -24,7 +24,6 @@ package org.ossgang.commons.properties;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Objects;
 import java.util.function.BinaryOperator;
 import java.util.function.UnaryOperator;
 
@@ -53,6 +52,7 @@ public interface Property<T> extends ObservableValue<T> {
      * 
      * @param value the new value
      * @throws NullPointerException on a null value
+     * @return the previous value
      */
     default T getAndSet(T value) {
         requireNonNull(value, "new value must not be null.");
@@ -106,7 +106,7 @@ public interface Property<T> extends ObservableValue<T> {
      * attempted updates fail due to contention among threads. The function is applied with the current value as its
      * first argument, and the given update as the second argument.
      * 
-     * @param the update value
+     * @param x the update value
      * @param accumulatorFunction a side-effect-free function of two arguments
      * @return the updated value
      * @throws NullPointerException if the accumulatorFunction itself the result of it is {@code null}.
@@ -121,7 +121,7 @@ public interface Property<T> extends ObservableValue<T> {
      * side-effect-free, since it may be re-applied when attempted updates fail due to contention among threads. The
      * function is applied with the current value as its first argument, and the given update as the second argument.
      * 
-     * @param the update value
+     * @param x the update value
      * @param accumulatorFunction a side-effect-free function of two arguments
      * @return the previous value
      * @throws NullPointerException if the accumulatorFunction itself the result of it is {@code null}.
@@ -137,7 +137,7 @@ public interface Property<T> extends ObservableValue<T> {
      * among threads. The
      * function is applied with the current value as its first argument, and the given update as the second argument.
      * 
-     * @param the update value
+     * @param x the update value
      * @param accumulatorFunction a side-effect-free function of two arguments
      * @return a transition object, containing both, the previous and the updated value
      * @throws NullPointerException if the accumulatorFunction itself the result of it is {@code null}.
