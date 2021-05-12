@@ -43,7 +43,7 @@ public class Properties {
      * @param <T>          the type of the {@link Property}
      * @return the new property
      */
-    public static <T> Property<T> property(T initialValue) {
+    public static <T> AtomicProperty<T> property(T initialValue) {
         return new SimpleProperty<>(initialValue);
     }
 
@@ -53,7 +53,7 @@ public class Properties {
      * @param <T> the type of the {@link Property}
      * @return the new property
      */
-    public static <T> Property<T> property() {
+    public static <T> AtomicProperty<T> property() {
         return new SimpleProperty<>(null);
     }
 

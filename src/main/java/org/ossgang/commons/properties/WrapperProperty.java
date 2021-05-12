@@ -61,9 +61,4 @@ public class WrapperProperty<T> implements Property<T>, ObservableValue<T> {
         return observableValue.subscribe(listener, options);
     }
 
-    @Override
-    public Transition<T> accumulate(T x, BinaryOperator<T> accumulatorFunction) {
-        // XXX Not sure yet what to do here ...?
-        throw new UnsupportedOperationException("accumulate currently not supperted on wrapped property ...");
-    }
 }

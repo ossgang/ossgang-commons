@@ -11,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Before;
 import org.junit.Test;
 import org.ossgang.commons.observables.Transition;
+import org.ossgang.commons.properties.AtomicProperty;
 import org.ossgang.commons.properties.Properties;
 import org.ossgang.commons.properties.Property;
 
@@ -20,7 +21,7 @@ public class SimplePropertyUpdatesTest {
     private static final String ANOTHER = "another";
 
     private CompletableFuture<String> updateValue = new CompletableFuture<>();
-    private Property<String> property = Properties.property();
+    private AtomicProperty<String> property = Properties.property();
 
     @Before
     public void setUp() {

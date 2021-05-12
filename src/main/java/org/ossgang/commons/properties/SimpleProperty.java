@@ -34,7 +34,7 @@ import org.ossgang.commons.observables.Transition;
  *
  * @param <T> the type of the property
  */
-public class SimpleProperty<T> extends DispatchingObservableValue<T> implements Property<T> {
+public class SimpleProperty<T> extends DispatchingObservableValue<T> implements AtomicProperty<T> {
     
     SimpleProperty(T initial) {
         super(initial);
