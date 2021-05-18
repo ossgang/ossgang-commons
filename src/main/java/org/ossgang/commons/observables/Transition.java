@@ -15,13 +15,14 @@ public class Transition<T> {
     private final T newValue;
 
     private Transition(T oldValue, T newValue) {
-        this.oldValue = oldValue; /* The old value is allowed to be null */
-        this.newValue = requireNonNull(newValue, "new value must not be null");
+        /* No null checks here. The knowledge which values can be null, are only in DispatchingObservableValue. */
+        this.oldValue = oldValue;
+        this.newValue = newValue;
     }
 
     /**
      * Factory method for a value transition.
-     * 
+     *
      * @param oldValue the old value (before the transition)
      * @param newValue the new value (after the transition)
      */

@@ -64,7 +64,6 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
 
     @Override
     protected void dispatchValue(T newValue) {
-        requireNonNull(newValue, "null value not allowed");
         accumulate(newValue, (old, update) -> update);
     }
 
