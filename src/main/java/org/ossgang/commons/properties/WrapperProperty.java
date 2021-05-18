@@ -22,14 +22,12 @@
 
 package org.ossgang.commons.properties;
 
-import java.util.function.BinaryOperator;
-import java.util.function.Consumer;
-
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observer;
 import org.ossgang.commons.observables.Subscription;
 import org.ossgang.commons.observables.SubscriptionOption;
-import org.ossgang.commons.observables.Transition;
+
+import java.util.function.Consumer;
 
 /**
  * A {@link Property} that will delegate its {@link Property#set(Object)}, {@link Property#get()} and {@link #subscribe(Observer, SubscriptionOption...)}
@@ -60,5 +58,4 @@ public class WrapperProperty<T> implements Property<T>, ObservableValue<T> {
     public Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options) {
         return observableValue.subscribe(listener, options);
     }
-
 }

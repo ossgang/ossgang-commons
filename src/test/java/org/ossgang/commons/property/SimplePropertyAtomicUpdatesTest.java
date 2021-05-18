@@ -15,7 +15,7 @@ import org.ossgang.commons.properties.AtomicProperty;
 import org.ossgang.commons.properties.Properties;
 import org.ossgang.commons.properties.Property;
 
-public class SimplePropertyUpdatesTest {
+public class SimplePropertyAtomicUpdatesTest {
 
     private static final String INITIAL = "initial";
     private static final String ANOTHER = "another";
