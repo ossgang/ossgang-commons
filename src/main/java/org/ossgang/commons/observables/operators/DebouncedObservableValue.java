@@ -18,9 +18,9 @@
 
 package org.ossgang.commons.observables.operators;
 
-import org.ossgang.commons.observables.DispatchingObservableValue;
-import org.ossgang.commons.observables.Observable;
-import org.ossgang.commons.observables.ObservableValue;
+import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
+import static org.ossgang.commons.observables.weak.WeakObservers.weakWithErrorAndSubscriptionCountHandling;
+import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
 import java.time.Duration;
 import java.util.concurrent.Executors;
@@ -29,9 +29,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
-import static org.ossgang.commons.observables.weak.WeakObservers.weakWithErrorAndSubscriptionCountHandling;
-import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
+import org.ossgang.commons.observables.DispatchingObservableValue;
+import org.ossgang.commons.observables.Observable;
+import org.ossgang.commons.observables.ObservableValue;
 
 /**
  * An {@link ObservableValue} that only dispatch those items dispatched by the source {@link ObservableValue} that are not

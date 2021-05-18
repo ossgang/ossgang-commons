@@ -23,14 +23,14 @@
 package org.ossgang.commons.observables;
 
 
-import org.ossgang.commons.monads.Maybe;
-import org.ossgang.commons.observables.operators.BlockingOperators;
-import org.ossgang.commons.observables.operators.DerivedObservableValue;
-
 import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import org.ossgang.commons.monads.Maybe;
+import org.ossgang.commons.observables.operators.BlockingOperators;
+import org.ossgang.commons.observables.operators.DerivedObservableValue;
 
 /**
  * An stream of objects of type T, which can be subscribed to by interested consumers.

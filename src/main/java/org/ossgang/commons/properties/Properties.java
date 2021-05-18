@@ -22,11 +22,11 @@
 
 package org.ossgang.commons.properties;
 
+import java.util.function.Consumer;
+
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observer;
 import org.ossgang.commons.observables.SubscriptionOption;
-
-import java.util.function.Consumer;
 
 /**
  * Static entry point to create properties.
@@ -43,7 +43,7 @@ public class Properties {
      * @param <T>          the type of the {@link Property}
      * @return the new property
      */
-    public static <T> Property<T> property(T initialValue) {
+    public static <T> AtomicProperty<T> property(T initialValue) {
         return new SimpleProperty<>(initialValue);
     }
 
@@ -53,7 +53,7 @@ public class Properties {
      * @param <T> the type of the {@link Property}
      * @return the new property
      */
-    public static <T> Property<T> property() {
+    public static <T> AtomicProperty<T> property() {
         return new SimpleProperty<>(null);
     }
 

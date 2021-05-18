@@ -1,5 +1,12 @@
 package org.ossgang.commons.observables;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.ossgang.commons.observables.exceptions.UnhandledException;
@@ -7,13 +14,6 @@ import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
 import org.ossgang.commons.observables.testing.TestObserver;
 import org.ossgang.commons.properties.Properties;
 import org.ossgang.commons.properties.Property;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeoutException;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class ExceptionHandlersTest {
 

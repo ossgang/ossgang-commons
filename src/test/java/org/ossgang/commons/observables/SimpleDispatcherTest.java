@@ -1,13 +1,13 @@
 package org.ossgang.commons.observables;
 
-import org.junit.Test;
-import org.ossgang.commons.monads.Maybe;
-
-import java.util.concurrent.CompletableFuture;
-
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.ossgang.commons.observables.Observers.forExceptions;
+
+import java.util.concurrent.CompletableFuture;
+
+import org.junit.Test;
+import org.ossgang.commons.monads.Maybe;
 
 public class SimpleDispatcherTest {
 

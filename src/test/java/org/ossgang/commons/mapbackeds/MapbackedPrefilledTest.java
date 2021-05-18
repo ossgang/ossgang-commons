@@ -1,13 +1,11 @@
 package org.ossgang.commons.mapbackeds;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
 import static org.ossgang.commons.mapbackeds.Mapbackeds.builder;
 import static org.ossgang.commons.mapbackeds.Mapbackeds.mapOf;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.ossgang.commons.mapbackeds.Mapbackeds.Builder;
 
 public class MapbackedPrefilledTest {
 

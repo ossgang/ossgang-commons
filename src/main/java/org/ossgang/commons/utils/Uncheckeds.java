@@ -1,15 +1,15 @@
 package org.ossgang.commons.utils;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
 import org.ossgang.commons.monads.ThrowingConsumer;
 import org.ossgang.commons.monads.ThrowingFunction;
 import org.ossgang.commons.monads.ThrowingPredicate;
 import org.ossgang.commons.monads.ThrowingRunnable;
 import org.ossgang.commons.monads.ThrowingSupplier;
-
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 /**
  * Utility class to transform Runnables, Suppliers, Consumers and Functions which can throw checked exceptions to their

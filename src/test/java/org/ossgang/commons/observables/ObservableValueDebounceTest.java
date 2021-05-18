@@ -18,14 +18,13 @@
 
 package org.ossgang.commons.observables;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
-import org.ossgang.commons.monads.Maybe;
-import org.ossgang.commons.observables.testing.TestObserver;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.Test;
+import org.ossgang.commons.monads.Maybe;
+import org.ossgang.commons.observables.testing.TestObserver;
 
 public class ObservableValueDebounceTest {
 

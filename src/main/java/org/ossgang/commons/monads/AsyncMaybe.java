@@ -18,14 +18,6 @@
 
 package org.ossgang.commons.monads;
 
-import java.time.Duration;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.concurrent.Executors.newCachedThreadPool;
@@ -34,6 +26,14 @@ import static org.ossgang.commons.utils.Uncheckeds.uncheckedConsumer;
 import static org.ossgang.commons.utils.Uncheckeds.uncheckedFunction;
 import static org.ossgang.commons.utils.Uncheckeds.uncheckedRunnable;
 import static org.ossgang.commons.utils.Uncheckeds.uncheckedSupplier;
+
+import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * This utility class implements the concept of a "Maybe" or "Try" {@link Optional} that can be resolved at some point

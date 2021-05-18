@@ -1,17 +1,17 @@
 package org.ossgang.commons.observables.operators;
 
-import org.ossgang.commons.monads.Maybe;
-import org.ossgang.commons.observables.Observable;
-import org.ossgang.commons.observables.Observer;
-import org.ossgang.commons.observables.Observers;
-import org.ossgang.commons.observables.Subscription;
+import static org.ossgang.commons.awaitables.Retry.retry;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.ossgang.commons.awaitables.Retry.retry;
+import org.ossgang.commons.monads.Maybe;
+import org.ossgang.commons.observables.Observable;
+import org.ossgang.commons.observables.Observer;
+import org.ossgang.commons.observables.Observers;
+import org.ossgang.commons.observables.Subscription;
 
 public final class BlockingOperators {
     private BlockingOperators() {

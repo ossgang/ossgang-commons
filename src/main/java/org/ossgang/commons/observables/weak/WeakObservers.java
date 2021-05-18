@@ -1,8 +1,8 @@
 package org.ossgang.commons.observables.weak;
 
-import org.ossgang.commons.observables.Observer;
-
 import java.util.function.BiConsumer;
+
+import org.ossgang.commons.observables.Observer;
 
 public class WeakObservers {
     private WeakObservers() {

@@ -1,15 +1,15 @@
 package org.ossgang.commons.observables.testing;
 
-import org.ossgang.commons.observables.ObservableValue;
-import org.ossgang.commons.observables.Observer;
-import org.ossgang.commons.observables.Subscription;
+import static org.ossgang.commons.awaitables.Await.await;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static org.ossgang.commons.awaitables.Await.await;
+import org.ossgang.commons.observables.ObservableValue;
+import org.ossgang.commons.observables.Observer;
+import org.ossgang.commons.observables.Subscription;
 
 /**
  * An {@link Observer} that is especially useful for testing {@link ObservableValue}s

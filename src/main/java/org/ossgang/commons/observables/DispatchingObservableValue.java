@@ -22,13 +22,18 @@
 
 package org.ossgang.commons.observables;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-
 import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.observables.SubscriptionOptions.ON_CHANGE;
 import static org.ossgang.commons.utils.Uncheckeds.uncheckedConsumer;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BinaryOperator;
 
 /**
  * A basic implementation of {@link ObservableValue}, based on {@link DispatchingObservable} to handle the update
@@ -51,18 +56,44 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
         Subscription subscription = super.subscribe(listener, options);
         if (optionSet.contains(FIRST_UPDATE)) {
-            Optional.ofNullable(lastValue.get()).ifPresent(uncheckedConsumer(value -> dispatch(listener::onValue, value).get()));
+            Optional.ofNullable(lastValue.get())
+                    .ifPresent(uncheckedConsumer(value -> dispatch(listener::onValue, value).get()));
         }
         return subscription;
     }
 
     @Override
     protected void dispatchValue(T newValue) {
-        requireNonNull(newValue, "null value not allowed");
-        if (Objects.equals(lastValue.getAndSet(newValue), newValue)) {
-            super.dispatchValue(newValue, s -> !s.contains(ON_CHANGE));
+        accumulate(newValue, (old, update) -> update);
+    }
+
+    /**
+     * This is the most generic way to update the internal reference: It uses and accumulator function to transit from
+     * the current value to a new one. The new value will be the result of the accumulator function with the current
+     * value as first parameter and the update value as second parameter.
+     * 
+     * @param x the update value
+     * @param accumulatorFunction a side-effect-free function of two arguments
+     * @return a transition object, containing both, the original value and the updated (new) value
+     */
+    protected Transition<T> accumulate(T x, BinaryOperator<T> accumulatorFunction) {
+        AtomicReference<T> newValue = new AtomicReference<>();
+        T oldValue = lastValue.getAndAccumulate(x, (old, update) -> {
+            T v = accumulatorFunction.apply(old, update);
+            requireNonNull(v, "updated value must not be null.");
+            newValue.set(v);
+            return v;
+        });
+        Transition<T> transition = Transition.fromTo(oldValue, newValue.get());
+        dispatch(transition);
+        return transition;
+    }
+
+    private void dispatch(Transition<T> transition) {
+        if (Objects.equals(transition.oldValue(), transition.newValue())) {
+            super.dispatchValue(transition.newValue(), s -> !s.contains(ON_CHANGE));
         } else {
-            super.dispatchValue(newValue);
+            super.dispatchValue(transition.newValue());
         }
     }
 

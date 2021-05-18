@@ -4,8 +4,8 @@ import static java.util.Objects.requireNonNull;
 import static org.ossgang.commons.mapbackeds.MapbackedInternals.toStringMethod;
 
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -25,7 +26,7 @@ import java.util.Set;
  * <li>delegate calls to default methods of the proxied interface to the real implementations</li>
  * </ul>
  */
-class MapbackedObject implements InvocationHandler {
+final class MapbackedObject implements InvocationHandler {
 
     private final Class<?> intfc;
     private final Map<String, Object> fieldValues;
@@ -100,10 +101,13 @@ class MapbackedObject implements InvocationHandler {
         if (obj == null) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+        
+        Optional<MapbackedObject> handler = Mapbackeds.handlerFrom(obj);
+        if(!handler.isPresent()) {
             return false;
         }
-        MapbackedObject other = (MapbackedObject) obj;
+        
+        MapbackedObject other = handler.get();
         return Objects.equals(fieldMethods, other.fieldMethods) && Objects.equals(fieldValues, other.fieldValues)
                 && Objects.equals(intfc, other.intfc);
     }

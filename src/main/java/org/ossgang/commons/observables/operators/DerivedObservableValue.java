@@ -1,18 +1,18 @@
 package org.ossgang.commons.observables.operators;
 
-import org.ossgang.commons.observables.DispatchingObservableValue;
-import org.ossgang.commons.observables.Observable;
-import org.ossgang.commons.observables.ObservableValue;
+import static java.util.Collections.singletonMap;
+import static org.ossgang.commons.monads.Maybe.attempt;
+import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
+import static org.ossgang.commons.observables.weak.WeakObservers.weakWithErrorAndSubscriptionCountHandling;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static java.util.Collections.singletonMap;
-import static org.ossgang.commons.monads.Maybe.attempt;
-import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
-import static org.ossgang.commons.observables.weak.WeakObservers.weakWithErrorAndSubscriptionCountHandling;
+import org.ossgang.commons.observables.DispatchingObservableValue;
+import org.ossgang.commons.observables.Observable;
+import org.ossgang.commons.observables.ObservableValue;
 
 /**
  * An {@link ObservableValue} which gets its data from a parent (upstream) {@link ObservableValue} or {@link Observable},

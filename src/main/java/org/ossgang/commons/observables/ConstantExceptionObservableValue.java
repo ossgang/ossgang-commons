@@ -1,8 +1,8 @@
 package org.ossgang.commons.observables;
 
-import org.ossgang.commons.observables.exceptions.UnhandledException;
-
 import static org.ossgang.commons.observables.ExceptionHandlers.dispatchToUncaughtExceptionHandler;
+
+import org.ossgang.commons.observables.exceptions.UnhandledException;
 
 /**
  * An immutable implementation of {@link ObservableValue} which always returns null on get(),

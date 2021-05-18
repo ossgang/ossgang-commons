@@ -1,8 +1,8 @@
 package org.ossgang.commons.observables.operators.connectors;
 
-import org.ossgang.commons.observables.ObservableValue;
-
 import java.util.function.Supplier;
+
+import org.ossgang.commons.observables.ObservableValue;
 
 /**
  * Static support class for dealing with {@link ConnectorObservableValue}s
