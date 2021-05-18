@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.com/ossgang/ossgang-commons.svg?branch=master)](https://travis-ci.com/ossgang/ossgang-commons)
+[![Latest release](https://img.shields.io/github/release/ossgang/ossgang-commons.svg?maxAge=1000)](https://github.com/ossgang/ossgang-commons/releases)
+[![Maven Central](https://img.shields.io/maven-central/v/org.ossgang/ossgang-commons)](https://search.maven.org/artifact/org.ossgang/ossgang-commons) |
 
 # ossgang-commons
 A set of shared common classes.
