@@ -1,6 +1,9 @@
 package org.ossgang.commons;
 
+import org.ossgang.commons.awaitables.Await;
+
 import java.lang.ref.WeakReference;
+import java.time.Duration;
 
 /**
  * Test Creation Utility For GC-bases Tests
@@ -17,9 +20,13 @@ public class GcTests {
     public static void forceGc() {
         for (int run = 0; run < 10; run++) {
             WeakReference<?> ref = new WeakReference<>(new Object());
-            while (ref.get() != null) {
+            Await.await(() -> {
                 System.gc();
-            }
+                return ref.get() == null;
+            }).withErrorMessage("Weak ref should have been collected already!")
+                    .withRetryInterval(Duration.ofMillis(100))
+                    .withRetryCount(100)
+                    .indefinitely();
         }
     }
 

@@ -64,11 +64,6 @@ class WeakMethodReferenceObserver<C, T> implements Observer<T> {
     }
 
     @Override
-    public void onValue(T t) {
-        dispatch(valueConsumer, t);
-    }
-
-    @Override
     public void onException(Throwable t) {
         dispatch(exceptionConsumer, t);
     }
@@ -77,7 +72,7 @@ class WeakMethodReferenceObserver<C, T> implements Observer<T> {
     public void onSubscribe(Subscription subscription) {
         synchronized (subscriptions) {
             subscriptions.add(subscription);
-            Optional.ofNullable(holder.get()).ifPresent(h -> subscriptionCountUpdated.accept(h, subscriptions.size()));
+            Optional.ofNullable(holderRef.get()).ifPresent(h -> subscriptionCountUpdated.accept(h, subscriptions.size()));
         }
     }
 
@@ -85,19 +80,39 @@ class WeakMethodReferenceObserver<C, T> implements Observer<T> {
     public void onUnsubscribe(Subscription subscription) {
         synchronized (subscriptions) {
             subscriptions.remove(subscription);
-            Optional.ofNullable(holder.get()).ifPresent(h -> subscriptionCountUpdated.accept(h, subscriptions.size()));
+            Optional.ofNullable(holderRef.get()).ifPresent(h -> subscriptionCountUpdated.accept(h, subscriptions.size()));
         }
     }
 
     private <X> void dispatch(BiConsumer<? super C, X> consumer, X item) {
-        C holderInstance = holder.get();
+        C holderInstance = holderRef.get();
         if (holderInstance != null) {
             consumer.accept(holderInstance, item);
         } else {
-            synchronized (subscriptions) {
-                subscriptions.forEach(Subscription::unsubscribe);
-                subscriptions.clear();
-            }
+            unsubscribeAll();
         }
     }
+
+    private static class ObserverPhantomReference<C> extends PhantomReference<C> {
+
+        private final Runnable finalizeAction;
+        private final ReferenceQueue<? super C> referenceQueue;
+
+        public ObserverPhantomReference(C holder, Runnable finalizeAction, ReferenceQueue<? super C> referenceQueue) {
+            super(holder, referenceQueue);
+            this.finalizeAction = finalizeAction;
+            this.referenceQueue = referenceQueue;
+        }
+
+        public boolean attemptFinalize() {
+            Reference<?> ref = referenceQueue.poll();
+            if (ref != null) {
+                finalizeAction.run();
+                return true;
+            }
+            return false;
+        }
+
+    }
+
 }
