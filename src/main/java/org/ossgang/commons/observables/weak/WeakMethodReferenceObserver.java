@@ -57,13 +57,13 @@ import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFac
  */
 class WeakMethodReferenceObserver<C, T> implements Observer<T> {
 
-    private static final ScheduledExecutorService PHANTOM_REFERENCE_CLEANUP_EXECUTOR = newSingleThreadScheduledExecutor(
+    private static final ScheduledExecutorService REFERENCE_CLEANUP_EXECUTOR = newSingleThreadScheduledExecutor(
             daemonThreadFactoryWithPrefix("ossgang-weak-observer-cleanup"));
-    private static final Set<WeakCleaner> CLEANER_REFERENCES = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final Set<WeakCleaner> REFERENCE_CLEANERS = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     static {
-        PHANTOM_REFERENCE_CLEANUP_EXECUTOR.scheduleAtFixedRate(
-                () -> CLEANER_REFERENCES.removeIf(WeakCleaner::attemptToClean),
+        REFERENCE_CLEANUP_EXECUTOR.scheduleAtFixedRate(
+                () -> REFERENCE_CLEANERS.removeIf(WeakCleaner::attemptToClean),
                 1, 1, TimeUnit.SECONDS);
     }
 
@@ -80,7 +80,7 @@ class WeakMethodReferenceObserver<C, T> implements Observer<T> {
         this.valueConsumer = valueConsumer;
         this.exceptionConsumer = exceptionConsumer;
         this.subscriptionCountUpdated = subscriptionCountUpdated;
-        CLEANER_REFERENCES.add(new WeakCleaner(holderRef, this::unsubscribeAll));
+        REFERENCE_CLEANERS.add(new WeakCleaner(holderRef, this::unsubscribeAll));
     }
 
     private void unsubscribeAll() {
@@ -135,9 +135,9 @@ class WeakMethodReferenceObserver<C, T> implements Observer<T> {
             this.cleanupAction = cleanupAction;
         }
 
-        public static boolean attemptToClean(WeakCleaner weakCleaner) {
-            if (weakCleaner.holderRef.get() == null) {
-                Maybe.attempt(weakCleaner.cleanupAction::run);
+        public boolean attemptToClean() {
+            if (holderRef.get() == null) {
+                Maybe.attempt(cleanupAction::run);
                 return true;
             }
             return false;
