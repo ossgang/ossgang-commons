@@ -22,14 +22,24 @@
 
 package org.ossgang.commons.observables.weak;
 
+import org.ossgang.commons.observables.Observer;
+import org.ossgang.commons.observables.Subscription;
+
+import java.lang.ref.PhantomReference;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
-import org.ossgang.commons.observables.Observer;
-import org.ossgang.commons.observables.Subscription;
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
 /**
  * An observer based on a weak reference to an object, and class method references to consumers for values (and,
@@ -48,7 +58,18 @@ import org.ossgang.commons.observables.Subscription;
  * subscription will be kept alive.
  */
 class WeakMethodReferenceObserver<C, T> implements Observer<T> {
-    private final WeakReference<C> holder;
+
+    private static final ScheduledExecutorService PHANTOM_REFERENCE_CLEANUP_EXECUTOR = newSingleThreadScheduledExecutor(
+            daemonThreadFactoryWithPrefix("ossgang-weak-observer-cleanup"));
+    private static final Set<ObserverPhantomReference<?>> PHANTOM_REFERENCES = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    static {
+        PHANTOM_REFERENCE_CLEANUP_EXECUTOR.scheduleAtFixedRate(
+                () -> PHANTOM_REFERENCES.removeIf(ObserverPhantomReference::attemptFinalize),
+                1, 1, TimeUnit.SECONDS);
+    }
+
+    private final WeakReference<C> holderRef;
     private final BiConsumer<? super C, T> valueConsumer;
     private final BiConsumer<? super C, Throwable> exceptionConsumer;
     private final BiConsumer<? super C, Integer> subscriptionCountUpdated;
@@ -57,10 +78,23 @@ class WeakMethodReferenceObserver<C, T> implements Observer<T> {
     WeakMethodReferenceObserver(C holder, BiConsumer<? super C, T> valueConsumer,
                                 BiConsumer<? super C, Throwable> exceptionConsumer,
                                 BiConsumer<? super C, Integer> subscriptionCountUpdated) {
-        this.holder = new WeakReference<>(holder);
+        this.holderRef = new WeakReference<>(holder);
         this.valueConsumer = valueConsumer;
         this.exceptionConsumer = exceptionConsumer;
         this.subscriptionCountUpdated = subscriptionCountUpdated;
+        PHANTOM_REFERENCES.add(new ObserverPhantomReference<>(holder, this::unsubscribeAll, new ReferenceQueue<>()));
+    }
+
+    private void unsubscribeAll() {
+        synchronized (subscriptions) {
+            subscriptions.forEach(Subscription::unsubscribe);
+            subscriptions.clear();
+        }
+    }
+
+    @Override
+    public void onValue(T t) {
+        dispatch(valueConsumer, t);
     }
 
     @Override
