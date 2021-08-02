@@ -22,12 +22,10 @@
 
 package org.ossgang.commons.observables.weak;
 
+import org.ossgang.commons.monads.Maybe;
 import org.ossgang.commons.observables.Observer;
 import org.ossgang.commons.observables.Subscription;
 
-import java.lang.ref.PhantomReference;
-import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashSet;
@@ -61,11 +59,11 @@ class WeakMethodReferenceObserver<C, T> implements Observer<T> {
 
     private static final ScheduledExecutorService PHANTOM_REFERENCE_CLEANUP_EXECUTOR = newSingleThreadScheduledExecutor(
             daemonThreadFactoryWithPrefix("ossgang-weak-observer-cleanup"));
-    private static final Set<ObserverPhantomReference<?>> PHANTOM_REFERENCES = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final Set<WeakCleaner> CLEANER_REFERENCES = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     static {
         PHANTOM_REFERENCE_CLEANUP_EXECUTOR.scheduleAtFixedRate(
-                () -> PHANTOM_REFERENCES.removeIf(ObserverPhantomReference::attemptFinalize),
+                () -> CLEANER_REFERENCES.removeIf(WeakCleaner::attemptToClean),
                 1, 1, TimeUnit.SECONDS);
     }
 
@@ -82,7 +80,7 @@ class WeakMethodReferenceObserver<C, T> implements Observer<T> {
         this.valueConsumer = valueConsumer;
         this.exceptionConsumer = exceptionConsumer;
         this.subscriptionCountUpdated = subscriptionCountUpdated;
-        PHANTOM_REFERENCES.add(new ObserverPhantomReference<>(holder, this::unsubscribeAll, new ReferenceQueue<>()));
+        CLEANER_REFERENCES.add(new WeakCleaner(holderRef, this::unsubscribeAll));
     }
 
     private void unsubscribeAll() {
@@ -127,26 +125,23 @@ class WeakMethodReferenceObserver<C, T> implements Observer<T> {
         }
     }
 
-    private static class ObserverPhantomReference<C> extends PhantomReference<C> {
+    private static class WeakCleaner {
 
-        private final Runnable finalizeAction;
-        private final ReferenceQueue<? super C> referenceQueue;
+        private final WeakReference<?> holderRef;
+        private final Runnable cleanupAction;
 
-        public ObserverPhantomReference(C holder, Runnable finalizeAction, ReferenceQueue<? super C> referenceQueue) {
-            super(holder, referenceQueue);
-            this.finalizeAction = finalizeAction;
-            this.referenceQueue = referenceQueue;
+        public WeakCleaner(WeakReference<?> holderRef, Runnable cleanupAction) {
+            this.holderRef = holderRef;
+            this.cleanupAction = cleanupAction;
         }
 
-        public boolean attemptFinalize() {
-            Reference<?> ref = referenceQueue.poll();
-            if (ref != null) {
-                finalizeAction.run();
+        public static boolean attemptToClean(WeakCleaner weakCleaner) {
+            if (weakCleaner.holderRef.get() == null) {
+                Maybe.attempt(weakCleaner.cleanupAction::run);
                 return true;
             }
             return false;
         }
 
     }
-
 }
