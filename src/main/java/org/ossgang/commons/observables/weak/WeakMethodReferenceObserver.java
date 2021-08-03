@@ -57,17 +57,16 @@ import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFac
  */
 class WeakMethodReferenceObserver<C, T> implements Observer<T> {
 
+    private static final String CLEANUP_PERIOD_SYS_PROPERTY = "org.ossgang.commons.observables.weak_cleanup_period";
     private static final int DEFAULT_CLEANUP_PERIOD = 30;
     private static final ScheduledExecutorService REFERENCE_CLEANUP_EXECUTOR = newSingleThreadScheduledExecutor(
             daemonThreadFactoryWithPrefix("ossgang-weak-observer-cleanup"));
     private static final Set<WeakCleaner> REFERENCE_CLEANERS = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
+
     static {
-        Integer cleanupPeriod = Maybe.attempt(() -> Integer.parseInt(System.getProperty("ossgang-weak-reference-cleanup-seconds")))
-                .recover(e -> DEFAULT_CLEANUP_PERIOD)
-                .value();
-        REFERENCE_CLEANUP_EXECUTOR.scheduleAtFixedRate(
-                () -> REFERENCE_CLEANERS.removeIf(WeakCleaner::attemptToClean),
+        Integer cleanupPeriod = Integer.getInteger(CLEANUP_PERIOD_SYS_PROPERTY, DEFAULT_CLEANUP_PERIOD);
+        REFERENCE_CLEANUP_EXECUTOR.scheduleAtFixedRate(() -> REFERENCE_CLEANERS.removeIf(WeakCleaner::attemptToClean),
                 cleanupPeriod, cleanupPeriod, TimeUnit.SECONDS);
     }
 

@@ -1,5 +1,7 @@
 package org.ossgang.commons.observables.weak;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.ossgang.commons.awaitables.Await;
 import org.ossgang.commons.observables.Dispatcher;
@@ -13,6 +15,16 @@ import static java.time.Duration.ofSeconds;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WeakObserverTest {
+
+    @Before
+    public void setUp() {
+        System.setProperty("org.ossgang.commons.observables.weak_cleanup_period", "1");
+    }
+
+    @After
+    public void tearDown() {
+        System.clearProperty("org.ossgang.commons.observables.weak_cleanup_period");
+    }
 
     @Test
     public void weakObserver_shouldGetGCd() {
