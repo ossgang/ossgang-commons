@@ -23,8 +23,10 @@
 package org.ossgang.commons.observables.weak;
 
 import org.ossgang.commons.monads.Maybe;
+import org.ossgang.commons.observables.ExceptionHandlers;
 import org.ossgang.commons.observables.Observer;
 import org.ossgang.commons.observables.Subscription;
+import org.ossgang.commons.observables.exceptions.UnhandledException;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;
@@ -58,22 +60,33 @@ import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFac
 class WeakMethodReferenceObserver<C, T> implements Observer<T> {
 
     /* Visible for testing */
-    static final int DEFAULT_CLEANUP_PERIOD = 30;
+    static final int DEFAULT_CLEANUP_PERIOD_SEC = 30;
     private static final String CLEANUP_PERIOD_SYS_PROPERTY = "org.ossgang.commons.observables.weak_cleanup_period";
     private static final Set<WeakCleaner> REFERENCE_CLEANERS = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private static final ScheduledExecutorService REFERENCE_CLEANUP_EXECUTOR = newSingleThreadScheduledExecutor(
             daemonThreadFactoryWithPrefix("ossgang-weak-observer-cleanup"));
 
     static {
-        Integer cleanupPeriod = Integer.getInteger(CLEANUP_PERIOD_SYS_PROPERTY, DEFAULT_CLEANUP_PERIOD);
-        REFERENCE_CLEANUP_EXECUTOR.scheduleAtFixedRate(() -> REFERENCE_CLEANERS.removeIf(WeakCleaner::attemptToClean),
-                cleanupPeriod, cleanupPeriod, TimeUnit.SECONDS);
+        Integer cleanupPeriod = Integer.getInteger(CLEANUP_PERIOD_SYS_PROPERTY, DEFAULT_CLEANUP_PERIOD_SEC);
+        Runnable cleanupRunnable = () -> REFERENCE_CLEANERS.removeIf(c -> c.attemptToClean()
+                .ifException(WeakMethodReferenceObserver::dispatchToUncaughtExceptionHandler)
+                .optionalValue().orElse(false));
+        REFERENCE_CLEANUP_EXECUTOR.scheduleAtFixedRate(cleanupRunnable, cleanupPeriod, cleanupPeriod, TimeUnit.SECONDS);
+    }
+
+    private static void dispatchToUncaughtExceptionHandler(Throwable t) {
+        if (t instanceof UnhandledException) {
+            ExceptionHandlers.dispatchToUncaughtExceptionHandler((UnhandledException) t);
+        } else {
+            ExceptionHandlers.dispatchToUncaughtExceptionHandler(new UnhandledException(t));
+        }
     }
 
     private final WeakReference<C> holderRef;
     private final BiConsumer<? super C, T> valueConsumer;
     private final BiConsumer<? super C, Throwable> exceptionConsumer;
     private final BiConsumer<? super C, Integer> subscriptionCountUpdated;
+
     private final Set<Subscription> subscriptions = new HashSet<>();
 
     WeakMethodReferenceObserver(C holder, BiConsumer<? super C, T> valueConsumer,
@@ -138,13 +151,15 @@ class WeakMethodReferenceObserver<C, T> implements Observer<T> {
             this.cleanupAction = cleanupAction;
         }
 
-        public boolean attemptToClean() {
-            if (holderRef.get() == null) {
-                Maybe.attempt(cleanupAction::run);
-                return true;
-            }
-            return false;
+        public Maybe<Boolean> attemptToClean() {
+            return Maybe.attempt(() -> {
+                if (holderRef.get() == null) {
+                    cleanupAction.run();
+                    return true;
+                }
+                return false;
+            });
         }
-
     }
+
 }

@@ -3,14 +3,14 @@ package org.ossgang.commons.observables;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-final class ExceptionHandlers {
+public final class ExceptionHandlers {
     private static volatile Consumer<Exception> uncaughtExceptionHandler = ExceptionHandlers::printExceptionToStderr;
 
     private ExceptionHandlers() {
         throw new UnsupportedOperationException("static only");
     }
 
-    static void dispatchToUncaughtExceptionHandler(Exception exception) {
+    public static void dispatchToUncaughtExceptionHandler(Exception exception) {
         try {
             uncaughtExceptionHandler.accept(exception);
         } catch (Exception e) {
