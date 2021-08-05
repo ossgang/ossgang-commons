@@ -20,12 +20,9 @@
  ******************************************************************************/
 // @formatter:on
 
-package org.ossgang.commons.observables.weak;
+package org.ossgang.commons.observables;
 
 import org.ossgang.commons.monads.Maybe;
-import org.ossgang.commons.observables.ExceptionHandlers;
-import org.ossgang.commons.observables.Observer;
-import org.ossgang.commons.observables.Subscription;
 import org.ossgang.commons.observables.exceptions.UnhandledException;
 
 import java.lang.ref.WeakReference;

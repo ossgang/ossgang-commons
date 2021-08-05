@@ -1,10 +1,7 @@
-package org.ossgang.commons.observables.weak;
+package org.ossgang.commons.observables;
 
 import org.junit.Test;
 import org.ossgang.commons.awaitables.Await;
-import org.ossgang.commons.observables.Dispatcher;
-import org.ossgang.commons.observables.Observables;
-import org.ossgang.commons.observables.Subscription;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.CountDownLatch;
@@ -14,7 +11,7 @@ import java.util.function.Consumer;
 
 import static java.time.Duration.ofSeconds;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.ossgang.commons.observables.weak.WeakMethodReferenceObserver.DEFAULT_CLEANUP_PERIOD_SEC;
+import static org.ossgang.commons.observables.WeakMethodReferenceObserver.DEFAULT_CLEANUP_PERIOD_SEC;
 
 public class WeakObserverTest {
 
@@ -42,7 +39,7 @@ public class WeakObserverTest {
                 .atMost(ofSeconds(DEFAULT_CLEANUP_PERIOD_SEC * 2));
 
         assertThat(unSubscribed.await(DEFAULT_CLEANUP_PERIOD_SEC * 2, TimeUnit.SECONDS))
-                .as("Subscriber should have been unsubscribed by now..")
+                .as("Subscriber should have been unsubscribed by now because the holder was collected")
                 .isTrue();
     }
 
