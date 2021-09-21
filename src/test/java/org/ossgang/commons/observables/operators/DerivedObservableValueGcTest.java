@@ -146,13 +146,44 @@ public class DerivedObservableValueGcTest {
 
     @SuppressWarnings("UnusedAssignment")
     @Test
+    public void gcWithMultipleDerivationsWhileSubscribedAndSubscriptionReferences_shouldPreventGc() throws Exception {
+        Property<String> property = Properties.property("42");
+        ObservableValue<String> step1 = property.map(identity());
+        ObservableValue<Integer> step2 = step1.map(Integer::parseInt);
+        ObservableValue<Integer> step3 = step2.filter(any -> true);
+
+        Subscription subscriptionThatShouldPreventGc = step3.subscribe(this::handleUpdate);
+
+        WeakReference<?> step1ref = new WeakReference<>(step1);
+        step1 = null;
+        WeakReference<?> step2ref = new WeakReference<>(step2);
+        step2 = null;
+        WeakReference<?> step3ref = new WeakReference<>(step3);
+        step3 = null;
+        WeakReference<Property<String>> propertyRef = new WeakReference<>(property);
+        property = null;
+
+        forceGc();
+        assertThat(subscriptionThatShouldPreventGc).isNotNull();
+
+        property = propertyRef.get();
+        assertThat(property).isNotNull();
+        assertThat(step1ref.get()).isNotNull();
+        assertThat(step2ref.get()).isNotNull();
+        assertThat(step3ref.get()).isNotNull();
+        property.set("1");
+        assertThat(methodReferenceUpdateValue.get(5, SECONDS)).isEqualTo(1);
+    }
+
+    @SuppressWarnings("UnusedAssignment")
+    @Test
     public void gcWithMultipleDerivationsWhileSubscribedAndNoStageReferenced_shouldGc() throws Exception {
         Property<String> property = Properties.property("42");
         ObservableValue<String> step1 = property.map(identity());
         ObservableValue<Integer> step2 = step1.map(Integer::parseInt);
         ObservableValue<Integer> step3 = step2.filter(any -> true);
 
-        Subscription subscriptionThatShouldNotPreventGc = step3.subscribe(this::handleUpdate);
+        step3.subscribe(this::handleUpdate);
 
         WeakReference<?> step1ref = new WeakReference<>(step1);
         step1 = null;
@@ -172,7 +203,5 @@ public class DerivedObservableValueGcTest {
         assertThat(step1ref.get()).isNull();
         assertThat(step2ref.get()).isNull();
         assertThat(step3ref.get()).isNull();
-        subscriptionThatShouldNotPreventGc.unsubscribe();
-        assertThat(subscriptionThatShouldNotPreventGc).isNotNull();
     }
 }

@@ -138,18 +138,18 @@ public class DispatchingObservable<T> implements Observable<T> {
     private static class ObservableSubscription<T> implements Subscription {
         private final Observer<? super T> listener;
         private final Set<SubscriptionOption> options;
-        private final WeakReference<DispatchingObservable<T>> observable;
+        private final DispatchingObservable<T> observable;
 
         private ObservableSubscription(DispatchingObservable<T> observable, Observer<? super T> listener,
                 Set<SubscriptionOption> options) {
-            this.observable = new WeakReference<>(observable);
+            this.observable = observable;
             this.listener = listener;
             this.options = options;
         }
 
         @Override
         public void unsubscribe() {
-            Optional.ofNullable(observable.get()).ifPresent(obs -> obs.removeListener(listener));
+            observable.removeListener(listener);
             listener.onUnsubscribe(this);
         }
     }

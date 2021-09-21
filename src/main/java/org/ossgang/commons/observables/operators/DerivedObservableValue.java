@@ -19,6 +19,7 @@ import org.ossgang.commons.observables.DispatchingObservableValue;
 import org.ossgang.commons.observables.Observable;
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observer;
+import org.ossgang.commons.observables.Subscription;
 import org.ossgang.commons.observables.SubscriptionOption;
 
 /**
@@ -40,7 +41,7 @@ public class DerivedObservableValue<K, I, O> extends DispatchingObservableValue<
     private static final Object SINGLE = new Object();
     private final List<PossiblyWeakObserver<DerivedObservableValue<K, I, O>, I>> sourceObservers;
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    private final List<Observable<I>> sourceObservables; /* just used to hold strong references upstream */
+    private final List<Subscription> sourceSubscriptions; /* just used to hold strong references upstream */
 
     private int subscriptionCount = 0;
 
@@ -49,14 +50,13 @@ public class DerivedObservableValue<K, I, O> extends DispatchingObservableValue<
         super(null);
         this.mapper = mapper;
         this.sourceObservers = new ArrayList<>();
-        this.sourceObservables = new ArrayList<>();
+        this.sourceSubscriptions = new ArrayList<>();
         sourceObservables.forEach((key, obs) -> {
-            this.sourceObservables.add(obs);
             PossiblyWeakObserver<DerivedObservableValue<K, I, O>, I> observer = new PossiblyWeakObserver<>(this,
                     (self,item) -> self.deriveUpdate(key, item),
                     (self, exception) -> self.dispatchException(exception));
-            obs.subscribe(observer, FIRST_UPDATE);
             this.sourceObservers.add(observer);
+            this.sourceSubscriptions.add(obs.subscribe(observer, FIRST_UPDATE));
         });
     }
 
