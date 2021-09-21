@@ -22,20 +22,20 @@
 
 package org.ossgang.commons.observables;
 
-import static java.util.Collections.newSetFromMap;
 import static java.util.concurrent.Executors.newCachedThreadPool;
 import static org.ossgang.commons.observables.ExceptionHandlers.dispatchToUncaughtExceptionHandler;
 import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -52,11 +52,9 @@ import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
  * @param <T> the type of the observable
  */
 public class DispatchingObservable<T> implements Observable<T> {
-    private static final Set<Observable<?>> GC_PROTECTION = newSetFromMap(new ConcurrentHashMap<>());
-    private static final ExecutorService DISPATCHER_POOL =
-            newCachedThreadPool(daemonThreadFactoryWithPrefix("ossgang-Observable-dispatcher"));
-    private final Map<Observer<? super T>, ObservableSubscription> listeners = new ConcurrentHashMap<>();
-    private final AtomicInteger listenerCount = new AtomicInteger(0);
+    private static final ExecutorService DISPATCHER_POOL = newCachedThreadPool(
+            daemonThreadFactoryWithPrefix("ossgang-Observable-dispatcher-"));
+    private final Map<Observer<? super T>, ObservableSubscription<T>> listeners = new ConcurrentHashMap<>();
 
     protected DispatchingObservable() {
     }
@@ -70,20 +68,25 @@ public class DispatchingObservable<T> implements Observable<T> {
     }
 
     private ObservableSubscription addListener(Observer<? super T> listener, Set<SubscriptionOption> options) {
-        ObservableSubscription subscription = new ObservableSubscription(listener, options);
-        listeners.put(listener, subscription);
-        if (listenerCount.getAndIncrement() == 0) {
-            GC_PROTECTION.add(this);
+        ObservableSubscription<T> subscription = new ObservableSubscription<>(this, listener, options);
+        if(listeners.put(listener, subscription) == null) {
+            subscriptionAdded(listener, options);
         }
         return subscription;
     }
 
     private void removeListener(Observer<? super T> listener) {
-        if (listeners.remove(listener) != null) {
-            if (listenerCount.decrementAndGet() == 0) {
-                GC_PROTECTION.remove(this);
-            }
+        if(listeners.remove(listener) != null) {
+            subscriptionRemoved(listener);
         }
+    }
+
+    protected void subscriptionAdded(Observer<? super T> listener, Set<SubscriptionOption> options) {
+        /* no op */
+    }
+
+    protected void subscriptionRemoved(Observer<? super T> listener) {
+        /* no op */
     }
 
     protected void unsubscribeAllObservers() {
@@ -132,19 +135,21 @@ public class DispatchingObservable<T> implements Observable<T> {
         });
     }
 
-
-    private class ObservableSubscription implements Subscription {
+    private static class ObservableSubscription<T> implements Subscription {
         private final Observer<? super T> listener;
         private final Set<SubscriptionOption> options;
+        private final WeakReference<DispatchingObservable<T>> observable;
 
-        private ObservableSubscription(Observer<? super T> listener, Set<SubscriptionOption> options) {
+        private ObservableSubscription(DispatchingObservable<T> observable, Observer<? super T> listener,
+                Set<SubscriptionOption> options) {
+            this.observable = new WeakReference<>(observable);
             this.listener = listener;
             this.options = options;
         }
 
         @Override
         public void unsubscribe() {
-            removeListener(listener);
+            Optional.ofNullable(observable.get()).ifPresent(obs -> obs.removeListener(listener));
             listener.onUnsubscribe(this);
         }
     }
