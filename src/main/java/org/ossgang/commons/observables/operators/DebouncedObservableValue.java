@@ -18,19 +18,17 @@
 
 package org.ossgang.commons.observables.operators;
 
-import org.ossgang.commons.observables.DispatchingObservableValue;
 import org.ossgang.commons.observables.Observable;
 import org.ossgang.commons.observables.ObservableValue;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.ossgang.commons.observables.Observers.weakWithErrorAndSubscriptionCountHandling;
-import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
 /**
@@ -41,38 +39,27 @@ import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFac
  *
  * @param <T> the type of the {@link ObservableValue}
  */
-public class DebouncedObservableValue<T> extends DispatchingObservableValue<T> {
+public class DebouncedObservableValue<T> extends AbstractOperatorObservableValue<Object, T, T> {
 
     private final ScheduledExecutorService debouncerExecutor;
-
     private final AtomicReference<ScheduledFuture<?>> callback;
     private final long debouncePeriodMs;
 
     public DebouncedObservableValue(Observable<T> source, Duration debouncePeriod) {
-        super(null);
         this.debouncePeriodMs = debouncePeriod.toMillis();
         this.callback = new AtomicReference<>();
         this.debouncerExecutor = Executors.newSingleThreadScheduledExecutor(daemonThreadFactoryWithPrefix("ossgang-Observable-debounce-" + System.identityHashCode(this) + "-"));
-        source.subscribe(weakWithErrorAndSubscriptionCountHandling(this,
-                DebouncedObservableValue::debounceValue,
-                DebouncedObservableValue::dispatchException,
-                DebouncedObservableValue::upstreamObserverSubscriptionCountChanged), FIRST_UPDATE);
+        super.subscribeUpstreamWithFirstUpdate(Collections.singletonMap(new Object(), source));
     }
 
-    private void debounceValue(T s) {
+    @Override
+    protected void applyOperation(Object key, T item) {
         callback.updateAndGet(scheduledCallback -> {
             if (scheduledCallback != null) {
                 scheduledCallback.cancel(false);
             }
-            return debouncerExecutor.schedule(() -> dispatchValue(s), debouncePeriodMs, TimeUnit.MILLISECONDS);
+            return debouncerExecutor.schedule(() -> dispatchValue(item), debouncePeriodMs, TimeUnit.MILLISECONDS);
         });
     }
 
-    private void upstreamObserverSubscriptionCountChanged(int refCount) {
-        if (refCount == 0) {
-            /* the upstream subscription was terminated. terminate downstream subscriptions, eventually
-               allowing GC'ing this derived value. */
-            unsubscribeAllObservers();
-        }
-    }
 }

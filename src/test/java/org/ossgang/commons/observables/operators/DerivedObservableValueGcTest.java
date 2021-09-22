@@ -1,17 +1,5 @@
 package org.ossgang.commons.observables.operators;
 
-import static java.lang.Integer.parseInt;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.function.Function.identity;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.ossgang.commons.GcTests.forceGc;
-import static org.ossgang.commons.observables.operators.DerivedObservableValue.derive;
-
-import java.lang.ref.WeakReference;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.junit.Test;
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observer;
@@ -19,6 +7,18 @@ import org.ossgang.commons.observables.Subscription;
 import org.ossgang.commons.observables.SubscriptionOption;
 import org.ossgang.commons.properties.Properties;
 import org.ossgang.commons.properties.Property;
+
+import java.lang.ref.WeakReference;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static java.lang.Integer.parseInt;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.function.Function.identity;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.GcTests.forceGc;
+import static org.ossgang.commons.observables.operators.DerivedObservableValue.derive;
 
 public class DerivedObservableValueGcTest {
     private CompletableFuture<Integer> methodReferenceUpdateValue = new CompletableFuture<>();
@@ -203,5 +203,63 @@ public class DerivedObservableValueGcTest {
         assertThat(step1ref.get()).isNull();
         assertThat(step2ref.get()).isNull();
         assertThat(step3ref.get()).isNull();
+    }
+
+    @Test
+    public void gcMultipleDerivationWithoutSubscriberAndMidStageReferenced_shouldKeepUpstreamOfMidStageAndGcDanglingStage() {
+        Property<String> source = Properties.property("42");
+        ObservableValue<Integer> midStep = source.map(Integer::parseInt);
+        ObservableValue<Integer> danglingStep = midStep.filter(any -> true);
+
+        WeakReference<?> sourceRef = new WeakReference<>(source);
+        source = null;
+        WeakReference<?> danglingStepRef = new WeakReference<>(danglingStep);
+        danglingStep = null;
+
+        forceGc();
+
+        assertThat(sourceRef.get()).isNotNull();
+        assertThat(danglingStepRef.get()).isNull();
+    }
+
+    @Test
+    public void gcMultipleDerivationWithSubscriberAndOnlySourceReferenced_shouldPreventGc() throws Exception {
+        Property<String> source = Properties.property("42");
+        ObservableValue<Integer> midStep = source.map(Integer::parseInt);
+        Subscription subscription = midStep.subscribe(this::handleUpdate);
+
+        WeakReference<?> midStepRef = new WeakReference<>(midStep);
+        midStep = null;
+        WeakReference<?> subscriptionRef = new WeakReference<>(subscription);
+        subscription = null;
+
+        forceGc();
+        source.set("1");
+        forceGc();
+
+        assertThat(midStepRef.get()).isNotNull();
+        assertThat(subscriptionRef.get()).isNotNull();
+        assertThat(methodReferenceUpdateValue.get(5, SECONDS)).isEqualTo(1);
+    }
+
+    @Test
+    public void gcMultipleDerivationWithSubscriberAndOnlySubscriberReferenced_shouldPreventGc() throws Exception {
+        Property<String> source = Properties.property("42");
+        ObservableValue<Integer> midStep = source.map(Integer::parseInt);
+        Subscription subscription = midStep.subscribe(this::handleUpdate);
+
+        WeakReference<Property<String>> sourceRef = new WeakReference<>(source);
+        source = null;
+        WeakReference<?> midStepRef = new WeakReference<>(midStep);
+        midStep = null;
+
+        forceGc();
+
+        assertThat(sourceRef.get()).isNotNull();
+        assertThat(midStepRef.get()).isNotNull();
+
+        sourceRef.get().set("1");
+
+        assertThat(methodReferenceUpdateValue.get(5, SECONDS)).isEqualTo(1);
     }
 }

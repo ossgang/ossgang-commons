@@ -2,6 +2,7 @@ package org.ossgang.commons.observables.operators.connectors;
 
 import org.ossgang.commons.observables.DispatchingObservableValue;
 import org.ossgang.commons.observables.ObservableValue;
+import org.ossgang.commons.observables.Observers;
 import org.ossgang.commons.observables.Subscription;
 import org.ossgang.commons.properties.Properties;
 import org.ossgang.commons.properties.Property;
@@ -47,10 +48,7 @@ public abstract class AbstractConnectorObservableValue<T> extends DispatchingObs
                     disconnect();
                 }
                 upstreamObservable = requireNonNull(upstream, "Upstream observable cannot be null! Not connecting");
-                upstreamSubscription = upstreamObservable.subscribe(weakWithErrorAndSubscriptionCountHandling(this,
-                        (self, value) -> self.dispatchValue(value),
-                        (self, exception) -> self.dispatchException(exception),
-                        AbstractConnectorObservableValue::subscriberCountChanged), FIRST_UPDATE);
+                upstreamSubscription = upstreamObservable.subscribe(Observers.withErrorHandling(this::dispatchValue, this::dispatchException), FIRST_UPDATE);
                 connectionState.set(CONNECTED);
             } finally {
                 ongoingOperation = false;

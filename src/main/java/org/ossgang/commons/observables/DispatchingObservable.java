@@ -26,11 +26,9 @@ import static java.util.concurrent.Executors.newCachedThreadPool;
 import static org.ossgang.commons.observables.ExceptionHandlers.dispatchToUncaughtExceptionHandler;
 import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
-import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -54,29 +52,29 @@ import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
 public class DispatchingObservable<T> implements Observable<T> {
     private static final ExecutorService DISPATCHER_POOL = newCachedThreadPool(
             daemonThreadFactoryWithPrefix("ossgang-Observable-dispatcher-"));
-    private final Map<Observer<? super T>, ObservableSubscription<T>> listeners = new ConcurrentHashMap<>();
+    private final Map<Observer<? super T>, ObservableSubscription<T>> observers = new ConcurrentHashMap<>();
 
     protected DispatchingObservable() {
     }
 
     @Override
-    public Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options) {
+    public Subscription subscribe(Observer<? super T> observer, SubscriptionOption... options) {
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
-        ObservableSubscription subscription = addListener(listener, optionSet);
-        listener.onSubscribe(subscription);
+        ObservableSubscription<T> subscription = addObserver(observer, optionSet);
+        observer.onSubscribe(subscription);
         return subscription;
     }
 
-    private ObservableSubscription addListener(Observer<? super T> listener, Set<SubscriptionOption> options) {
-        ObservableSubscription<T> subscription = new ObservableSubscription<>(this, listener, options);
-        if(listeners.put(listener, subscription) == null) {
-            subscriptionAdded(listener, options);
+    private ObservableSubscription<T> addObserver(Observer<? super T> observer, Set<SubscriptionOption> options) {
+        ObservableSubscription<T> subscription = new ObservableSubscription<>(this, observer, options);
+        if(observers.put(observer, subscription) == null) {
+            subscriptionAdded(observer, options);
         }
         return subscription;
     }
 
     private void removeListener(Observer<? super T> listener) {
-        if(listeners.remove(listener) != null) {
+        if(observers.remove(listener) != null) {
             subscriptionRemoved(listener);
         }
     }
@@ -90,7 +88,7 @@ public class DispatchingObservable<T> implements Observable<T> {
     }
 
     protected void unsubscribeAllObservers() {
-        Set<Subscription> allSubscriptions = new HashSet<>(listeners.values());
+        Set<Subscription> allSubscriptions = new HashSet<>(observers.values());
         allSubscriptions.forEach(Subscription::unsubscribe);
     }
 
@@ -99,7 +97,7 @@ public class DispatchingObservable<T> implements Observable<T> {
     }
 
     protected void dispatchValue(T newValue, Predicate<Set<SubscriptionOption>> optionPredicate) {
-        listeners.entrySet().stream() //
+        observers.entrySet().stream() //
                 .filter(entry -> optionPredicate.test(entry.getValue().options)) //
                 .map(Map.Entry::getKey) //
                 .forEach(l -> dispatch(l::onValue, newValue));
@@ -111,7 +109,7 @@ public class DispatchingObservable<T> implements Observable<T> {
 
     protected void dispatchException(Throwable exception, Predicate<Set<SubscriptionOption>> optionPredicate) {
         AtomicBoolean wasDispatched = new AtomicBoolean(false);
-        listeners.entrySet().stream() //
+        observers.entrySet().stream() //
                 .filter(entry -> optionPredicate.test(entry.getValue().options)) //
                 .map(Map.Entry::getKey) //
                 .forEach(l -> {

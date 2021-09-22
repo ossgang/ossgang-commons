@@ -52,12 +52,12 @@ public class DispatchingObservableValue<T> extends DispatchingObservable<T> impl
     }
 
     @Override
-    public Subscription subscribe(Observer<? super T> listener, SubscriptionOption... options) {
+    public Subscription subscribe(Observer<? super T> observer, SubscriptionOption... options) {
         Set<SubscriptionOption> optionSet = new HashSet<>(Arrays.asList(options));
-        Subscription subscription = super.subscribe(listener, options);
+        Subscription subscription = super.subscribe(observer, options);
         if (optionSet.contains(FIRST_UPDATE)) {
             Optional.ofNullable(lastValue.get())
-                    .ifPresent(uncheckedConsumer(value -> dispatch(listener::onValue, value).get()));
+                    .ifPresent(uncheckedConsumer(value -> dispatch(observer::onValue, value).get()));
         }
         return subscription;
     }
