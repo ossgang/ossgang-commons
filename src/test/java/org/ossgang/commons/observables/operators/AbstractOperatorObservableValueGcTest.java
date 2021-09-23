@@ -1,5 +1,6 @@
 package org.ossgang.commons.observables.operators;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observer;
@@ -20,8 +21,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.ossgang.commons.GcTests.forceGc;
 import static org.ossgang.commons.observables.operators.DerivedObservableValue.derive;
 
-public class DerivedObservableValueGcTest {
-    private CompletableFuture<Integer> methodReferenceUpdateValue = new CompletableFuture<>();
+public class AbstractOperatorObservableValueGcTest {
+
+    private CompletableFuture<Integer> methodReferenceUpdateValue;
+
+    @Before
+    public void setUp() {
+        methodReferenceUpdateValue = new CompletableFuture<>();
+    }
 
     private void handleUpdate(int test) {
         methodReferenceUpdateValue.complete(test);
@@ -205,6 +212,7 @@ public class DerivedObservableValueGcTest {
         assertThat(step3ref.get()).isNull();
     }
 
+    @SuppressWarnings("UnusedAssignment")
     @Test
     public void gcMultipleDerivationWithoutSubscriberAndMidStageReferenced_shouldKeepUpstreamOfMidStageAndGcDanglingStage() {
         Property<String> source = Properties.property("42");
@@ -222,6 +230,7 @@ public class DerivedObservableValueGcTest {
         assertThat(danglingStepRef.get()).isNull();
     }
 
+    @SuppressWarnings("UnusedAssignment")
     @Test
     public void gcMultipleDerivationWithSubscriberAndOnlySourceReferenced_shouldPreventGc() throws Exception {
         Property<String> source = Properties.property("42");
@@ -242,8 +251,9 @@ public class DerivedObservableValueGcTest {
         assertThat(methodReferenceUpdateValue.get(5, SECONDS)).isEqualTo(1);
     }
 
+    @SuppressWarnings("UnusedAssignment")
     @Test
-    public void gcMultipleDerivationWithSubscriberAndOnlySubscriberReferenced_shouldPreventGc() throws Exception {
+    public void gcMultipleDerivationWithSubscriberAndOnlySubscriptionReferenced_shouldPreventGc() throws Exception {
         Property<String> source = Properties.property("42");
         ObservableValue<Integer> midStep = source.map(Integer::parseInt);
         Subscription subscription = midStep.subscribe(this::handleUpdate);
