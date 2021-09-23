@@ -10,7 +10,6 @@ import org.ossgang.commons.properties.Property;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
-import static org.ossgang.commons.observables.Observers.weakWithErrorAndSubscriptionCountHandling;
 import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
 import static org.ossgang.commons.observables.operators.connectors.ConnectorState.CONNECTED;
 import static org.ossgang.commons.observables.operators.connectors.ConnectorState.DISCONNECTED;
