@@ -1,15 +1,21 @@
 package org.ossgang.commons.observables.operators;
 
-import org.ossgang.commons.observables.Observable;
-import org.ossgang.commons.observables.Observer;
-import org.ossgang.commons.observables.*;
+import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
 
-import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 
-import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
+import org.ossgang.commons.observables.DispatchingObservableValue;
+import org.ossgang.commons.observables.Observable;
+import org.ossgang.commons.observables.ObservableValue;
+import org.ossgang.commons.observables.Observer;
+import org.ossgang.commons.observables.Subscription;
+import org.ossgang.commons.observables.SubscriptionOption;
+import org.ossgang.commons.observables.WeakMethodReferenceObserver;
 
 /**
  * A base {@link ObservableValue} which gets its data from parents (upstream) {@link ObservableValue} or {@link Observable},
@@ -28,7 +34,8 @@ import static org.ossgang.commons.observables.SubscriptionOptions.FIRST_UPDATE;
  * @param <I> the type of the source observable
  * @param <O> the type of this observable
  */
-public abstract class AbstractOperatorObservableValue<K, I, O> extends DispatchingObservableValue<O> implements ObservableValue<O> {
+public abstract class AbstractOperatorObservableValue<K, I, O> extends DispatchingObservableValue<O>
+        implements ObservableValue<O> {
 
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private final List<Subscription> sourceSubscriptions; /* just used to hold strong references upstream */
@@ -43,8 +50,8 @@ public abstract class AbstractOperatorObservableValue<K, I, O> extends Dispatchi
 
     protected void subscribeUpstreamWithFirstUpdate(Map<K, ? extends Observable<I>> sourceObservables) {
         sourceObservables.forEach((key, source) -> {
-            PossiblyWeakObserver<AbstractOperatorObservableValue<K, I, O>, I> observer = new PossiblyWeakObserver<>(this,
-                    (self, item) -> self.applyOperation(key, item),
+            PossiblyWeakObserver<AbstractOperatorObservableValue<K, I, O>, I> observer = new PossiblyWeakObserver<>(
+                    this, (self, item) -> self.applyOperation(key, item),
                     (self, exception) -> self.dispatchException(exception));
             this.sourceObservers.add(observer);
             this.sourceSubscriptions.add(source.subscribe(observer, FIRST_UPDATE));
@@ -72,45 +79,26 @@ public abstract class AbstractOperatorObservableValue<K, I, O> extends Dispatchi
     /**
      * Apply the operation to item delivered by upstream {@link ObservableValue} identified by the key.
      *
-     * @param key corresponding to the source {@link ObservableValue} that delivered the value
+     * @param key  corresponding to the source {@link ObservableValue} that delivered the value
      * @param item of the source {@link ObservableValue} identified by the key
      */
     abstract protected void applyOperation(K key, I item);
 
-    private static class PossiblyWeakObserver<C, T> implements Observer<T> {
-        private final WeakReference<C> holderRef;
+    private static class PossiblyWeakObserver<C, T> extends WeakMethodReferenceObserver<C, T> {
         private final AtomicReference<C> strongHolderRef;
-        private final BiConsumer<? super C, T> valueConsumer;
-        private final BiConsumer<? super C, Throwable> exceptionConsumer;
 
         PossiblyWeakObserver(C holder, BiConsumer<? super C, T> valueConsumer,
-                             BiConsumer<? super C, Throwable> exceptionConsumer) {
-            this.holderRef = new WeakReference<>(holder);
+                BiConsumer<? super C, Throwable> exceptionConsumer) {
+            super(holder, valueConsumer, exceptionConsumer);
             this.strongHolderRef = new AtomicReference<>();
-            this.valueConsumer = valueConsumer;
-            this.exceptionConsumer = exceptionConsumer;
         }
 
-        public void makeStrong() {
-            strongHolderRef.set(holderRef.get());
+        void makeStrong() {
+            strongHolderRef.set(get());
         }
 
-        public void makeWeak() {
+        void makeWeak() {
             strongHolderRef.set(null);
-        }
-
-        @Override
-        public void onValue(T t) {
-            dispatch(valueConsumer, t);
-        }
-
-        @Override
-        public void onException(Throwable t) {
-            dispatch(exceptionConsumer, t);
-        }
-
-        private <X> void dispatch(BiConsumer<? super C, X> consumer, X item) {
-            Optional.ofNullable(holderRef.get()).ifPresent(ref -> consumer.accept(ref, item));
         }
     }
 
