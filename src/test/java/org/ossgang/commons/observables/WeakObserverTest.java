@@ -4,7 +4,6 @@ import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofSeconds;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.ossgang.commons.GcTests.forceGc;
 import static org.ossgang.commons.GcTests.wasGarbageCollected;
 
 import java.lang.ref.WeakReference;
@@ -72,6 +71,8 @@ public class WeakObserverTest {
         Await.await(() -> wasGarbageCollected(weakHolder)).withRetryInterval(ofMillis(10))
                 .withErrorMessage("Holder should be collected since WeakObserver should not keep a reference to it!")
                 .atMost(ofSeconds(5));
+
+        Thread.sleep(100); /* allow the WeakObserver cleanup to run */
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> source.subscribe(observerRef.get()))
                 .withMessageContaining("Weak observer has been garbage collected");
