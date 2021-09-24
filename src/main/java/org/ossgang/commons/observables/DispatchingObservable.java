@@ -22,9 +22,8 @@
 
 package org.ossgang.commons.observables;
 
-import static java.util.concurrent.Executors.newCachedThreadPool;
-import static org.ossgang.commons.observables.ExceptionHandlers.dispatchToUncaughtExceptionHandler;
-import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
+import org.ossgang.commons.observables.exceptions.UnhandledException;
+import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -37,8 +36,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import org.ossgang.commons.observables.exceptions.UnhandledException;
-import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
+import static java.util.concurrent.Executors.newCachedThreadPool;
+import static org.ossgang.commons.observables.ExceptionHandlers.dispatchToUncaughtExceptionHandler;
+import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
 /**
  * A basic implementation of {@link Observable} managing a set of listeners, and dispatching updates to them.
@@ -50,8 +50,10 @@ import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
  * @param <T> the type of the observable
  */
 public class DispatchingObservable<T> implements Observable<T> {
+
     private static final ExecutorService DISPATCHER_POOL = newCachedThreadPool(
             daemonThreadFactoryWithPrefix("ossgang-commons-DispatchingObservable-dispatcher-"));
+
     private final Map<Observer<? super T>, ObservableSubscription<T>> observers = new ConcurrentHashMap<>();
 
     protected DispatchingObservable() {
@@ -67,14 +69,14 @@ public class DispatchingObservable<T> implements Observable<T> {
 
     private ObservableSubscription<T> addObserver(Observer<? super T> observer, Set<SubscriptionOption> options) {
         ObservableSubscription<T> subscription = new ObservableSubscription<>(this, observer, options);
-        if(observers.put(observer, subscription) == null) {
+        if (observers.put(observer, subscription) == null) {
             subscriptionAdded(observer, options);
         }
         return subscription;
     }
 
     private void removeListener(Observer<? super T> listener) {
-        if(observers.remove(listener) != null) {
+        if (observers.remove(listener) != null) {
             subscriptionRemoved(listener);
         }
     }
@@ -139,7 +141,7 @@ public class DispatchingObservable<T> implements Observable<T> {
         private final DispatchingObservable<T> observable;
 
         private ObservableSubscription(DispatchingObservable<T> observable, Observer<? super T> listener,
-                Set<SubscriptionOption> options) {
+                                       Set<SubscriptionOption> options) {
             this.observable = observable;
             this.listener = listener;
             this.options = options;

@@ -23,12 +23,10 @@ import org.ossgang.commons.observables.ObservableValue;
 
 import java.time.Duration;
 import java.util.Collections;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
 /**
@@ -41,15 +39,15 @@ import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFac
  */
 public class DebouncedObservableValue<T> extends AbstractOperatorObservableValue<Object, T, T> {
 
-    private final ScheduledExecutorService debouncerExecutor;
+    private static final ScheduledExecutorService SCHEDULED_EXECUTOR_SERVICE = newScheduledThreadPool(1,
+            daemonThreadFactoryWithPrefix("ossgang-commons-DebouncedObservableValue-"));
+
     private final AtomicReference<ScheduledFuture<?>> callback;
     private final long debouncePeriodMs;
 
     public DebouncedObservableValue(Observable<T> source, Duration debouncePeriod) {
         this.debouncePeriodMs = debouncePeriod.toMillis();
         this.callback = new AtomicReference<>();
-        this.debouncerExecutor = Executors.newSingleThreadScheduledExecutor(
-                daemonThreadFactoryWithPrefix("ossgang-commons-DebouncedObservableValue-" + System.identityHashCode(this) + "-"));
         super.subscribeUpstreamWithFirstUpdate(Collections.singletonMap(new Object(), source));
     }
 
@@ -59,12 +57,8 @@ public class DebouncedObservableValue<T> extends AbstractOperatorObservableValue
             if (scheduledCallback != null) {
                 scheduledCallback.cancel(false);
             }
-            return debouncerExecutor.schedule(() -> dispatchValue(item), debouncePeriodMs, TimeUnit.MILLISECONDS);
+            return SCHEDULED_EXECUTOR_SERVICE.schedule(() -> dispatchValue(item), debouncePeriodMs, TimeUnit.MILLISECONDS);
         });
     }
 
-    @Override
-    protected void finalize() {
-        debouncerExecutor.shutdown();
-    }
 }
