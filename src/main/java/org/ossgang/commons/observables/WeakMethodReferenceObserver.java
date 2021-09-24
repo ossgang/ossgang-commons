@@ -82,7 +82,7 @@ public class WeakMethodReferenceObserver<C, T> extends WeakReference<C> implemen
 
     @Override
     public synchronized void onSubscribe(Subscription subscription) {
-        if (subscriptions == null) {
+        if (isCleanedUp()) {
             subscription.unsubscribe();
             throw new IllegalStateException("Weak observer has been garbage collected and can not be re-used!");
         }
@@ -91,7 +91,7 @@ public class WeakMethodReferenceObserver<C, T> extends WeakReference<C> implemen
 
     @Override
     public synchronized void onUnsubscribe(Subscription subscription) {
-        if (subscriptions == null) {
+        if (isCleanedUp()) {
             return;
         }
         subscriptions.remove(subscription);
@@ -102,6 +102,10 @@ public class WeakMethodReferenceObserver<C, T> extends WeakReference<C> implemen
         subscriptions = null;
         valueConsumer = null;
         exceptionConsumer = null;
+    }
+
+    protected final synchronized boolean isCleanedUp() {
+        return subscriptions == null;
     }
 
     private <X> void dispatch(BiConsumer<? super C, X> consumer, X item) {

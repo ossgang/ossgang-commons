@@ -72,7 +72,9 @@ public class WeakObserverTest {
                 .withErrorMessage("Holder should be collected since WeakObserver should not keep a reference to it!")
                 .atMost(ofSeconds(5));
 
-        Thread.sleep(100); /* allow the WeakObserver cleanup to run */
+        Await.await(() -> observerRef.get().isCleanedUp()).withRetryInterval(ofMillis(10))
+                .withErrorMessage("WeakObserver should be cleaned up!")
+                .atMost(ofSeconds(5));
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> source.subscribe(observerRef.get()))
                 .withMessageContaining("Weak observer has been garbage collected");
