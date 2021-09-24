@@ -22,21 +22,17 @@
 
 package org.ossgang.commons.observables;
 
-import org.ossgang.commons.monads.Maybe;
 import org.ossgang.commons.observables.exceptions.UnhandledException;
 
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
-import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
 /**
  * An observer based on a weak reference to an object, and class method references to consumers for values (and,
@@ -54,53 +50,24 @@ import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFac
  * This will allow the "Test" instance to be GC'd, terminating the subscription; but for as long as it lives, the
  * subscription will be kept alive.
  */
-class WeakMethodReferenceObserver<C, T> implements Observer<T> {
+public class WeakMethodReferenceObserver<C, T> extends WeakReference<C> implements Observer<T> {
+    private static final ReferenceQueue<Object> STALE_WEAK_OBSERVERS = new ReferenceQueue<>();
+    private BiConsumer<? super C, T> valueConsumer;
+    private BiConsumer<? super C, Throwable> exceptionConsumer;
+    private Set<Subscription> subscriptions;
 
-    /* Visible for testing */
-    static final int DEFAULT_CLEANUP_PERIOD_SEC = 30;
-    private static final String CLEANUP_PERIOD_SYS_PROPERTY = "org.ossgang.commons.observables.weak_cleanup_period";
-    private static final Set<WeakCleaner> REFERENCE_CLEANERS = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private static final ScheduledExecutorService REFERENCE_CLEANUP_EXECUTOR = newSingleThreadScheduledExecutor(
-            daemonThreadFactoryWithPrefix("ossgang-weak-observer-cleanup"));
-
-    static {
-        Integer cleanupPeriod = Integer.getInteger(CLEANUP_PERIOD_SYS_PROPERTY, DEFAULT_CLEANUP_PERIOD_SEC);
-        Runnable cleanupRunnable = () -> REFERENCE_CLEANERS.removeIf(c -> c.attemptToClean()
-                .ifException(WeakMethodReferenceObserver::dispatchToUncaughtExceptionHandler)
-                .optionalValue().orElse(false));
-        REFERENCE_CLEANUP_EXECUTOR.scheduleAtFixedRate(cleanupRunnable, cleanupPeriod, cleanupPeriod, TimeUnit.SECONDS);
-    }
-
-    private static void dispatchToUncaughtExceptionHandler(Throwable t) {
-        if (t instanceof UnhandledException) {
-            ExceptionHandlers.dispatchToUncaughtExceptionHandler((UnhandledException) t);
-        } else {
-            ExceptionHandlers.dispatchToUncaughtExceptionHandler(new UnhandledException(t));
-        }
-    }
-
-    private final WeakReference<C> holderRef;
-    private final BiConsumer<? super C, T> valueConsumer;
-    private final BiConsumer<? super C, Throwable> exceptionConsumer;
-    private final BiConsumer<? super C, Integer> subscriptionCountUpdated;
-
-    private final Set<Subscription> subscriptions = new HashSet<>();
-
-    WeakMethodReferenceObserver(C holder, BiConsumer<? super C, T> valueConsumer,
-                                BiConsumer<? super C, Throwable> exceptionConsumer,
-                                BiConsumer<? super C, Integer> subscriptionCountUpdated) {
-        this.holderRef = new WeakReference<>(holder);
+    protected WeakMethodReferenceObserver(C holder, BiConsumer<? super C, T> valueConsumer,
+            BiConsumer<? super C, Throwable> exceptionConsumer) {
+        super(holder, STALE_WEAK_OBSERVERS);
+        this.subscriptions = new HashSet<>();
         this.valueConsumer = valueConsumer;
         this.exceptionConsumer = exceptionConsumer;
-        this.subscriptionCountUpdated = subscriptionCountUpdated;
-        REFERENCE_CLEANERS.add(new WeakCleaner(holderRef, this::unsubscribeAll));
     }
 
-    private void unsubscribeAll() {
-        synchronized (subscriptions) {
-            subscriptions.forEach(Subscription::unsubscribe);
-            subscriptions.clear();
-        }
+    protected WeakMethodReferenceObserver(C holder, BiConsumer<? super C, T> valueConsumer) {
+        this(holder, valueConsumer, (r, e) -> {
+            throw new UnhandledException(e);
+        });
     }
 
     @Override
@@ -114,49 +81,52 @@ class WeakMethodReferenceObserver<C, T> implements Observer<T> {
     }
 
     @Override
-    public void onSubscribe(Subscription subscription) {
-        synchronized (subscriptions) {
-            subscriptions.add(subscription);
-            Optional.ofNullable(holderRef.get()).ifPresent(h -> subscriptionCountUpdated.accept(h, subscriptions.size()));
+    public synchronized void onSubscribe(Subscription subscription) {
+        if (isCleanedUp()) {
+            subscription.unsubscribe();
+            throw new IllegalStateException("Weak observer has been garbage collected and can not be re-used!");
         }
+        subscriptions.add(subscription);
     }
 
     @Override
-    public void onUnsubscribe(Subscription subscription) {
-        synchronized (subscriptions) {
-            subscriptions.remove(subscription);
-            Optional.ofNullable(holderRef.get()).ifPresent(h -> subscriptionCountUpdated.accept(h, subscriptions.size()));
+    public synchronized void onUnsubscribe(Subscription subscription) {
+        if (isCleanedUp()) {
+            return;
         }
+        subscriptions.remove(subscription);
+    }
+
+    private synchronized void cleanUp() {
+        subscriptions.forEach(Subscription::unsubscribe);
+        subscriptions = null;
+        valueConsumer = null;
+        exceptionConsumer = null;
+    }
+
+    protected final synchronized boolean isCleanedUp() {
+        return subscriptions == null;
     }
 
     private <X> void dispatch(BiConsumer<? super C, X> consumer, X item) {
-        C holderInstance = holderRef.get();
-        if (holderInstance != null) {
-            consumer.accept(holderInstance, item);
-        } else {
-            unsubscribeAll();
-        }
+        Optional.ofNullable(get()).ifPresent(ref -> consumer.accept(ref, item));
     }
 
-    private static class WeakCleaner {
-
-        private final WeakReference<?> holderRef;
-        private final Runnable cleanupAction;
-
-        public WeakCleaner(WeakReference<?> holderRef, Runnable cleanupAction) {
-            this.holderRef = holderRef;
-            this.cleanupAction = cleanupAction;
-        }
-
-        public Maybe<Boolean> attemptToClean() {
-            return Maybe.attempt(() -> {
-                if (holderRef.get() == null) {
-                    cleanupAction.run();
-                    return true;
+    static {
+        Thread cleanupThread = new Thread(() -> {
+            while (!Thread.interrupted()) {
+                try {
+                    Reference<?> ref = STALE_WEAK_OBSERVERS.remove();
+                    WeakMethodReferenceObserver<?, ?> observer = (WeakMethodReferenceObserver<?, ?>) ref;
+                    observer.cleanUp();
+                } catch (Exception e) {
+                    ExceptionHandlers.dispatchToUncaughtExceptionHandler(
+                            new IllegalStateException("Error in WeakMethodReferenceObserver finalizer", e));
                 }
-                return false;
-            });
-        }
+            }
+        });
+        cleanupThread.setName("ossgang-commons-WeakMethodReferenceObserver-finalizer");
+        cleanupThread.setDaemon(true);
+        cleanupThread.start();
     }
-
 }

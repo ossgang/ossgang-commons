@@ -21,10 +21,9 @@ package org.ossgang.commons.observables;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -32,21 +31,16 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.ossgang.commons.monads.Consumer3;
-import org.ossgang.commons.monads.Consumer4;
-import org.ossgang.commons.monads.Consumer5;
-import org.ossgang.commons.monads.Function3;
-import org.ossgang.commons.monads.Function4;
-import org.ossgang.commons.monads.Function5;
+import org.ossgang.commons.monads.*;
 import org.ossgang.commons.observables.exceptions.UnhandledException;
 import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
-import org.ossgang.commons.observables.operators.CombinationOperators;
-import org.ossgang.commons.observables.operators.DebouncedObservableValue;
-import org.ossgang.commons.observables.operators.Operators;
-import org.ossgang.commons.observables.operators.SubscribeValuesOperators;
+import org.ossgang.commons.observables.operators.*;
 import org.ossgang.commons.observables.operators.connectors.ConnectorObservableValue;
 import org.ossgang.commons.observables.operators.connectors.ConnectorObservables;
 import org.ossgang.commons.observables.operators.connectors.DynamicConnectorObservableValue;
+import org.ossgang.commons.utils.NamedDaemonThreadFactory;
+
+import static org.ossgang.commons.utils.NamedDaemonThreadFactory.daemonThreadFactoryWithPrefix;
 
 /**
  * Static support class for dealing with {@link Observable} and {@link ObservableValue}.
@@ -246,7 +240,7 @@ public final class Observables {
      * result of combiner applied with the latest values of the other inputs.
      */
     public static <K, O> ObservableValue<O> zipObjects(Map<K, ? extends Observable<?>> sourcesMap,
-            Function<Map<K, Object>, O> combiner) {
+                                                       Function<Map<K, Object>, O> combiner) {
         return CombinationOperators.zipObjects(sourcesMap, combiner);
     }
 
@@ -265,7 +259,7 @@ public final class Observables {
      * combiner applied with the latest values of the other inputs.
      */
     public static <O> ObservableValue<O> zipObjects(List<? extends Observable<?>> sources,
-            Function<List<Object>, O> combiner) {
+                                                    Function<List<Object>, O> combiner) {
         return CombinationOperators.zipObjects(sources, combiner);
     }
 
@@ -317,7 +311,7 @@ public final class Observables {
      * with the latest values of the other input
      */
     public static <I1, I2, O> ObservableValue<O> zip(Observable<I1> source1, Observable<I2> source2,
-            BiFunction<I1, I2, O> combiner) {
+                                                     BiFunction<I1, I2, O> combiner) {
         return CombinationOperators.zip(source1, source2, combiner);
     }
 
@@ -338,8 +332,8 @@ public final class Observables {
      * with the latest values of the other input
      */
     public static <I1, I2, I3, O> ObservableValue<O> zip(Observable<I1> source1, Observable<I2> source2,
-            Observable<I3> source3,
-            Function3<I1, I2, I3, O> combiner) {
+                                                         Observable<I3> source3,
+                                                         Function3<I1, I2, I3, O> combiner) {
         return CombinationOperators.zip(source1, source2, source3, combiner);
     }
 
@@ -362,8 +356,8 @@ public final class Observables {
      * with the latest values of the other input
      */
     public static <I1, I2, I3, I4, O> ObservableValue<O> zip(Observable<I1> source1, Observable<I2> source2,
-            Observable<I3> source3, Observable<I4> source4,
-            Function4<I1, I2, I3, I4, O> combiner) {
+                                                             Observable<I3> source3, Observable<I4> source4,
+                                                             Function4<I1, I2, I3, I4, O> combiner) {
         return CombinationOperators.zip(source1, source2, source3, source4, combiner);
     }
 
@@ -388,9 +382,9 @@ public final class Observables {
      * with the latest values of the other input
      */
     public static <I1, I2, I3, I4, I5, O> ObservableValue<O> zip(Observable<I1> source1, Observable<I2> source2,
-            Observable<I3> source3, Observable<I4> source4,
-            Observable<I5> source5,
-            Function5<I1, I2, I3, I4, I5, O> combiner) {
+                                                                 Observable<I3> source3, Observable<I4> source4,
+                                                                 Observable<I5> source5,
+                                                                 Function5<I1, I2, I3, I4, I5, O> combiner) {
         return CombinationOperators.zip(source1, source2, source3, source4, source5, combiner);
     }
 
@@ -751,6 +745,8 @@ public final class Observables {
      * <li>If an observer onNext/onException throws, with an {@link UpdateDeliveryException}</li>
      * <li>If an observer does not implement onException and an exception would be delivered, by
      * an {@link UnhandledException}</li>
+     * <li>If an internal error occurs in the framework (e.g. during cleanup of a weak observer), with an
+     * {@link IllegalStateException}</li>
      * </ul>
      * In either case, getCause() can be used to obtain the original exception.
      *

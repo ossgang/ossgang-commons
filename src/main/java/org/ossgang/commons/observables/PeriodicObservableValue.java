@@ -13,11 +13,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class PeriodicObservableValue extends DispatchingObservableValue<Instant> {
 
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(daemonThreadFactoryWithPrefix("periodic-observable"));
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
+            daemonThreadFactoryWithPrefix("ossgang-commons-PeriodicObservable-"));
 
     PeriodicObservableValue(long period, TimeUnit unit) {
         super(Instant.now());
         executor.scheduleAtFixedRate(() -> dispatchValue(Instant.now()), 0, period, unit);
     }
 
+    @Override
+    protected void finalize() {
+        executor.shutdown();
+    }
 }

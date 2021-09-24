@@ -1,6 +1,5 @@
 package org.ossgang.commons.observables;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.ossgang.commons.GcTests.forceGc;
 
@@ -20,13 +19,11 @@ public class ObservableValueGcTest {
     }
 
     @Test
-    public void gcWhileSubscribed_shouldPreventGc() throws Exception {
+    public void gcWithSourceDiscardedWhileSubscribed_shouldGc() throws Exception {
         WeakReference<Property<Integer>> weakProp = gcWhileSubscribed_shouldPreventGc_subscribe();
         forceGc();
         Property<Integer> prop = weakProp.get();
-        assertThat(prop).isNotNull();
-        prop.set(2);
-        assertThat(methodReferenceUpdateValue.get(1, SECONDS)).isEqualTo(2);
+        assertThat(prop).isNull();
     }
 
     private WeakReference<Property<Integer>> gcWhileSubscribed_shouldPreventGc_subscribe() {

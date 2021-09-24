@@ -1,25 +1,26 @@
 package org.ossgang.commons.observables;
 
-import org.junit.Test;
-import org.ossgang.commons.awaitables.Await;
+import static java.time.Duration.ofMillis;
+import static java.time.Duration.ofSeconds;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.ossgang.commons.GcTests.wasGarbageCollected;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static java.time.Duration.ofSeconds;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.ossgang.commons.observables.WeakMethodReferenceObserver.DEFAULT_CLEANUP_PERIOD_SEC;
+import org.junit.Test;
+import org.ossgang.commons.awaitables.Await;
 
 public class WeakObserverTest {
 
-    public static final BiConsumer<Object, Object> NOOP_ON_VALUE = (h, v) -> {
+    private static final BiConsumer<Object, Object> NOOP_ON_VALUE = (h, v) -> {
     };
-    public static final BiConsumer<Object, Throwable> NOOP_ON_EXCEPTION = (h, e) -> {
-    };
-    public static final BiConsumer<Object, Integer> NOOP_SUBSCRIBER_COUNTING = (h, i) -> {
+    private static final BiConsumer<Object, Throwable> NOOP_ON_EXCEPTION = (h, e) -> {
     };
 
     @Test
@@ -33,14 +34,12 @@ public class WeakObserverTest {
         WeakReference<?> weakHolder = new WeakReference<>(holder);
         holder = null;
 
-        Await.await(() -> wasGarbageCollected(weakHolder))
-                .withRetryInterval(ofSeconds(1))
+        Await.await(() -> wasGarbageCollected(weakHolder)).withRetryInterval(ofMillis(10))
                 .withErrorMessage("Holder should be collected since WeakObserver should not keep a reference to it!")
-                .atMost(ofSeconds(DEFAULT_CLEANUP_PERIOD_SEC * 2));
+                .atMost(ofSeconds(5));
 
-        assertThat(unSubscribed.await(DEFAULT_CLEANUP_PERIOD_SEC * 2, TimeUnit.SECONDS))
-                .as("Subscriber should have been unsubscribed by now because the holder was collected")
-                .isTrue();
+        assertThat(unSubscribed.await(5, TimeUnit.SECONDS))
+                .as("Subscriber should have been unsubscribed by now because the holder was collected").isTrue();
     }
 
     @Test
@@ -52,24 +51,51 @@ public class WeakObserverTest {
         Dispatcher<Object> source = Observables.dispatcher();
         source.subscribe(newWeakObserver(holder, s -> unSubscribed.countDown()));
 
-        assertThat(unSubscribed.await(DEFAULT_CLEANUP_PERIOD_SEC * 2, TimeUnit.SECONDS))
+        assertThat(unSubscribed.await(1, TimeUnit.SECONDS))
                 .as("Subscriber should NOT have been unsubscribed because there is a strong reference to the holder!")
                 .isFalse();
     }
 
-    private static WeakMethodReferenceObserver<Object, Object> newWeakObserver(Object holder, Consumer<Subscription> onUnsubscribe) {
-        return new WeakMethodReferenceObserver<Object, Object>(holder, NOOP_ON_VALUE, NOOP_ON_EXCEPTION, NOOP_SUBSCRIBER_COUNTING) {
+    @Test
+    public void weakObserver_whenHolderIsCollectedAndReuseIsAttempted_shouldThrowOnSubscribe() throws Exception {
+        Object holder = new Object();
+        CountDownLatch unSubscribed = new CountDownLatch(1);
+
+        Dispatcher<Object> source = Observables.dispatcher();
+        AtomicReference<WeakMethodReferenceObserver<Object, Object>> observerRef =
+                new AtomicReference<>(newWeakObserver(holder, s -> unSubscribed.countDown()));
+
+        WeakReference<?> weakHolder = new WeakReference<>(holder);
+        holder = null;
+
+        Await.await(() -> wasGarbageCollected(weakHolder)).withRetryInterval(ofMillis(10))
+                .withErrorMessage("Holder should be collected since WeakObserver should not keep a reference to it!")
+                .atMost(ofSeconds(5));
+
+        Await.await(() -> observerRef.get().isCleanedUp()).withRetryInterval(ofMillis(10))
+                .withErrorMessage("WeakObserver should be cleaned up!")
+                .atMost(ofSeconds(5));
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> source.subscribe(observerRef.get()))
+                .withMessageContaining("Weak observer has been garbage collected");
+
+        WeakReference<WeakMethodReferenceObserver<?,?>> weakObserverRef = new WeakReference<>(observerRef.get());
+        observerRef.set(null);
+
+        Await.await(() -> wasGarbageCollected(weakObserverRef)).withRetryInterval(ofMillis(10))
+                .withErrorMessage("WeakObserver itself should be collected!")
+                .atMost(ofSeconds(5));
+    }
+
+    private static WeakMethodReferenceObserver<Object, Object> newWeakObserver(Object holder,
+            Consumer<Subscription> onUnsubscribe) {
+        return new WeakMethodReferenceObserver<Object, Object>(holder, NOOP_ON_VALUE, NOOP_ON_EXCEPTION) {
             @Override
             public void onUnsubscribe(Subscription subscription) {
                 super.onUnsubscribe(subscription);
                 onUnsubscribe.accept(subscription);
             }
         };
-    }
-
-    private static Boolean wasGarbageCollected(WeakReference<?> weakHolder) {
-        System.gc();
-        return weakHolder.get() == null;
     }
 
 }

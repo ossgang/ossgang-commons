@@ -1,6 +1,7 @@
 package org.ossgang.commons.observables;
 
 import org.ossgang.commons.monads.Maybe;
+import org.ossgang.commons.observables.exceptions.UnhandledException;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -89,9 +90,7 @@ public class Observers {
      * subscription will be kept alive.
      */
     public static <C, T> Observer<T> weak(C holder, BiConsumer<C, T> valueConsumer) {
-        return new WeakMethodReferenceObserver<>(holder, valueConsumer, (a, b) -> {
-        }, (a, b) -> {
-        });
+        return new WeakMethodReferenceObserver<>(holder, valueConsumer);
     }
 
     /**
@@ -99,17 +98,6 @@ public class Observers {
      */
     public static <C, T> Observer<T> weakWithErrorHandling(C holder, BiConsumer<? super C, T> valueConsumer,
                                                            BiConsumer<? super C, Throwable> exceptionConsumer) {
-        return new WeakMethodReferenceObserver<>(holder, valueConsumer, exceptionConsumer, (a, b) -> {
-        });
-    }
-
-    /**
-     * @see #weak(Object, BiConsumer)
-     */
-    public static <C, T> Observer<T> weakWithErrorAndSubscriptionCountHandling(C holder,
-                                                                               BiConsumer<? super C, T> valueConsumer,
-                                                                               BiConsumer<? super C, Throwable> exceptionConsumer,
-                                                                               BiConsumer<? super C, Integer> subscriptionCountChanged) {
-        return new WeakMethodReferenceObserver<>(holder, valueConsumer, exceptionConsumer, subscriptionCountChanged);
+        return new WeakMethodReferenceObserver<>(holder, valueConsumer, exceptionConsumer);
     }
 }
