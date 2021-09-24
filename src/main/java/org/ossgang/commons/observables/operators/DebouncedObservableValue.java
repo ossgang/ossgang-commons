@@ -48,7 +48,8 @@ public class DebouncedObservableValue<T> extends AbstractOperatorObservableValue
     public DebouncedObservableValue(Observable<T> source, Duration debouncePeriod) {
         this.debouncePeriodMs = debouncePeriod.toMillis();
         this.callback = new AtomicReference<>();
-        this.debouncerExecutor = Executors.newSingleThreadScheduledExecutor(daemonThreadFactoryWithPrefix("ossgang-Observable-debounce-" + System.identityHashCode(this) + "-"));
+        this.debouncerExecutor = Executors.newSingleThreadScheduledExecutor(
+                daemonThreadFactoryWithPrefix("ossgang-commons-DebouncedObservableValue-" + System.identityHashCode(this) + "-"));
         super.subscribeUpstreamWithFirstUpdate(Collections.singletonMap(new Object(), source));
     }
 
@@ -62,4 +63,8 @@ public class DebouncedObservableValue<T> extends AbstractOperatorObservableValue
         });
     }
 
+    @Override
+    protected void finalize() {
+        debouncerExecutor.shutdown();
+    }
 }

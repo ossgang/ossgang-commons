@@ -51,7 +51,7 @@ import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
  */
 public class DispatchingObservable<T> implements Observable<T> {
     private static final ExecutorService DISPATCHER_POOL = newCachedThreadPool(
-            daemonThreadFactoryWithPrefix("ossgang-Observable-dispatcher-"));
+            daemonThreadFactoryWithPrefix("ossgang-commons-DispatchingObservable-dispatcher-"));
     private final Map<Observer<? super T>, ObservableSubscription<T>> observers = new ConcurrentHashMap<>();
 
     protected DispatchingObservable() {

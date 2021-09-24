@@ -1,13 +1,10 @@
 package org.ossgang.commons.observables;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.ossgang.commons.awaitables.Await;
-import org.ossgang.commons.monads.Maybe;
-import org.ossgang.commons.properties.Properties;
-import org.ossgang.commons.properties.Property;
+import static java.time.Duration.ofMillis;
+import static java.time.Duration.ofSeconds;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.ossgang.commons.GcTests.forceGc;
+import static org.ossgang.commons.GcTests.wasGarbageCollected;
 
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
@@ -16,11 +13,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import static java.time.Duration.ofMillis;
-import static java.time.Duration.ofSeconds;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.ossgang.commons.GcTests.forceGc;
-import static org.ossgang.commons.GcTests.wasGarbageCollected;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.ossgang.commons.awaitables.Await;
+import org.ossgang.commons.monads.Maybe;
+import org.ossgang.commons.properties.Properties;
+import org.ossgang.commons.properties.Property;
 
 @RunWith(Parameterized.class)
 public class ObservableOperatorsGcComplianceTest {

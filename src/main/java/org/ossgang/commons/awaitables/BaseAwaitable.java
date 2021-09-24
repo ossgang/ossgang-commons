@@ -30,7 +30,7 @@ import org.ossgang.commons.awaitables.exceptions.AwaitTimeoutException;
 @SuppressWarnings("unchecked")
 class BaseAwaitable<T, A extends BaseAwaitable<T, A>> {
     private static final ExecutorService AWAITER_POOL =
-            newCachedThreadPool(daemonThreadFactoryWithPrefix("ossgang-Awaitables-awaiter"));
+            newCachedThreadPool(daemonThreadFactoryWithPrefix("ossgang-commons-Awaitable-"));
 
     private static final Duration DEFAULT_RETRY_INTERVAL = Duration.ofMillis(100);
     private static final int DEFAULT_RETRY_COUNT = Integer.MAX_VALUE;
