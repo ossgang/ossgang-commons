@@ -20,14 +20,16 @@ public class GcTests {
     public static void forceGc() {
         for (int run = 0; run < 10; run++) {
             WeakReference<?> ref = new WeakReference<>(new Object());
-            Await.await(() -> {
-                System.gc();
-                return ref.get() == null;
-            }).withErrorMessage("Weak ref should have been collected already!")
-                    .withRetryInterval(Duration.ofMillis(100))
-                    .withRetryCount(100)
+            Await.await(() -> wasGarbageCollected(ref)) //
+                    .withErrorMessage("Weak ref should have been collected already!") //
+                    .withRetryInterval(Duration.ofMillis(100)) //
+                    .withRetryCount(100) //
                     .indefinitely();
         }
     }
 
+    public static boolean wasGarbageCollected(WeakReference<?> weakHolder) {
+        System.gc();
+        return weakHolder.get() == null;
+    }
 }

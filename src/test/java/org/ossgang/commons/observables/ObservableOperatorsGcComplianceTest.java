@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.ossgang.commons.awaitables.Await;
 import org.ossgang.commons.monads.Maybe;
 import org.ossgang.commons.properties.Properties;
 import org.ossgang.commons.properties.Property;
@@ -15,8 +16,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import static java.time.Duration.ofMillis;
+import static java.time.Duration.ofSeconds;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.ossgang.commons.GcTests.forceGc;
+import static org.ossgang.commons.GcTests.wasGarbageCollected;
 
 @RunWith(Parameterized.class)
 public class ObservableOperatorsGcComplianceTest {
@@ -155,12 +159,12 @@ public class ObservableOperatorsGcComplianceTest {
         WeakReference<?> operatorStep2Weak = new WeakReference<>(operatorStep2);
         operatorStep2 = null;
 
-        for (int i = 0; i < 10; i++) {
-            forceGc();
-            Thread.sleep(10); /* allow weak observer stale cleanup to happen */
-        }
+        Await.await(() -> wasGarbageCollected(operatorStep1Weak)).withRetryInterval(ofMillis(10))
+                .withErrorMessage("Holding source without subscriber should keep GC dangling operators")
+                .atMost(ofSeconds(5));
 
-        assertThat(operatorStep1Weak.get()).as("Holding source without subscriber should keep GC dangling operators").isNull();
-        assertThat(operatorStep2Weak.get()).as("Holding source without subscriber should keep GC dangling operators").isNull();
+        Await.await(() -> wasGarbageCollected(operatorStep2Weak)).withRetryInterval(ofMillis(10))
+                .withErrorMessage("Holding source without subscriber should keep GC dangling operators")
+                .atMost(ofSeconds(5));
     }
 }

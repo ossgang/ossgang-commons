@@ -23,7 +23,6 @@
 package org.ossgang.commons.observables;
 
 import org.ossgang.commons.observables.exceptions.UnhandledException;
-import org.ossgang.commons.observables.operators.AbstractOperatorObservableValue;
 
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -53,14 +52,14 @@ import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
  */
 public class WeakMethodReferenceObserver<C, T> extends WeakReference<C> implements Observer<T> {
     private static final ReferenceQueue<Object> STALE_WEAK_OBSERVERS = new ReferenceQueue<>();
-    private final BiConsumer<? super C, T> valueConsumer;
-    private final BiConsumer<? super C, Throwable> exceptionConsumer;
-
-    private final Set<Subscription> subscriptions = new HashSet<>();
+    private BiConsumer<? super C, T> valueConsumer;
+    private BiConsumer<? super C, Throwable> exceptionConsumer;
+    private Set<Subscription> subscriptions;
 
     protected WeakMethodReferenceObserver(C holder, BiConsumer<? super C, T> valueConsumer,
             BiConsumer<? super C, Throwable> exceptionConsumer) {
         super(holder, STALE_WEAK_OBSERVERS);
+        this.subscriptions = new HashSet<>();
         this.valueConsumer = valueConsumer;
         this.exceptionConsumer = exceptionConsumer;
     }
@@ -69,13 +68,6 @@ public class WeakMethodReferenceObserver<C, T> extends WeakReference<C> implemen
         this(holder, valueConsumer, (r, e) -> {
             throw new UnhandledException(e);
         });
-    }
-
-    private void unsubscribeAll() {
-        synchronized (subscriptions) {
-            subscriptions.forEach(Subscription::unsubscribe);
-            subscriptions.clear();
-        }
     }
 
     @Override
@@ -89,17 +81,27 @@ public class WeakMethodReferenceObserver<C, T> extends WeakReference<C> implemen
     }
 
     @Override
-    public void onSubscribe(Subscription subscription) {
-        synchronized (subscriptions) {
-            subscriptions.add(subscription);
+    public synchronized void onSubscribe(Subscription subscription) {
+        if (subscriptions == null) {
+            subscription.unsubscribe();
+            throw new IllegalStateException("Weak observer has been garbage collected and can not be re-used!");
         }
+        subscriptions.add(subscription);
     }
 
     @Override
-    public void onUnsubscribe(Subscription subscription) {
-        synchronized (subscriptions) {
-            subscriptions.remove(subscription);
+    public synchronized void onUnsubscribe(Subscription subscription) {
+        if (subscriptions == null) {
+            return;
         }
+        subscriptions.remove(subscription);
+    }
+
+    private synchronized void cleanUp() {
+        subscriptions.forEach(Subscription::unsubscribe);
+        subscriptions = null;
+        valueConsumer = null;
+        exceptionConsumer = null;
     }
 
     private <X> void dispatch(BiConsumer<? super C, X> consumer, X item) {
@@ -112,7 +114,7 @@ public class WeakMethodReferenceObserver<C, T> extends WeakReference<C> implemen
                 try {
                     Reference<?> ref = STALE_WEAK_OBSERVERS.remove();
                     WeakMethodReferenceObserver<?, ?> observer = (WeakMethodReferenceObserver<?, ?>) ref;
-                    observer.unsubscribeAll();
+                    observer.cleanUp();
                 } catch (Exception e) {
                     ExceptionHandlers.dispatchToUncaughtExceptionHandler(
                             new IllegalStateException("Error in WeakMethodReferenceObserver finalizer", e));
