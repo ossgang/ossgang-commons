@@ -121,7 +121,7 @@ public class WeakMethodReferenceObserver<C, T> extends WeakReference<C> implemen
                 }
             }
         });
-        cleanupThread.setName("ossgang-commons-weakobserver-finalizer");
+        cleanupThread.setName("ossgang-commons-WeakMethodReferenceObserver-finalizer");
         cleanupThread.setDaemon(true);
         cleanupThread.start();
     }
