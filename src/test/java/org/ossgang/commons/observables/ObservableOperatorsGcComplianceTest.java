@@ -13,11 +13,8 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.function.Function.identity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.ossgang.commons.GcTests.forceGc;
 
@@ -27,11 +24,11 @@ public class ObservableOperatorsGcComplianceTest {
     @Parameterized.Parameters(name = "{0}")
     public static Iterable<Object[]> parameters() {
         /* Unfortunate JUnit parametrized API... */
-        return Arrays.asList(new Object[][] { { "Generic derive",
-                (Function<ObservableValue<Object>, ObservableValue<Object>>) source -> source.derive(Optional::of) },
-                { "Map", (Function<ObservableValue<Object>, ObservableValue<Object>>) source -> source
-                        .map(Function.identity()) }, { "Filter",
-                (Function<ObservableValue<Object>, ObservableValue<Object>>) source -> source.filter(any -> true) } });
+        return Arrays.asList(new Object[][]{ //
+                {"Generic derive", (Function<ObservableValue<Object>, ObservableValue<Object>>) source -> source.derive(Optional::of)}, //
+                {"Map", (Function<ObservableValue<Object>, ObservableValue<Object>>) source -> source.map(Function.identity())}, //
+                {"Filter", (Function<ObservableValue<Object>, ObservableValue<Object>>) source -> source.filter(any -> true)} //
+        });
     }
 
     @Parameterized.Parameter(0)
@@ -122,7 +119,7 @@ public class ObservableOperatorsGcComplianceTest {
     }
 
     @Test
-    public void withoutSubscriber_holdingSource_shouldGcOperator() {
+    public void withoutSubscription_holdingSource_shouldGcOperator() {
         Dispatcher<Object> source = Observables.dispatcher();
         ObservableValue<Object> operatorStep = operator.apply(source);
 
@@ -135,7 +132,7 @@ public class ObservableOperatorsGcComplianceTest {
     }
 
     @Test
-    public void withoutSubscriber_holdingOperator_shouldPreventGcOfSource() {
+    public void withoutSubscription_holdingOperator_shouldPreventGcOfSource() {
         Dispatcher<Object> source = Observables.dispatcher();
         ObservableValue<Object> operatorStep = operator.apply(source);
 
@@ -148,23 +145,22 @@ public class ObservableOperatorsGcComplianceTest {
     }
 
     @Test
-    public void gcWithMultipleDerivationsWhileNotSubscribedAndSourceReferenced_shouldGcDerivations() throws Exception {
-        Property<String> property = Properties.property("42");
-        ObservableValue<String> step1 = property.map(identity());
-        ObservableValue<Integer> step2 = step1.map(Integer::parseInt);
-        ObservableValue<Integer> step3 = step2.filter(any -> true);
+    public void withoutSubscription_withMultipleDerivationsWhileHoldingSource_shouldGcDerivations() throws Exception {
+        Property<Object> source = Properties.property("42");
+        ObservableValue<Object> operatorStep1 = operator.apply(source);
+        ObservableValue<Object> operatorStep2 = operator.apply(operatorStep1);
 
-        WeakReference<?> step2ref = new WeakReference<>(step2);
-        step2 = null;
-        WeakReference<?> step3ref = new WeakReference<>(step3);
-        step3 = null;
+        WeakReference<?> operatorStep1Weak = new WeakReference<>(operatorStep1);
+        operatorStep1 = null;
+        WeakReference<?> operatorStep2Weak = new WeakReference<>(operatorStep2);
+        operatorStep2 = null;
 
         for (int i = 0; i < 10; i++) {
             forceGc();
             Thread.sleep(10); /* allow weak observer stale cleanup to happen */
         }
 
-        assertThat(step3ref.get()).isNull();
-        assertThat(step2ref.get()).isNull();
+        assertThat(operatorStep1Weak.get()).as("Holding source without subscriber should keep GC dangling operators").isNull();
+        assertThat(operatorStep2Weak.get()).as("Holding source without subscriber should keep GC dangling operators").isNull();
     }
 }
