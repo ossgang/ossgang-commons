@@ -46,7 +46,8 @@ import java.util.function.Supplier;
  */
 public class AsyncMaybe<T> {
 
-    private static final ExecutorService ASYNC_MAYBE_POOL = newCachedThreadPool(daemonThreadFactoryWithPrefix("ossgang-AsyncMaybe-executor"));
+    private static final ExecutorService ASYNC_MAYBE_POOL = newCachedThreadPool(
+            daemonThreadFactoryWithPrefix("ossgang-commons-AsyncMaybe-"));
     private static final String NULL_VALUE_MSG = "AsyncMaybe cannot contain a null value";
 
     private final CompletableFuture<Maybe<T>> stage;
