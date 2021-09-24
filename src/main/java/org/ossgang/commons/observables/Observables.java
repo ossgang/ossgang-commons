@@ -745,6 +745,8 @@ public final class Observables {
      * <li>If an observer onNext/onException throws, with an {@link UpdateDeliveryException}</li>
      * <li>If an observer does not implement onException and an exception would be delivered, by
      * an {@link UnhandledException}</li>
+     * <li>If an internal error occurs in the framework (e.g. during cleanup of a weak observer), with an
+     * {@link IllegalStateException}</li>
      * </ul>
      * In either case, getCause() can be used to obtain the original exception.
      *
