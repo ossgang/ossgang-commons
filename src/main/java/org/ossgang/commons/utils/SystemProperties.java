@@ -35,6 +35,7 @@ public final class SystemProperties {
     /**
      * Set the system property with the provided value if case the property is not already set.
      * This is just a convenience method that combines {@link System#getProperty(String)} and {@link System#setProperty(String, String)}
+     * <p>
      * NOTE: this method is not thread-safe !
      *
      * @param propertyName  to look for
@@ -54,10 +55,12 @@ public final class SystemProperties {
      * This is just a convenience method that combines {@link System#getProperty(String)} and {@link System#setProperty(String, String)}
      * Returns a consumer that can be used to react to the system property value resulted from the method execution.
      * This is useful in case of actions (typically logs) that need to be executed after setting (or not) the property.
+     * <p>
      * E.g.:
      * <code>
      * setPropertyIfNotSetAndThen("myProperty", "myValue").accept((p, v) -> System.out.printf("Using %s with %s%n", p, v));
      * </code>
+     * <p>
      * NOTE: this method is not thread-safe !
      *
      * @param propertyName  to look for
