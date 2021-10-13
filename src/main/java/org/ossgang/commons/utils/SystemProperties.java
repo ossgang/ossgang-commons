@@ -58,7 +58,7 @@ public final class SystemProperties {
      * <p>
      * E.g.:
      * <code>
-     * setPropertyIfNotSetAndThen("myProperty", "myValue").accept((p, v) -> System.out.printf("Using %s with %s%n", p, v));
+     * setPropertyIfNotSetAndThen("myProperty", "myValue").accept((p, v) -&gt; System.out.printf("Using %s with %s%n", p, v));
      * </code>
      * <p>
      * NOTE: this method is not thread-safe !
