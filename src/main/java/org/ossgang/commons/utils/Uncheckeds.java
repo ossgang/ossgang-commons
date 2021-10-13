@@ -1,5 +1,6 @@
 package org.ossgang.commons.utils;
 
+import java.time.Duration;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -83,5 +84,21 @@ public final class Uncheckeds {
             return (RuntimeException) exception;
         }
         return new RuntimeException(exception);
+    }
+
+    /**
+     * An unchecked sleep. Converts the duration to milliseconds and invokes Thread.sleep().
+     * In case of an InterruptedException, it re-interrupts the threads and re-throws the exception as a
+     * RuntimeException.
+     *
+     * @param duration the duration to sleep.
+     */
+    public static void sleep(Duration duration) {
+        try {
+            Thread.sleep(duration.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
     }
 }
