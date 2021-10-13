@@ -5,7 +5,7 @@ jdk:
 before_install:
   - chmod +x ./gradlew
 script:
-  - ./gradlew check --stacktrace
+  - ./gradlew check javadoc --stacktrace
   - ./gradlew jacocoTestReport
 before_deploy:
   - ./gradlew generateLicenseReport
