@@ -12,7 +12,7 @@ public class GeneralDecimalFormatTest {
         assertThat(format.format(42.42)).isEqualTo("42.42");
         assertThat(format.format(0.42)).isEqualTo("0.42");
         assertThat(format.format(0.0)).isEqualTo("0");
-        assertThat(format.format(99999.9)).isEqualTo("99999.9");
+        assertThat(format.format(999999.9)).isEqualTo("999999.9");
     }
 
     @org.junit.Test
@@ -21,7 +21,7 @@ public class GeneralDecimalFormatTest {
         assertThat(format.format(1)).isEqualTo("1");
         assertThat(format.format(42)).isEqualTo("42");
         assertThat(format.format(42000)).isEqualTo("42000");
-        assertThat(format.format(99999)).isEqualTo("99999");
+        assertThat(format.format(999999)).isEqualTo("999999");
     }
 
     @org.junit.Test
@@ -44,4 +44,13 @@ public class GeneralDecimalFormatTest {
         assertThat(format.format(4242424)).isEqualTo("4.2424E6");
         assertThat(format.format(123000000)).isEqualTo("1.23E8");
     }
+
+
+    @org.junit.Test
+    public void format_customOptions_shouldFormatAccordingly() {
+        assertThat(new GeneralDecimalFormat(1, 1).format(42.42)).isEqualTo("4.2E1");
+        assertThat(new GeneralDecimalFormat(11, 1).format(42000000000.0)).isEqualTo("42000000000");
+        assertThat(new GeneralDecimalFormat(4, 4).format(9999.9999)).isEqualTo("9999.9999");
+    }
+
 }

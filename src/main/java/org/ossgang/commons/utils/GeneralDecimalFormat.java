@@ -18,11 +18,20 @@ public class GeneralDecimalFormat extends NumberFormat {
     private final double lowExponentialThreshold;
     private final double highExponentialThreshold;
 
-    public GeneralDecimalFormat(String pattern, double lowExponentialThreshold, double highExponentialThreshold) {
-        fixedFormat = new DecimalFormat(pattern);
-        exponentialFormat = new DecimalFormat(pattern + "E0");
+    public GeneralDecimalFormat(DecimalFormat fixedFormat, DecimalFormat exponentialFormat,
+            double lowExponentialThreshold, double highExponentialThreshold) {
+        if (lowExponentialThreshold <= 0 || highExponentialThreshold <= 0) {
+            throw new IllegalArgumentException("Thresholds must be > 0!");
+        }
+        this.fixedFormat = fixedFormat;
+        this.exponentialFormat = exponentialFormat;
         this.lowExponentialThreshold = lowExponentialThreshold;
         this.highExponentialThreshold = highExponentialThreshold;
+    }
+
+    public GeneralDecimalFormat(String pattern, double lowExponentialThreshold, double highExponentialThreshold) {
+        this(new DecimalFormat(pattern), new DecimalFormat(pattern + "E0"), lowExponentialThreshold,
+                highExponentialThreshold);
     }
 
     public GeneralDecimalFormat(int integerDigits, int fractionDigits) {
