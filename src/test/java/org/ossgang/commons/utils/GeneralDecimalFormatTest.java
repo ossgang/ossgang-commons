@@ -1,6 +1,11 @@
 package org.ossgang.commons.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+
+import java.text.DecimalFormat;
+
+import org.junit.Test;
 
 public class GeneralDecimalFormatTest {
 
@@ -45,12 +50,22 @@ public class GeneralDecimalFormatTest {
         assertThat(format.format(123000000)).isEqualTo("1.23E8");
     }
 
-
     @org.junit.Test
     public void format_customOptions_shouldFormatAccordingly() {
         assertThat(new GeneralDecimalFormat(1, 1).format(42.42)).isEqualTo("4.2E1");
         assertThat(new GeneralDecimalFormat(11, 1).format(42000000000.0)).isEqualTo("42000000000");
         assertThat(new GeneralDecimalFormat(4, 4).format(9999.9999)).isEqualTo("9999.9999");
+        assertThat(new GeneralDecimalFormat("000.000", 1e-3, 1e3) .format(9999.9999)).isEqualTo("100.000E2");
+        assertThat(new GeneralDecimalFormat("000.000", 1e-3, 1e3) .format(999.9)).isEqualTo("999.900");
+        assertThat(new GeneralDecimalFormat(new DecimalFormat("0.00"),new DecimalFormat("0.0E0"), 1e-3, 1e3) .format(999.9)).isEqualTo("999.90");
+        assertThat(new GeneralDecimalFormat(new DecimalFormat("0.00"),new DecimalFormat("0.0E0"), 1e-3, 1e3) .format(4242.4242)).isEqualTo("4.2E3");
+    }
+
+    @Test
+    public void construct_invalidCustomOptions_shouldThrow() {
+        assertThatExceptionOfType(UnsupportedOperationException.class) //
+                .isThrownBy(() -> new GeneralDecimalFormat("0.0E0", 1e-1, 10)) //
+                .withMessageContaining("pattern");
     }
 
 }

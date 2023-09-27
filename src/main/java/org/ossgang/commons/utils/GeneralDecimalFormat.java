@@ -30,8 +30,15 @@ public class GeneralDecimalFormat extends NumberFormat {
     }
 
     public GeneralDecimalFormat(String pattern, double lowExponentialThreshold, double highExponentialThreshold) {
-        this(new DecimalFormat(pattern), new DecimalFormat(pattern + "E0"), lowExponentialThreshold,
+        this(new DecimalFormat(pattern), new DecimalFormat(buildDefaultExponentialPattern(pattern)), lowExponentialThreshold,
                 highExponentialThreshold);
+    }
+
+    private static String buildDefaultExponentialPattern(String pattern) {
+        if (pattern.contains("E")) {
+            throw new UnsupportedOperationException("The pattern must not contain an exponential specifier ('E')");
+        }
+        return pattern + "E0";
     }
 
     public GeneralDecimalFormat(int integerDigits, int fractionDigits) {
