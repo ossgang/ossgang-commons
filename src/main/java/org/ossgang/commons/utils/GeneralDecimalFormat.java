@@ -36,7 +36,7 @@ public class GeneralDecimalFormat extends NumberFormat {
 
     private static String buildDefaultExponentialPattern(String pattern) {
         if (pattern.contains("E")) {
-            throw new UnsupportedOperationException("The pattern must not contain an exponential specifier ('E')");
+            throw new IllegalArgumentException("The pattern must not contain an exponential specifier ('E')");
         }
         return pattern + "E0";
     }

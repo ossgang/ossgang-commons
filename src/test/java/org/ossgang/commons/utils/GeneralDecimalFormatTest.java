@@ -63,7 +63,7 @@ public class GeneralDecimalFormatTest {
 
     @Test
     public void construct_invalidCustomOptions_shouldThrow() {
-        assertThatExceptionOfType(UnsupportedOperationException.class) //
+        assertThatExceptionOfType(IllegalArgumentException.class) //
                 .isThrownBy(() -> new GeneralDecimalFormat("0.0E0", 1e-1, 10)) //
                 .withMessageContaining("pattern");
     }
