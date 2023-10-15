@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.com/ossgang/ossgang-commons.svg?branch=master)](https://app.travis-ci.com/ossgang/ossgang-commons)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/ossgang/ossgang-commons/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/ossgang/ossgang-commons/tree/master)
+[![Codecov](https://codecov.io/gh/ossgang/ossgang-commons/branch/master/graph/badge.svg)](https://app.codecov.io/gh/ossgang/ossgang-commons)
 [![Latest release](https://img.shields.io/github/release/ossgang/ossgang-commons.svg?maxAge=1000)](https://github.com/ossgang/ossgang-commons/releases)
 [![Maven Central](https://img.shields.io/maven-central/v/org.ossgang/ossgang-commons)](https://search.maven.org/artifact/org.ossgang/ossgang-commons)
 
