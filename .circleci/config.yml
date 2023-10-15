@@ -1,26 +1,59 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine.
-# See: https://circleci.com/docs/configuration-reference
 version: 2.1
-
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/configuration-reference/#jobs
+orbs:
+  codecov: codecov/codecov@3
 jobs:
-  say-hello:
-    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/configuration-reference/#executor-job
+  build-and-deploy:
     docker:
-      - image: cimg/base:stable
-    # Add steps to the job
-    # See: https://circleci.com/docs/configuration-reference/#steps
+      - image: cimg/openjdk:11.0
+    working_directory: ~/repo
+    environment:
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
     steps:
       - checkout
-      - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
+      - run: chmod +x ./gradlew
+      - run: ./gradlew dependencies
+      - run: ./gradlew check --stacktrace
+      - run: ./gradlew jacocoTestReport
 
-# Orchestrate jobs using workflows
-# See: https://circleci.com/docs/configuration-reference/#workflows
+      - run: "[[ -n ${SIGNING_KEY_SECRING_BASE64} ]]"
+      - run: echo $SIGNING_KEY_SECRING_BASE64 | base64 --decode > ./signing.key.secring
+      - run: echo "export SIGNING_KEY_PATH=./signing.key.secring" >> "$BASH_ENV"
+      - run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository -DDEPLOYMENT=true
+
+  build:
+    docker:
+      - image: cimg/openjdk:11.0
+    working_directory: ~/repo
+    environment:
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
+    steps:
+      - checkout
+      - run: chmod +x ./gradlew
+      - run: ./gradlew dependencies
+      - run: ./gradlew check --stacktrace
+      - run: ./gradlew jacocoTestReport
+      - codecov/upload
+
 workflows:
-  say-hello-workflow:
+  build-and-deploy-workflow:
     jobs:
-      - say-hello
+      - build-and-deploy:
+          context:
+            - ossgang-deploy
+          filters:
+            tags:
+              # any tag
+              only: /.*/
+            branches:
+              # no branches
+              ignore: /.*/
+
+  build-workflow:
+    jobs:
+      - build:
+          filters:
+            tags:
+              # not tag
+              ignore: /.*/
