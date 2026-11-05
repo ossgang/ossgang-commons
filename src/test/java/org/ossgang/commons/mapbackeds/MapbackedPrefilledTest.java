@@ -1,11 +1,12 @@
 package org.ossgang.commons.mapbackeds;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.ossgang.commons.mapbackeds.Mapbackeds.builder;
 import static org.ossgang.commons.mapbackeds.Mapbackeds.mapOf;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class MapbackedPrefilledTest {
 
@@ -15,7 +16,7 @@ public class MapbackedPrefilledTest {
 
     private AnInterface first;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         first = Mapbackeds.builder(AnInterface.class)//
                 .field(AnInterface::intValue, ORIGINAL_INT)//
@@ -74,11 +75,13 @@ public class MapbackedPrefilledTest {
         builder(MismatchedInterface.class).from(first).build();
     }
 
-    @Test(expected = ClassCastException.class)
+    @Test
     public void mismapedInterfaceThrowsOnGet() {
-        /* This is still annoying and should be fixed at some point (throw already at build time) */
-        MismatchedInterface second = builder(MismatchedInterface.class).from(first).build();
-        second.stringValue();
+        assertThrows(ClassCastException.class, () -> {
+            /* This is still annoying and should be fixed at some point (throw already at build time) */
+            MismatchedInterface second = builder(MismatchedInterface.class).from(first).build();
+            second.stringValue();
+        });
     }
 
     private interface AnInterface {

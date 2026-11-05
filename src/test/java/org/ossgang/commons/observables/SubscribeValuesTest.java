@@ -29,7 +29,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.monads.Consumer3;
 import org.ossgang.commons.monads.Consumer4;
 import org.ossgang.commons.monads.Consumer5;

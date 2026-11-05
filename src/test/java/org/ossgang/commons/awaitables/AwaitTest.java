@@ -10,15 +10,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.ossgang.commons.awaitables.exceptions.AwaitRetryCountException;
 import org.ossgang.commons.awaitables.exceptions.AwaitTimeoutException;
 
+@Timeout(5)
 public class AwaitTest {
-    @Rule
-    public Timeout globalTimeout = Timeout.seconds(5);
 
     @Test
     public void awaitFulfilledCondition_shouldReturnImmediately() {

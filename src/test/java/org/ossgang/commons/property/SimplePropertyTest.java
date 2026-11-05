@@ -6,7 +6,7 @@ import static org.ossgang.commons.observables.Observers.withErrorHandling;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.properties.Properties;
 import org.ossgang.commons.properties.Property;

@@ -24,7 +24,7 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class AsyncMaybeVoidTest {
 

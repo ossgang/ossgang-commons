@@ -8,7 +8,7 @@ import static org.ossgang.commons.observables.testing.TestObserver.ObserverEvent
 import java.util.concurrent.CompletableFuture;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.observables.testing.TestObserver;
 
 public class ObserverApiComplianceTest {
