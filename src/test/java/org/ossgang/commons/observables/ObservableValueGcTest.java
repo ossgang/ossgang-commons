@@ -7,7 +7,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.properties.Properties;
 import org.ossgang.commons.properties.Property;
 

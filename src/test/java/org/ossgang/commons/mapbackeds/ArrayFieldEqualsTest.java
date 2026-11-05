@@ -1,12 +1,12 @@
 package org.ossgang.commons.mapbackeds;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-@Ignore("This test does not pass in the current version! Would need a more sophisticated equals method.")
+@Disabled("This test does not pass in the current version! Would need a more sophisticated equals method.")
 public class ArrayFieldEqualsTest {
 
     @Test

@@ -1,8 +1,9 @@
 package org.ossgang.commons.mapbackeds;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CustomToStringTest {
 
@@ -18,14 +19,18 @@ public class CustomToStringTest {
         assertThat(object.toString()).isEqualTo("3");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void moreThanOneToStringThrows() {
-        Mapbackeds.builder(MoreThanOneToString.class).build();
+        assertThrows(IllegalArgumentException.class, () -> {
+            Mapbackeds.builder(MoreThanOneToString.class).build();
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void subToStringWithSameNameAndSignatureIsDetectedAsTwoMethods() {
-        Mapbackeds.builder(SubInterfaceWithDefaultToStringOnSameMethod.class).build();
+        assertThrows(IllegalArgumentException.class, () -> {
+            Mapbackeds.builder(SubInterfaceWithDefaultToStringOnSameMethod.class).build();
+        });
     }
 
     @Test

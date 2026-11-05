@@ -2,8 +2,8 @@ package org.ossgang.commons.observables.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.observables.Dispatcher;
 import org.ossgang.commons.observables.Observables;
 import org.ossgang.commons.properties.Properties;
@@ -14,7 +14,7 @@ public class TestObserverTest {
     private Property<Object> source;
     private TestObserver<Object> observer;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         source = Properties.property();
         observer = new TestObserver<>();

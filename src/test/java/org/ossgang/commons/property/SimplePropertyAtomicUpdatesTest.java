@@ -8,8 +8,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.observables.Transition;
 import org.ossgang.commons.properties.AtomicProperty;
 import org.ossgang.commons.properties.Properties;
@@ -23,7 +23,7 @@ public class SimplePropertyAtomicUpdatesTest {
     private CompletableFuture<String> updateValue = new CompletableFuture<>();
     private AtomicProperty<String> property = Properties.property();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         updateValue = new CompletableFuture<>();
         property = Properties.property(INITIAL);

@@ -6,7 +6,7 @@ import static org.ossgang.commons.observables.operators.connectors.ConnectorStat
 
 import java.util.function.Function;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observables;
 import org.ossgang.commons.observables.testing.TestObserver;

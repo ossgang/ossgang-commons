@@ -6,7 +6,7 @@ import static org.ossgang.commons.observables.Observers.forExceptions;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.monads.Maybe;
 
 public class SimpleDispatcherTest {

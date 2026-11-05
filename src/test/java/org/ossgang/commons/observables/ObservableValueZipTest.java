@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.observables.testing.TestObserver;
 import org.ossgang.commons.properties.Property;
 
@@ -22,7 +22,7 @@ public class ObservableValueZipTest {
     private Property<String> valueA;
     private Property<String> valueB;
 
-    @Before
+    @BeforeEach
     public void setup() {
         valueA = property();
         valueB = property();

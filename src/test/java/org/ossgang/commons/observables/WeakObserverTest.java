@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.ossgang.commons.GcTests.wasGarbageCollected;
 
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -13,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.awaitables.Await;
 
 public class WeakObserverTest {
@@ -40,6 +41,9 @@ public class WeakObserverTest {
 
         assertThat(unSubscribed.await(5, TimeUnit.SECONDS))
                 .as("Subscriber should have been unsubscribed by now because the holder was collected").isTrue();
+
+        // keep strongly reachable until here, the JIT may otherwise consider the local variable dead after its last use
+        Reference.reachabilityFence(source);
     }
 
     @Test
@@ -54,6 +58,10 @@ public class WeakObserverTest {
         assertThat(unSubscribed.await(1, TimeUnit.SECONDS))
                 .as("Subscriber should NOT have been unsubscribed because there is a strong reference to the holder!")
                 .isFalse();
+
+        // keep strongly reachable until here, the JIT may otherwise consider the local variable dead after its last use
+        Reference.reachabilityFence(holder);
+        Reference.reachabilityFence(source);
     }
 
     @Test

@@ -23,6 +23,7 @@
 package org.ossgang.commons.monads;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -37,7 +38,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class MaybeTest {
@@ -65,29 +66,39 @@ public class MaybeTest {
         assertThat(Maybe.ofException(new MaybeTestException1()).hasException()).isTrue();
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void constructionWithNullArgumentFails() {
-        Maybe.ofValue(null);
+        assertThrows(NullPointerException.class, () -> {
+            Maybe.ofValue(null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void constructionWithNullExceptionFails() {
-        Maybe.ofException(null);
+        assertThrows(NullPointerException.class, () -> {
+            Maybe.ofException(null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void mappingWithNullFunctionFails() {
-        Maybe.ofValue("42").map((ThrowingFunction<String, String>) null);
+        assertThrows(NullPointerException.class, () -> {
+            Maybe.ofValue("42").map((ThrowingFunction<String, String>) null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void attemptWithNullFunctionFails() {
-        attempt((ThrowingSupplier<String>) null);
+        assertThrows(NullPointerException.class, () -> {
+            attempt((ThrowingSupplier<String>) null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void thenRunWithNullFunctionFails() {
-        Maybe.ofValue("42").then(((ThrowingSupplier<String>) null));
+        assertThrows(NullPointerException.class, () -> {
+            Maybe.ofValue("42").then(((ThrowingSupplier<String>) null));
+        });
     }
 
     @Test
@@ -105,12 +116,14 @@ public class MaybeTest {
         assertThat(chain.value()).isEqualTo("Success");
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void failureMapping() {
-        Maybe<Integer> maybe = attempt(() -> 42).map(this::throwException1).map(v -> 84 - v).map(this::throwException2);
-        assertThat(maybe.hasException()).isTrue();
-        assertThat(maybe.optionalException().get()).isInstanceOf(MaybeTestException1.class);
-        maybe.value(); /* <- throws */
+        assertThrows(RuntimeException.class, () -> {
+            Maybe<Integer> maybe = attempt(() -> 42).map(this::throwException1).map(v -> 84 - v).map(this::throwException2);
+            assertThat(maybe.hasException()).isTrue();
+            assertThat(maybe.optionalException().get()).isInstanceOf(MaybeTestException1.class);
+            maybe.value(); /* <- throws */
+        });
     }
 
     @Test
@@ -118,9 +131,11 @@ public class MaybeTest {
         attempt(() -> Thread.sleep(0)).throwOnException();
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void failureTransformToUncheckedException() {
-        attempt(() -> throwException1(42)).throwOnException();
+        assertThrows(RuntimeException.class, () -> {
+            attempt(() -> throwException1(42)).throwOnException();
+        });
     }
 
     @Test
@@ -190,14 +205,18 @@ public class MaybeTest {
         assertThat(m.hasException()).isFalse();
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test
     public void successfulVoidThrowsOnGettingException() {
-        Maybe.ofVoid().exception();
+        assertThrows(NoSuchElementException.class, () -> {
+            Maybe.ofVoid().exception();
+        });
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test
     public void successfulVoidThrowsOnGettingValue() {
-        Maybe.ofVoid().value();
+        assertThrows(NoSuchElementException.class, () -> {
+            Maybe.ofVoid().value();
+        });
     }
 
     @Test
@@ -209,9 +228,11 @@ public class MaybeTest {
         assertThat(m.value()).isEqualTo("42");
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test
     public void successfulValueThrowsOnException() {
-        Maybe.ofValue("42").exception();
+        assertThrows(NoSuchElementException.class, () -> {
+            Maybe.ofValue("42").exception();
+        });
     }
 
     @Test

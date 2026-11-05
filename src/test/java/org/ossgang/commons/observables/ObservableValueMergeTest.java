@@ -3,7 +3,7 @@ package org.ossgang.commons.observables;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.ossgang.commons.properties.Properties.property;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.observables.testing.TestObserver;
 import org.ossgang.commons.properties.Property;
 

@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.monads.Function3;
 import org.ossgang.commons.monads.Function4;
 import org.ossgang.commons.monads.Function5;

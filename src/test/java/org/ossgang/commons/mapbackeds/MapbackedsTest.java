@@ -1,14 +1,14 @@
 package org.ossgang.commons.mapbackeds;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.ossgang.commons.mapbackeds.Mapbackeds.builder;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MapbackedsTest {
 
@@ -30,10 +30,12 @@ public class MapbackedsTest {
         assertThat(object.intValue()).isEqualTo(ANY_INT);
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void primitiveNotSetThrows() {
-        AnInterface object = builder(AnInterface.class).build();
-        object.intValue();
+        assertThrows(NullPointerException.class, () -> {
+            AnInterface object = builder(AnInterface.class).build();
+            object.intValue();
+        });
     }
 
     @Test
@@ -53,9 +55,11 @@ public class MapbackedsTest {
         Assertions.assertThat(anInstance()).isEqualTo(anInstance());
     }
     
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void proxyingObject() {
-        Mapbackeds.mapOf("Any Non Mapbacked");
+        assertThrows(IllegalArgumentException.class, () -> {
+            Mapbackeds.mapOf("Any Non Mapbacked");
+        });
     }
 
     @Test

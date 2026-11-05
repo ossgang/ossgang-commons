@@ -11,7 +11,7 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.awaitables.exceptions.AwaitTimeoutException;
 import org.ossgang.commons.monads.Maybe;
 import org.ossgang.commons.observables.Dispatcher;

@@ -3,12 +3,13 @@ package org.ossgang.commons.observables;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.observables.exceptions.UnhandledException;
 import org.ossgang.commons.observables.exceptions.UpdateDeliveryException;
 import org.ossgang.commons.observables.testing.TestObserver;
@@ -19,7 +20,7 @@ public class ExceptionHandlersTest {
 
     private final CompletableFuture<Throwable> exception = new CompletableFuture<>();
 
-    @Before
+    @BeforeEach
     public void setUncaughtExceptionHandler() {
         Observables.setUncaughtExceptionHandler(exception::complete);
     }
@@ -61,27 +62,31 @@ public class ExceptionHandlersTest {
                 .hasCauseInstanceOf(NumberFormatException.class);
     }
 
-    @Test(expected = TimeoutException.class)
+    @Test
     public void nothingThrows_shouldNotCatchAnything() throws Exception {
-        Property<String> property = Properties.property("A");
-        property.subscribe(System.out::println);
-        property.set("b");
+        assertThrows(TimeoutException.class, () -> {
+            Property<String> property = Properties.property("A");
+            property.subscribe(System.out::println);
+            property.set("b");
 
-        exception.get(200, MILLISECONDS);
+            exception.get(200, MILLISECONDS);
+        });
     }
 
-    @Test(expected = TimeoutException.class)
+    @Test
     public void mapThrows_subscriberHandles_shouldNotDeflect() throws Exception {
-        TestObserver<Integer> testObserver = new TestObserver<>();
-        Property<String> property = Properties.property();
-        property.map(Integer::valueOf).subscribe(testObserver);
-        property.set("THIS-IS-NOT-A-NUMBER");
+        assertThrows(TimeoutException.class, () -> {
+            TestObserver<Integer> testObserver = new TestObserver<>();
+            Property<String> property = Properties.property();
+            property.map(Integer::valueOf).subscribe(testObserver);
+            property.set("THIS-IS-NOT-A-NUMBER");
 
-        exception.get(200, MILLISECONDS);
-        assertThat(testObserver.receivedExceptions()).hasSize(1);
-        assertThat((Exception) testObserver.receivedExceptions().get(0))
-                .isInstanceOf(UnhandledException.class)
-                .hasMessageContaining("THIS-IS-NOT-A-NUMBER")
-                .hasCauseInstanceOf(NumberFormatException.class);
+            exception.get(200, MILLISECONDS);
+            assertThat(testObserver.receivedExceptions()).hasSize(1);
+            assertThat((Exception) testObserver.receivedExceptions().get(0))
+                    .isInstanceOf(UnhandledException.class)
+                    .hasMessageContaining("THIS-IS-NOT-A-NUMBER")
+                    .hasCauseInstanceOf(NumberFormatException.class);
+        });
     }
 }

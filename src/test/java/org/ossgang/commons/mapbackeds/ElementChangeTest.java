@@ -1,24 +1,29 @@
 package org.ossgang.commons.mapbackeds;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.ossgang.commons.mapbackeds.Mapbackeds.builder;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ElementChangeTest {
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void nonInitializedThrows() {
-        Mapbackeds.builder(AnInterface.class).element(AnInterface::integerList, 2, 5);
+        assertThrows(IllegalStateException.class, () -> {
+            Mapbackeds.builder(AnInterface.class).element(AnInterface::integerList, 2, 5);
+        });
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void toShortListFails() {
-        Mapbackeds.builder(AnInterface.class).field(AnInterface::integerList, list()).element(AnInterface::integerList,
-                2, 5);
+        assertThrows(IndexOutOfBoundsException.class, () -> {
+            Mapbackeds.builder(AnInterface.class).field(AnInterface::integerList, list()).element(AnInterface::integerList,
+                    2, 5);
+        });
     }
 
     @Test

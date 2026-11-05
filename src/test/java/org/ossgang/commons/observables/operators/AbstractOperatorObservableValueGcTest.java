@@ -1,7 +1,7 @@
 package org.ossgang.commons.observables.operators;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ossgang.commons.observables.ObservableValue;
 import org.ossgang.commons.observables.Observer;
 import org.ossgang.commons.observables.Subscription;
@@ -9,6 +9,7 @@ import org.ossgang.commons.observables.SubscriptionOption;
 import org.ossgang.commons.properties.Properties;
 import org.ossgang.commons.properties.Property;
 
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -25,7 +26,7 @@ public class AbstractOperatorObservableValueGcTest {
 
     private CompletableFuture<Integer> methodReferenceUpdateValue;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         methodReferenceUpdateValue = new CompletableFuture<>();
     }
@@ -122,6 +123,9 @@ public class AbstractOperatorObservableValueGcTest {
         assertThat(step1ref.get()).isNotNull();
         assertThat(step2ref.get()).isNotNull();
         assertThat(step3ref.get()).isNotNull();
+
+        // keep strongly reachable until here, the JIT may otherwise consider the local variable dead after its last use
+        Reference.reachabilityFence(property);
     }
 
     @SuppressWarnings("UnusedAssignment")
@@ -149,6 +153,9 @@ public class AbstractOperatorObservableValueGcTest {
         assertThat(step2ref.get()).isNotNull();
         property.set("1");
         assertThat(methodReferenceUpdateValue.get(5, SECONDS)).isEqualTo(1);
+
+        // keep strongly reachable until here, the JIT may otherwise consider the local variable dead after its last use
+        Reference.reachabilityFence(step3);
     }
 
     @SuppressWarnings("UnusedAssignment")
@@ -180,6 +187,9 @@ public class AbstractOperatorObservableValueGcTest {
         assertThat(step3ref.get()).isNotNull();
         property.set("1");
         assertThat(methodReferenceUpdateValue.get(5, SECONDS)).isEqualTo(1);
+
+        // keep strongly reachable until here, the JIT may otherwise consider the local variable dead after its last use
+        Reference.reachabilityFence(subscriptionThatShouldPreventGc);
     }
 
     @SuppressWarnings("UnusedAssignment")
@@ -228,6 +238,9 @@ public class AbstractOperatorObservableValueGcTest {
 
         assertThat(sourceRef.get()).isNotNull();
         assertThat(danglingStepRef.get()).isNull();
+
+        // keep strongly reachable until here, the JIT may otherwise consider the local variable dead after its last use
+        Reference.reachabilityFence(midStep);
     }
 
     @SuppressWarnings("UnusedAssignment")
@@ -249,6 +262,9 @@ public class AbstractOperatorObservableValueGcTest {
         assertThat(midStepRef.get()).isNotNull();
         assertThat(subscriptionRef.get()).isNotNull();
         assertThat(methodReferenceUpdateValue.get(5, SECONDS)).isEqualTo(1);
+
+        // keep strongly reachable until here, the JIT may otherwise consider the local variable dead after its last use
+        Reference.reachabilityFence(source);
     }
 
     @SuppressWarnings("UnusedAssignment")
@@ -271,5 +287,8 @@ public class AbstractOperatorObservableValueGcTest {
         sourceRef.get().set("1");
 
         assertThat(methodReferenceUpdateValue.get(5, SECONDS)).isEqualTo(1);
+
+        // keep strongly reachable until here, the JIT may otherwise consider the local variable dead after its last use
+        Reference.reachabilityFence(subscription);
     }
 }
